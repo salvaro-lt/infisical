@@ -484,6 +484,8 @@ import { objectStorageServiceFactory } from "@app/services/object-storage/object
 import { offlineUsageReportDALFactory } from "@app/services/offline-usage-report/offline-usage-report-dal";
 import { offlineUsageReportServiceFactory } from "@app/services/offline-usage-report/offline-usage-report-service";
 import { oidcIssuerServiceFactory } from "@app/services/oidc-issuer/oidc-issuer-service";
+import { oidcSsoDALFactory } from "@app/services/oidc-sso/oidc-sso-dal";
+import { oidcSsoServiceFactory } from "@app/services/oidc-sso/oidc-sso-service";
 import { orgAdminServiceFactory } from "@app/services/org-admin/org-admin-service";
 import { orgAssetDALFactory } from "@app/services/org-asset/org-asset-dal";
 import { orgMembershipDALFactory } from "@app/services/org-membership/org-membership-dal";
@@ -1601,6 +1603,20 @@ export const registerRoutes = async (
     permissionService,
     mfaLockoutService,
     userService
+  });
+
+  const oidcSsoService = oidcSsoServiceFactory({
+    oidcSsoDAL: oidcSsoDALFactory(db),
+    orgDAL,
+    userDAL,
+    userAliasDAL,
+    membershipUserDAL,
+    membershipRoleDAL,
+    permissionService,
+    kmsDataKeyService,
+    tokenService,
+    smtpService,
+    loginService
   });
 
   const samlService = samlConfigServiceFactory({
@@ -5038,6 +5054,7 @@ export const registerRoutes = async (
     orgDeletion: orgDeletionService,
     subOrganization: subOrgService,
     oidc: oidcService,
+    oidcSso: oidcSsoService,
     authToken: tokenService,
     oauthClient: oauthClientService,
     oidcIssuer: oidcIssuerService,

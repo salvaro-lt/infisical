@@ -109,7 +109,7 @@ export const InitialStep = ({ isAdmin }: Props) => {
   const redirectToOidc = (orgSlug: string) => {
     const query = new URLSearchParams({ orgSlug });
     if (callbackPort) query.set("callbackPort", callbackPort);
-    window.location.assign(`/api/v1/sso/oidc/login?${query.toString()}`);
+    window.location.assign(`/api/v1/sso/community-oidc/login?${query.toString()}`);
   };
 
   useEffect(() => {

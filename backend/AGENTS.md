@@ -461,6 +461,12 @@ path that resolves people by identifier, read
 In short: resolve by exact `users.username` first and only then by `resolveUsersBySsoExternalId`; match
 `externalId` exactly (never case-folded), scoped by org and alias type; treat ambiguity as an error.
 
+### Community OIDC SSO
+
+**Before touching `src/services/oidc-sso/` or `src/server/routes/v1/oidc-sso-router.ts`, read
+[`src/services/oidc-sso/AGENTS.md`](src/services/oidc-sso/AGENTS.md).** It is an MIT reimplementation
+served at `/api/v1/sso/community-oidc/*`; never import from or copy `src/ee/services/oidc/` into it.
+
 ### Permission System (CASL)
 
 Uses CASL (`@casl/ability`) with MongoDB-style rules. Permission logic lives in `src/ee/services/permission/`:

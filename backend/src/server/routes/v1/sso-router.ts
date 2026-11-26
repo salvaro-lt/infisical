@@ -35,6 +35,8 @@ import { AuthMethod, ProviderAuthResult } from "@app/services/auth/auth-type";
 import { OrgAuthMethod } from "@app/services/org/org-types";
 import { PostHogEventTypes, SignupAttributionType, SignupSource } from "@app/services/telemetry/telemetry-types";
 
+import { OIDC_SSO_ROUTE_PREFIX, registerOidcSsoRouter } from "./oidc-sso-router";
+
 const passport = new Authenticator({ key: "sso", userProperty: "passportUser" });
 
 type TOauthLoginConfig = Pick<
@@ -626,6 +628,11 @@ export const registerSsoRouter = async (server: FastifyZodProvider) => {
     throw new BadRequestError({ message: "Unexpected auth result" });
   };
 
+  await server.register(registerOidcSsoRouter, {
+    prefix: OIDC_SSO_ROUTE_PREFIX,
+    handleLoginResult: handleOAuthCallbackRedirect
+  });
+
   server.route({
     url: "/google",
     method: "GET",
@@ -726,7 +733,7 @@ export const registerSsoRouter = async (server: FastifyZodProvider) => {
 
       if (org.orgAuthMethod === OrgAuthMethod.OIDC) {
         return res.redirect(
-          `${appCfg.SITE_URL}/api/v1/sso/oidc/login?orgSlug=${org.slug}${
+          `${appCfg.SITE_URL}/api/v1/sso${OIDC_SSO_ROUTE_PREFIX}/login?orgSlug=${org.slug}${
             req.query.callback_port ? `&callbackPort=${req.query.callback_port}` : ""
           }`
         );

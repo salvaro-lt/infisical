@@ -46,7 +46,7 @@ export const useUpdateOIDCConfig = () => {
       mfaClaimName?: string;
       mfaAmrValues?: string[] | null;
     }) => {
-      const { data } = await apiRequest.patch("/api/v1/sso/oidc/config", {
+      const { data } = await apiRequest.patch("/api/v1/sso/community-oidc/config", {
         issuer,
         allowedEmailDomains,
         authorizationEndpoint,
@@ -114,7 +114,7 @@ export const useCreateOIDCConfig = () => {
       mfaClaimName?: string;
       mfaAmrValues?: string[] | null;
     }) => {
-      const { data } = await apiRequest.post("/api/v1/sso/oidc/config", {
+      const { data } = await apiRequest.post("/api/v1/sso/community-oidc/config", {
         issuer,
         configurationType,
         discoveryURL,

@@ -1,13 +1,11 @@
 import type { JSX } from "react";
-import { AlertTriangle, ArrowLeftRight, Info, MoreHorizontal, Pencil } from "lucide-react";
+import { ArrowLeftRight, Info, MoreHorizontal, Pencil } from "lucide-react";
 
-import { OidcSsoUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
   Alert,
   AlertDescription,
-  AlertTitle,
   Card,
   CardAction,
   CardContent,
@@ -23,9 +21,6 @@ import {
   FieldDescription,
   FieldGroup,
   FieldTitle,
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
   IconButton,
   Toggle
 } from "@app/components/v3";
@@ -33,8 +28,7 @@ import {
   OrgPermissionActions,
   OrgPermissionSubjects,
   useOrganization,
-  useOrgPermission,
-  useSubscription
+  useOrgPermission
 } from "@app/context";
 import { OauthGrantType, useGetOauthClients, useGetOIDCConfig } from "@app/hooks/api";
 import { useUpdateOIDCConfig } from "@app/hooks/api/oidcConfig/mutations";
@@ -71,24 +65,17 @@ const TokenExchangeDependentsAlert = () => {
 
 export const OrgOIDCSection = ({ onSwitchProvider }: Props): JSX.Element => {
   const { currentOrg } = useOrganization();
-  const { subscription } = useSubscription();
   const { permission } = useOrgPermission();
 
   const { data, isPending } = useGetOIDCConfig(currentOrg?.id ?? "");
   const { mutateAsync } = useUpdateOIDCConfig();
 
   const { popUp, handlePopUpOpen, handlePopUpClose, handlePopUpToggle } = usePopUp([
-    "addOIDC",
-    "upgradePlan"
+    "addOIDC"
   ] as const);
 
   const handleOIDCToggle = async (value: boolean) => {
     if (!currentOrg?.id) return;
-
-    if (!subscription?.oidcSSO) {
-      handlePopUpOpen("upgradePlan");
-      return;
-    }
 
     await mutateAsync({
       organizationId: currentOrg?.id,
@@ -101,31 +88,8 @@ export const OrgOIDCSection = ({ onSwitchProvider }: Props): JSX.Element => {
     });
   };
 
-  const handleOIDCGroupManagement = async (value: boolean) => {
-    if (!currentOrg?.id) return;
-
-    if (!subscription?.oidcSSO) {
-      handlePopUpOpen("upgradePlan");
-      return;
-    }
-
-    await mutateAsync({
-      organizationId: currentOrg?.id,
-      manageGroupMemberships: value
-    });
-
-    createNotification({
-      text: `Successfully ${value ? "enabled" : "disabled"} OIDC group membership mapping`,
-      type: "success"
-    });
-  };
-
   const addOidcButtonClick = async () => {
-    if (subscription?.oidcSSO && currentOrg) {
-      handlePopUpOpen("addOIDC");
-    } else {
-      handlePopUpOpen("upgradePlan");
-    }
+    if (currentOrg) handlePopUpOpen("addOIDC");
   };
 
   const isGoogleOAuthEnabled = currentOrg.googleSsoAuthEnforced;
@@ -209,59 +173,6 @@ export const OrgOIDCSection = ({ onSwitchProvider }: Props): JSX.Element => {
                 )}
               </Field>
             )}
-            <Field orientation="horizontal">
-              <FieldContent>
-                <FieldTitle>
-                  OIDC Group Membership Mapping
-                  <HoverCard openDelay={150} closeDelay={150}>
-                    <HoverCardTrigger asChild>
-                      <Info className="text-muted" />
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-lg">
-                      <p>
-                        Sync group memberships from your OIDC provider on each sign-in. Users join
-                        groups matching their OIDC group names and leave the ones that don&apos;t.
-                        Manual group management is disabled while this is on.
-                      </p>
-                      <p className="mt-3">
-                        Requires group claims in the OIDC token.{" "}
-                        <a
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline underline-offset-2 hover:text-foreground"
-                          href="https://infisical.com/docs/documentation/platform/sso/overview"
-                        >
-                          See your OIDC provider docs for details.
-                        </a>
-                      </p>
-                      <Alert variant="warning" className="mt-3">
-                        <AlertTriangle />
-                        <AlertTitle>
-                          Changes only apply on the user&apos;s next OIDC sign-in.
-                        </AlertTitle>
-                        <AlertDescription>
-                          Enforce OIDC SSO to keep this gap small.
-                        </AlertDescription>
-                      </Alert>
-                    </HoverCardContent>
-                  </HoverCard>
-                </FieldTitle>
-                <FieldDescription>
-                  Infisical will manage user group memberships based on the OIDC provider.
-                </FieldDescription>
-              </FieldContent>
-              <OrgPermissionCan I={OrgPermissionActions.Edit} a={OrgPermissionSubjects.Sso}>
-                {(isAllowed) => (
-                  <Toggle
-                    id="enforce-org-auth"
-                    variant="org"
-                    checked={data?.manageGroupMemberships ?? false}
-                    onCheckedChange={(value) => handleOIDCGroupManagement(value)}
-                    disabled={!isAllowed}
-                  />
-                )}
-              </OrgPermissionCan>
-            </Field>
           </FieldGroup>
         </CardContent>
       </Card>
@@ -269,15 +180,6 @@ export const OrgOIDCSection = ({ onSwitchProvider }: Props): JSX.Element => {
         popUp={popUp}
         handlePopUpClose={handlePopUpClose}
         handlePopUpToggle={handlePopUpToggle}
-      />
-      <UpgradeGate
-        paywallKey="organization.org-oidc.section"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...OidcSsoUpgradeIntent,
-          isEnterpriseFeature: true
-        }}
       />
     </>
   );

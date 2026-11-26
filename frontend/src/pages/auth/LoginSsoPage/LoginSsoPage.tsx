@@ -67,7 +67,7 @@ export const LoginSsoPage = ({ type }: Props) => {
       [organizationSlug ? "orgSlug" : "domain"]: organizationSlug || (domain as string)
     });
     if (callbackPort) query.set("callbackPort", String(callbackPort));
-    window.location.assign(`/api/v1/sso/oidc/login?${query.toString()}`);
+    window.location.assign(`/api/v1/sso/community-oidc/login?${query.toString()}`);
   };
 
   const canSubmit = Boolean(organizationSlug) || workEmailSchema.safeParse(workEmail).success;

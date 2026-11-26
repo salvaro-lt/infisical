@@ -211,14 +211,6 @@ export const OrgSsoTab = withPermission(
     };
 
     const handleConnectOidc = () => {
-      if (!subscription?.oidcSSO) {
-        handlePopUpOpen("upgradePlan", {
-          featureName: "OIDC SSO",
-          isEnterpriseFeature: true,
-          paywallKey: "organization.org-oidc.chooser"
-        });
-        return;
-      }
       handlePopUpOpen("addOIDC");
     };
 
@@ -254,7 +246,7 @@ export const OrgSsoTab = withPermission(
 
     const isProviderEntitled = (provider: "saml" | "oidc" | "ldap") => {
       if (provider === "saml") return Boolean(subscription?.samlSSO);
-      if (provider === "oidc") return Boolean(subscription?.oidcSSO);
+      if (provider === "oidc") return true;
       return Boolean(subscription?.ldap);
     };
 

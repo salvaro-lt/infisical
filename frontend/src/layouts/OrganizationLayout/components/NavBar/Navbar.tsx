@@ -291,7 +291,7 @@ export const Navbar = () => {
       await logout.mutateAsync();
       if (org.orgAuthMethod === AuthMethod.OIDC) {
         // orgSlug, not domain: the domain param is a verified email-domain lookup and 403s on a slug
-        window.open(`/api/v1/sso/oidc/login?orgSlug=${org.slug}`);
+        window.open(`/api/v1/sso/community-oidc/login?orgSlug=${org.slug}`);
       } else {
         window.open(`/api/v1/sso/redirect/saml2/organizations/${org.slug}`);
       }

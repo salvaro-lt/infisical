@@ -165,6 +165,7 @@ import { TNotificationServiceFactory } from "@app/services/notification/notifica
 import { TOauthClientServiceFactory } from "@app/services/oauth-client/oauth-client-service";
 import { TOfflineUsageReportServiceFactory } from "@app/services/offline-usage-report/offline-usage-report-service";
 import { TOidcIssuerServiceFactory } from "@app/services/oidc-issuer/oidc-issuer-service";
+import { TOidcSsoServiceFactory } from "@app/services/oidc-sso/oidc-sso-service";
 import { TOrgAdminServiceFactory } from "@app/services/org-admin/org-admin-service";
 import { TOrgProductStatsServiceFactory } from "@app/services/org-product-stats/org-product-stats-service";
 import { TOrgDeletionServiceFactory } from "@app/services/org/org-deletion-service";
@@ -338,6 +339,7 @@ declare module "fastify" {
     org: TOrgServiceFactory;
     orgDeletion: TOrgDeletionServiceFactory;
     oidc: TOidcConfigServiceFactory;
+    oidcSso: TOidcSsoServiceFactory;
     superAdmin: TSuperAdminServiceFactory;
     cronJob: TCronJobFactory;
     user: TUserServiceFactory;
