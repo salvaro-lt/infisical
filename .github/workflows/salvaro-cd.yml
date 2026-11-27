@@ -28,7 +28,7 @@ permissions:
 
 env:
     REGISTRY: registry.salvaro.pro
-    IMAGE: registry.salvaro.pro/infisical
+    IMAGE: registry.salvaro.pro/salvaro/infisical
     COOLIFY_URL: https://coolify.salvaro.pro
     COOLIFY_APP_UUID: ulw86z2ortughwvznpwigdtd
 
