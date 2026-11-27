@@ -3,7 +3,7 @@ name: Salvaro CD
 # Builds the standalone Infisical image, pushes it to the Salvaro zot registry, and deploys it to
 # the `infisical` app on coolify.salvaro.pro (secrets.salvaro.pro).
 #
-# Every push builds and pushes. Deploying is opt-in: run this workflow by hand with "deploy"
+# Every push builds and pushes (in chunks, see the build job). Deploying is opt-in: run this workflow by hand with "deploy"
 # ticked, or set the repository variable COOLIFY_AUTODEPLOY to "true" to deploy on every push.
 #
 # Secrets: ZOT_USERNAME, ZOT_PASSWORD (push to registry.salvaro.pro), COOLIFY_TOKEN (Coolify API).
@@ -53,28 +53,45 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
-            - name: Log in to registry.salvaro.pro
-              uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
-              with:
-                  registry: ${{ env.REGISTRY }}
-                  username: ${{ secrets.ZOT_USERNAME }}
-                  password: ${{ secrets.ZOT_PASSWORD }}
-
-            - name: Build and push
+            # Built to a local OCI archive and pushed by regctl below, not by buildx: the proxy in
+            # front of zot cuts any single request at about 60 seconds, and buildx uploads each layer
+            # in one request. regctl splits layers into chunks that each finish well inside that.
+            - name: Build image
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
                   context: .
                   file: Dockerfile.standalone-infisical
                   platforms: linux/amd64
-                  push: true
-                  tags: |
-                      ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
-                      ${{ env.IMAGE }}:community-oidc-sso
+                  outputs: type=oci,dest=${{ runner.temp }}/image.tar
+                  tags: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
                   build-args: |
                       INFISICAL_CLI_VERSION=${{ env.INFISICAL_CLI_VERSION }}
                       INFISICAL_PLATFORM_VERSION=${{ steps.meta.outputs.tag }}
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
+
+            - name: Install regctl
+              env:
+                  REGCTL_VERSION: v0.11.7
+                  REGCTL_SHA256: 3737fbbdd791e04e7a831640b681f3397a376498e80e2ad9b1b2d27296f239bc
+              run: |
+                  curl -fsSL -o "${RUNNER_TEMP}/regctl" \
+                    "https://github.com/regclient/regclient/releases/download/${REGCTL_VERSION}/regctl-linux-amd64"
+                  echo "${REGCTL_SHA256}  ${RUNNER_TEMP}/regctl" | sha256sum --check
+                  chmod +x "${RUNNER_TEMP}/regctl"
+
+            - name: Push to registry.salvaro.pro in chunks
+              env:
+                  ZOT_USERNAME: ${{ secrets.ZOT_USERNAME }}
+                  ZOT_PASSWORD: ${{ secrets.ZOT_PASSWORD }}
+                  TAG: ${{ steps.meta.outputs.tag }}
+              run: |
+                  regctl="${RUNNER_TEMP}/regctl"
+                  printf '%s' "${ZOT_PASSWORD}" | "$regctl" registry login "${REGISTRY}" -u "${ZOT_USERNAME}" --pass-stdin
+                  "$regctl" registry set "${REGISTRY}" --blob-chunk 16777216 --blob-max 16777216
+                  "$regctl" image import "${IMAGE}:${TAG}" "${RUNNER_TEMP}/image.tar"
+                  "$regctl" image copy "${IMAGE}:${TAG}" "${IMAGE}:community-oidc-sso"
+                  "$regctl" manifest head "${IMAGE}:${TAG}"
 
     deploy:
         name: Deploy to secrets.salvaro.pro
