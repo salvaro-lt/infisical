@@ -604,7 +604,10 @@ export const orgServiceFactory = ({
     }
 
     if (authEnforced !== undefined) {
-      if (!plan?.has(PlanFeature.SamlSso) && !plan.has(PlanFeature.OidcSso))
+      // OIDC sign-in is implemented in community code (services/oidc-sso), so an org that has it
+      // configured can enforce it without the OIDC plan feature.
+      const hasActiveOidc = Boolean(await oidcConfigDAL.findOne({ orgId, isActive: true }));
+      if (!plan?.has(PlanFeature.SamlSso) && !plan.has(PlanFeature.OidcSso) && !hasActiveOidc)
         throw new BadRequestError({
           message: "Failed to enforce/un-enforce SSO due to plan restriction. Upgrade plan to enforce/un-enforce SSO."
         });
