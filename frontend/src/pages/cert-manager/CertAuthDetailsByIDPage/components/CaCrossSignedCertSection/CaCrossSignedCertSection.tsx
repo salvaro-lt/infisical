@@ -3,14 +3,9 @@ import { subject } from "@casl/ability";
 import { CircleXIcon } from "lucide-react";
 
 import {
-  CrossSignedCertificatesUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
-import {
   Alert,
   AlertDescription,
   AlertTitle,
-  Badge,
   Card,
   CardAction,
   CardContent,
@@ -18,10 +13,7 @@ import {
   CardHeader,
   CardTitle,
   DocumentationLinkBadge,
-  Loader,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
+  Loader
 } from "@app/components/v3";
 import {
   ProjectPermissionCertificateAuthorityActions,
@@ -41,7 +33,6 @@ import { CaCrossSignedCertEmptyState } from "./CaCrossSignedCertEmptyState";
 import { CaCrossSignedCertImportDialog } from "./CaCrossSignedCertImportDialog";
 import { CaCrossSignedCertRemoveDialog } from "./CaCrossSignedCertRemoveDialog";
 import {
-  ENTERPRISE_PLAN_TEXT,
   getServerErrorMessage,
   summarizeCrossSignedCert,
   TCrossSignedCertPopUp
@@ -61,7 +52,6 @@ export const CaCrossSignedCertSection = ({ caId }: Props) => {
 
   const { data: crossSignedCert, isPending, error } = useGetCaCrossSignedCert(caId, Boolean(ca));
 
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
     "generateCrossSignCsr",
     "importCrossSignedCert",
@@ -69,13 +59,6 @@ export const CaCrossSignedCertSection = ({ caId }: Props) => {
   ] as const);
 
   const handleOpen = (popUpName: TCrossSignedCertPopUp) => {
-    if (popUpName === "importCrossSignedCert" && !isEntitled) {
-      openUpgradeGate({
-        intent: CrossSignedCertificatesUpgradeIntent,
-        paywallKey: "cert-manager.cross-signed-certificates"
-      });
-      return;
-    }
     handlePopUpOpen(popUpName);
   };
 
@@ -85,6 +68,8 @@ export const CaCrossSignedCertSection = ({ caId }: Props) => {
   );
 
   if (!ca || (!isCaActive && !crossSignedCert)) return null;
+  // Off-plan, the section only stays to show a cross-signed certificate that already exists.
+  if (!isEntitled && !crossSignedCert) return null;
 
   const caSubject = subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name });
   const canGenerateCsr = permission.can(
@@ -134,14 +119,6 @@ export const CaCrossSignedCertSection = ({ caId }: Props) => {
           <CardTitle>
             Cross-Signed Certificate
             <DocumentationLinkBadge href={PkiDocsUrls.ca.crossSignedCertificates} />
-            {!isEntitled && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="info">Enterprise</Badge>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">{ENTERPRISE_PLAN_TEXT}</TooltipContent>
-              </Tooltip>
-            )}
           </CardTitle>
           <CardDescription>
             Keeps clients that trust your old CA working while you migrate
@@ -154,6 +131,7 @@ export const CaCrossSignedCertSection = ({ caId }: Props) => {
                 isCaActive={isCaActive}
                 canGenerateCsr={canGenerateCsr}
                 canManageCrossSignedCert={canManageCrossSignedCert}
+                canReplace={isEntitled}
                 onOpen={handleOpen}
               />
             </CardAction>
@@ -182,7 +160,6 @@ export const CaCrossSignedCertSection = ({ caId }: Props) => {
         isOpen={popUp.removeCrossSignedCert.isOpen}
         onOpenChange={(isOpen) => handlePopUpToggle("removeCrossSignedCert", isOpen)}
       />
-      {upgradeGate}
     </>
   );
 };

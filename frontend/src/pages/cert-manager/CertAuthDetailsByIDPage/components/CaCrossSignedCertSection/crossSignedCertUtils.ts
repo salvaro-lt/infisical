@@ -16,9 +16,6 @@ export const INACTIVE_CA_TEXT = "Enable this CA first";
 
 export const GENERATE_CSR_DENIED_TEXT = "You don't have permission to generate a CSR for this CA";
 
-export const ENTERPRISE_PLAN_TEXT =
-  "Cross-signed certificates are available on Infisical's Enterprise plan.";
-
 const EXPIRY_WARNING_DAYS = 30;
 
 const PEM_CERTIFICATE_REGEX = /-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/g;

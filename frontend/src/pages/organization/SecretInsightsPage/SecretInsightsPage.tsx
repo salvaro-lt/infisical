@@ -1,15 +1,14 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { format } from "date-fns";
 import { FileTextIcon } from "lucide-react";
 
-import {
-  SecretAccessInsightsUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { PageTitle } from "@app/components/PageTitle";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
   Button,
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
   Skeleton,
   Tooltip,
   TooltipContent,
@@ -41,7 +40,6 @@ import {
   AuthMethodsCard,
   DuplicatedSecretsCard,
   InsightsCard,
-  InsightsUpgradePreview,
   RequestOrgAuditReportModal,
   SecretAccessVolumeCard,
   StaticSecretPresenceCard,
@@ -56,7 +54,6 @@ const SecretInsightsPageContent = withPermission(
     const { currentOrg } = useOrganization();
     const { config } = useServerConfig();
     const { subscription } = useSubscription();
-    const { openUpgradeGate, upgradeGate } = useUpgradeGate();
     const isClickhouseEnabled = Boolean(config.isClickhouseAuditLogEnabled);
     const hasInsightsPlan = Boolean(subscription?.secretAccessInsights);
 
@@ -116,13 +113,6 @@ const SecretInsightsPageContent = withPermission(
       orgReports?.reports.some((report) => IN_FLIGHT_REPORT_STATUSES.includes(report.status))
     );
 
-    const handleUpgrade = useCallback(() => {
-      openUpgradeGate({
-        intent: SecretAccessInsightsUpgradeIntent,
-        paywallKey: "organization.secret-insights"
-      });
-    }, [openUpgradeGate]);
-
     const isSummaryLoading = hasInsightsPlan && isSummaryPending;
     const isProjectsLoading = hasInsightsPlan && isProjectsPending;
     const isStaticSecretsLoading = hasInsightsPlan && isStaticSecretsPending;
@@ -150,42 +140,40 @@ const SecretInsightsPageContent = withPermission(
                     Last report sent {format(new Date(lastSentReport.createdAt), "MMM d, yyyy")}
                   </span>
                 )}
-                <OrgPermissionCan
-                  I={OrgPermissionSecretsManagementInsightsActions.GenerateReport}
-                  a={OrgPermissionSubjects.SecretsManagementInsights}
-                >
-                  {(isAllowed) => {
-                    const generateButton = (
-                      <Button
-                        variant="project"
-                        size="xs"
-                        isDisabled={!isAllowed || hasInFlightReport}
-                        onClick={() => {
-                          if (hasInsightsPlan) {
+                {hasInsightsPlan && (
+                  <OrgPermissionCan
+                    I={OrgPermissionSecretsManagementInsightsActions.GenerateReport}
+                    a={OrgPermissionSubjects.SecretsManagementInsights}
+                  >
+                    {(isAllowed) => {
+                      const generateButton = (
+                        <Button
+                          variant="project"
+                          size="xs"
+                          isDisabled={!isAllowed || hasInFlightReport}
+                          onClick={() => {
                             handlePopUpOpen("requestOrgReport");
-                          } else {
-                            handleUpgrade();
-                          }
-                        }}
-                      >
-                        Generate Report
-                      </Button>
-                    );
-                    if (!hasInFlightReport) return generateButton;
-                    return (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex">{generateButton}</span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            A report is already being generated. Please wait for it to finish.
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  }}
-                </OrgPermissionCan>
+                          }}
+                        >
+                          Generate Report
+                        </Button>
+                      );
+                      if (!hasInFlightReport) return generateButton;
+                      return (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex">{generateButton}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              A report is already being generated. Please wait for it to finish.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    }}
+                  </OrgPermissionCan>
+                )}
               </div>
             </PageHeader>
             {hasInsightsPlan ? (
@@ -228,7 +216,11 @@ const SecretInsightsPageContent = withPermission(
                 )}
               </div>
             ) : (
-              <InsightsUpgradePreview onUpgrade={handleUpgrade} />
+              <Empty className="border">
+                <EmptyHeader>
+                  <EmptyTitle>Insights are not available on this instance</EmptyTitle>
+                </EmptyHeader>
+              </Empty>
             )}
           </div>
         </div>
@@ -237,7 +229,6 @@ const SecretInsightsPageContent = withPermission(
           onOpenChange={(isOpen) => handlePopUpToggle("requestOrgReport", isOpen)}
           isAuditLogSupported={isClickhouseEnabled}
         />
-        {upgradeGate}
       </>
     );
   },

@@ -14,39 +14,29 @@ import {
 } from "@app/components/v3";
 import { OrgPermissionActions, OrgPermissionSubjects } from "@app/context/OrgPermissionContext";
 import { ExternalKmsProvider, KmsListEntry } from "@app/hooks/api/kms/types";
-import { SubscriptionPlan } from "@app/hooks/api/types";
 import { UsePopUpState } from "@app/hooks/usePopUp";
 
 type Props = {
   kms: KmsListEntry;
   handlePopUpOpen: (
     popUpName: keyof UsePopUpState<
-      ["editExternalKmsDetails", "editExternalKmsCredentials", "removeExternalKms", "upgradePlan"]
+      ["editExternalKmsDetails", "editExternalKmsCredentials", "removeExternalKms"]
     >,
     data?: {
       kmsId?: string;
       name?: string;
       provider?: string;
-      isEnterpriseFeature?: boolean;
     }
   ) => void;
-  subscription: SubscriptionPlan;
 };
 
-export const ExternalKmsItem = ({ kms, handlePopUpOpen, subscription }: Props) => {
+export const ExternalKmsItem = ({ kms, handlePopUpOpen }: Props) => {
   const providerIcon =
     kms.externalKms.provider === ExternalKmsProvider.Aws
       ? "Amazon Web Services.png"
       : "Google Cloud Platform.png";
 
   const handleEdit = (popUpName: "editExternalKmsDetails" | "editExternalKmsCredentials") => {
-    if (subscription && !subscription.externalKms) {
-      handlePopUpOpen("upgradePlan", {
-        isEnterpriseFeature: true
-      });
-      return;
-    }
-
     handlePopUpOpen(popUpName, {
       kmsId: kms.id,
       name: kms.name,

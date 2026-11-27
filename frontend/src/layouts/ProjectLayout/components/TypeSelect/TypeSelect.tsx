@@ -11,7 +11,7 @@ import {
   CommandItemLink,
   CommandList
 } from "@app/components/v3";
-import { useOrganization } from "@app/context";
+import { useOrganization, useSubscription } from "@app/context";
 import {
   resolveCertManagerProjectId,
   setCertManagerActiveProjectCookie
@@ -65,6 +65,7 @@ const TypeSelectInner = ({
   const [selectedValue, setSelectedValue] = useState("");
   const navigate = useNavigate();
   const { currentOrg } = useOrganization();
+  const { subscription } = useSubscription();
   const { data: projects = [] } = useGetUserProjects();
   const { data: certManagerInstance, isPending: isCertManagerInstancePending } =
     useCertManagerInstanceState();
@@ -183,7 +184,9 @@ const TypeSelectInner = ({
           <Command value={selectedValue} onValueChange={setSelectedValue}>
             <CommandList>
               <CommandGroup heading="Products">
-                {PRODUCT_TYPES.map((type) => {
+                {PRODUCT_TYPES.filter(
+                  (type) => type !== ProjectType.SecretScanning || subscription?.secretScanning
+                ).map((type) => {
                   const isCertManager = type === ProjectType.CertificateManager;
                   const count = projectCountsByType[type] || 0;
                   const ItemIcon = getProjectLucideIcon(type);

@@ -1,16 +1,12 @@
 import { Controller, useForm } from "react-hook-form";
-import { faArrowUpRightFromSquare, faBookOpen } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearch } from "@tanstack/react-router";
 import z from "zod";
 
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -66,19 +62,6 @@ export function AzureKeyVaultAuthorizePage() {
           <CardDescription>
             Authenticate with a specific tenant ID or let OAuth handle it automatically.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                href="https://infisical.com/docs/integrations/cloud/azure-key-vault"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col gap-5">
           <CardContent>

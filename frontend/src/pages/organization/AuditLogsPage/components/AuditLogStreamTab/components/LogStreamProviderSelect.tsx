@@ -2,10 +2,8 @@ import { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Loader2Icon } from "lucide-react";
 
-import { AuditLogStreamsUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { ProviderIcon } from "@app/components/v3";
 import { AUDIT_LOG_STREAM_PROVIDER_MAP } from "@app/helpers/auditLogStreams";
-import { usePopUp } from "@app/hooks";
 import { useGetAuditLogStreamOptions } from "@app/hooks/api";
 import { LogProvider } from "@app/hooks/api/auditLogStreams/enums";
 
@@ -14,17 +12,11 @@ type Props = {
 };
 
 export const LogStreamProviderSelect = ({ onSelect }: Props) => {
-  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["upgradePlan"]);
-
   const { isPending, data: logStreamOptions } = useGetAuditLogStreamOptions();
 
   const options = useMemo(
     () =>
-      [
-        ...(logStreamOptions || []),
-        // QRadar is a planned provider
-        { name: "IBM QRadar", provider: LogProvider.QRadar }
-      ].sort((a, b) => {
+      [...(logStreamOptions || [])].sort((a, b) => {
         if (a.provider === LogProvider.Custom) return 1;
         if (b.provider === LogProvider.Custom) return -1;
         return 0;
@@ -51,15 +43,7 @@ export const LogStreamProviderSelect = ({ onSelect }: Props) => {
             <button
               key={option.provider}
               type="button"
-              onClick={() => {
-                if (option.provider === LogProvider.QRadar) {
-                  handlePopUpOpen("upgradePlan", {
-                    isEnterpriseFeature: true
-                  });
-                } else {
-                  onSelect(option.provider);
-                }
-              }}
+              onClick={() => onSelect(option.provider)}
               className="group flex h-28 cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-border bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-container-hover"
             >
               {image && (
@@ -83,15 +67,6 @@ export const LogStreamProviderSelect = ({ onSelect }: Props) => {
           );
         })}
       </div>
-      <UpgradeGate
-        paywallKey="organization.log-stream-provider-select"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...AuditLogStreamsUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
-      />
     </div>
   );
 };

@@ -8,7 +8,6 @@ import {
   TrashIcon
 } from "lucide-react";
 
-import { KmipUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
   Button,
@@ -116,8 +115,7 @@ export const KmipClientTable = () => {
     "upsertKmipClient",
     "deleteKmipClient",
     "generateKmipClientCert",
-    "displayKmipClientCert",
-    "upgradePlan"
+    "displayKmipClientCert"
   ] as const);
 
   const cannotEditKmipClient = permission.cannot(
@@ -145,32 +143,25 @@ export const KmipClientTable = () => {
         <CardDescription>
           Manage clients that connect to this project&apos;s KMIP server.
         </CardDescription>
-        <CardAction>
-          <ProjectPermissionCan
-            I={ProjectPermissionKmipActions.CreateClients}
-            a={ProjectPermissionSub.Kmip}
-          >
-            {(isAllowed) => (
-              <Button
-                variant="project"
-                onClick={() => {
-                  if (subscription && !subscription.kmip) {
-                    handlePopUpOpen("upgradePlan", {
-                      isEnterpriseFeature: true
-                    });
-                    return;
-                  }
-
-                  handlePopUpOpen("upsertKmipClient", null);
-                }}
-                isDisabled={!isAllowed}
-              >
-                <PlusIcon />
-                Add KMIP Client
-              </Button>
-            )}
-          </ProjectPermissionCan>
-        </CardAction>
+        {subscription?.kmip && (
+          <CardAction>
+            <ProjectPermissionCan
+              I={ProjectPermissionKmipActions.CreateClients}
+              a={ProjectPermissionSub.Kmip}
+            >
+              {(isAllowed) => (
+                <Button
+                  variant="project"
+                  onClick={() => handlePopUpOpen("upsertKmipClient", null)}
+                  isDisabled={!isAllowed}
+                >
+                  <PlusIcon />
+                  Add KMIP Client
+                </Button>
+              )}
+            </ProjectPermissionCan>
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent>
         <InputGroup className="mb-4">
@@ -192,11 +183,13 @@ export const KmipClientTable = () => {
                   ? "No KMIP clients match your search"
                   : "No KMIP clients yet"}
               </EmptyTitle>
-              <EmptyDescription>
-                {debouncedSearch.trim()
-                  ? "Try a different search term."
-                  : "Add a KMIP client to grant access to your KMS project."}
-              </EmptyDescription>
+              {(debouncedSearch.trim() || subscription?.kmip) && (
+                <EmptyDescription>
+                  {debouncedSearch.trim()
+                    ? "Try a different search term."
+                    : "Add a KMIP client to grant access to your KMS project."}
+                </EmptyDescription>
+              )}
             </EmptyHeader>
           </Empty>
         ) : (
@@ -351,15 +344,6 @@ export const KmipClientTable = () => {
         isOpen={popUp.displayKmipClientCert.isOpen}
         onOpenChange={(isOpen) => handlePopUpToggle("displayKmipClientCert", isOpen)}
         certificate={popUp.displayKmipClientCert.data}
-      />
-      <UpgradeGate
-        paywallKey="kms.kmip-client"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...KmipUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
       />
     </Card>
   );

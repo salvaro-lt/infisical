@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { InfoIcon, LockIcon, Trash2, UploadIcon } from "lucide-react";
+import { InfoIcon, Trash2, UploadIcon } from "lucide-react";
 import { z } from "zod";
 
 import { createNotification } from "@app/components/notifications";
@@ -16,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-  Badge,
   Button,
   Card,
   CardContent,
@@ -298,137 +297,118 @@ export const SecretSharingBrandingSection = () => {
     });
   };
 
+  if (!isFeatureEnabled) return null;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          Custom Branding
-          {!isFeatureEnabled && (
-            <Badge variant="info">
-              <LockIcon />
-              Enterprise
-            </Badge>
-          )}
-        </CardTitle>
+        <CardTitle>Custom Branding</CardTitle>
         <CardDescription>
           Customize the appearance of your shared secret pages with your own branding.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!isFeatureEnabled ? (
-          <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-container p-4">
-            <p className="text-sm text-muted">
-              Custom branding for secret sharing pages is available on Enterprise plans.
-            </p>
-            <Button size="xs" variant="project" asChild>
-              <a href="https://infisical.com/schedule-demo" target="_blank" rel="noreferrer">
-                Talk to Us
-              </a>
-            </Button>
-          </div>
-        ) : (
-          <OrgPermissionCan I={OrgPermissionActions.Edit} a={OrgPermissionSubjects.Settings}>
-            {(isAllowed) => (
-              <div className="space-y-4">
+        <OrgPermissionCan I={OrgPermissionActions.Edit} a={OrgPermissionSubjects.Settings}>
+          {(isAllowed) => (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <AssetUploadCard
+                  assetType="brand-logo"
+                  title="Logo"
+                  description={`Displayed on shared secret pages. ${ACCEPTED_FORMATS_LABEL}, max 1MB.`}
+                  hasAsset={brandingConfig?.hasLogo ?? false}
+                  isAllowed={isAllowed}
+                  isPending={isPending}
+                  onUpload={handleFileUpload}
+                  onDelete={handleFileDelete}
+                />
+                <AssetUploadCard
+                  assetType="brand-favicon"
+                  title="Favicon"
+                  description={`Displayed in browser tab. ${ACCEPTED_FORMATS_LABEL}, max 1MB.`}
+                  hasAsset={brandingConfig?.hasFavicon ?? false}
+                  isAllowed={isAllowed}
+                  isPending={isPending}
+                  onUpload={handleFileUpload}
+                  onDelete={handleFileDelete}
+                />
+              </div>
+
+              <form
+                onSubmit={handleSubmit(handleFormSubmit)}
+                autoComplete="off"
+                className="flex flex-col gap-4"
+              >
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <AssetUploadCard
-                    assetType="brand-logo"
-                    title="Logo"
-                    description={`Displayed on shared secret pages. ${ACCEPTED_FORMATS_LABEL}, max 1MB.`}
-                    hasAsset={brandingConfig?.hasLogo ?? false}
-                    isAllowed={isAllowed}
-                    isPending={isPending}
-                    onUpload={handleFileUpload}
-                    onDelete={handleFileDelete}
+                  <Controller
+                    control={control}
+                    name="primaryColor"
+                    render={({ field, fieldState: { error } }) => (
+                      <Field>
+                        <FieldLabel>
+                          Primary Color
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <InfoIcon className="text-muted" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              Background color for the page (hex format, e.g., #82cec0)
+                            </TooltipContent>
+                          </Tooltip>
+                        </FieldLabel>
+                        <ColorPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="#0e1014"
+                          disabled={!isAllowed}
+                          isError={Boolean(error)}
+                        />
+                        {error && <FieldError>{error.message}</FieldError>}
+                      </Field>
+                    )}
                   />
-                  <AssetUploadCard
-                    assetType="brand-favicon"
-                    title="Favicon"
-                    description={`Displayed in browser tab. ${ACCEPTED_FORMATS_LABEL}, max 1MB.`}
-                    hasAsset={brandingConfig?.hasFavicon ?? false}
-                    isAllowed={isAllowed}
-                    isPending={isPending}
-                    onUpload={handleFileUpload}
-                    onDelete={handleFileDelete}
+                  <Controller
+                    control={control}
+                    name="secondaryColor"
+                    render={({ field, fieldState: { error } }) => (
+                      <Field>
+                        <FieldLabel>
+                          Secondary Color
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <InfoIcon className="text-muted" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              Panel and component background color (hex format, e.g., #14211e)
+                            </TooltipContent>
+                          </Tooltip>
+                        </FieldLabel>
+                        <ColorPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="#1e1f22"
+                          disabled={!isAllowed}
+                          isError={Boolean(error)}
+                        />
+                        {error && <FieldError>{error.message}</FieldError>}
+                      </Field>
+                    )}
                   />
                 </div>
-
-                <form
-                  onSubmit={handleSubmit(handleFormSubmit)}
-                  autoComplete="off"
-                  className="flex flex-col gap-4"
-                >
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Controller
-                      control={control}
-                      name="primaryColor"
-                      render={({ field, fieldState: { error } }) => (
-                        <Field>
-                          <FieldLabel>
-                            Primary Color
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <InfoIcon className="text-muted" />
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                Background color for the page (hex format, e.g., #82cec0)
-                              </TooltipContent>
-                            </Tooltip>
-                          </FieldLabel>
-                          <ColorPicker
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="#0e1014"
-                            disabled={!isAllowed}
-                            isError={Boolean(error)}
-                          />
-                          {error && <FieldError>{error.message}</FieldError>}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      control={control}
-                      name="secondaryColor"
-                      render={({ field, fieldState: { error } }) => (
-                        <Field>
-                          <FieldLabel>
-                            Secondary Color
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <InfoIcon className="text-muted" />
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                Panel and component background color (hex format, e.g., #14211e)
-                              </TooltipContent>
-                            </Tooltip>
-                          </FieldLabel>
-                          <ColorPicker
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="#1e1f22"
-                            disabled={!isAllowed}
-                            isError={Boolean(error)}
-                          />
-                          {error && <FieldError>{error.message}</FieldError>}
-                        </Field>
-                      )}
-                    />
-                  </div>
-                  <div>
-                    <Button
-                      variant={!isDirty || !isAllowed ? "outline" : "project"}
-                      type="submit"
-                      isPending={isUpdatingOrg}
-                      isDisabled={!isDirty || !isAllowed}
-                    >
-                      Save Colors
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </OrgPermissionCan>
-        )}
+                <div>
+                  <Button
+                    variant={!isDirty || !isAllowed ? "outline" : "project"}
+                    type="submit"
+                    isPending={isUpdatingOrg}
+                    isDisabled={!isDirty || !isAllowed}
+                  >
+                    Save Colors
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </OrgPermissionCan>
       </CardContent>
     </Card>
   );

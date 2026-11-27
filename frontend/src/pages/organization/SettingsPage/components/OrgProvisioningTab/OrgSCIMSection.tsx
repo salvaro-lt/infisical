@@ -1,6 +1,5 @@
 import { UserCog } from "lucide-react";
 
-import { ScimUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -36,30 +35,17 @@ export const OrgScimSection = () => {
   const { subscription } = useSubscription();
   const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
     "scimToken",
-    "deleteScimToken",
-    "upgradePlan"
+    "deleteScimToken"
   ] as const);
 
   const { mutateAsync } = useUpdateOrg();
 
   const addScimTokenBtnClick = () => {
-    if (subscription?.scim) {
-      handlePopUpOpen("scimToken");
-    } else {
-      handlePopUpOpen("upgradePlan", {
-        isEnterpriseFeature: true
-      });
-    }
+    handlePopUpOpen("scimToken");
   };
 
   const handleEnableSCIMToggle = async (value: boolean) => {
     if (!currentOrg?.id) return;
-    if (!subscription?.scim) {
-      handlePopUpOpen("upgradePlan", {
-        isEnterpriseFeature: true
-      });
-      return;
-    }
 
     await mutateAsync({
       orgId: currentOrg?.id,
@@ -71,6 +57,8 @@ export const OrgScimSection = () => {
       type: "success"
     });
   };
+
+  if (!subscription?.scim) return null;
 
   return (
     <>
@@ -121,15 +109,6 @@ export const OrgScimSection = () => {
         popUp={popUp}
         handlePopUpOpen={handlePopUpOpen}
         handlePopUpToggle={handlePopUpToggle}
-      />
-      <UpgradeGate
-        paywallKey="organization.org-scim"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...ScimUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
       />
     </>
   );

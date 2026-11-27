@@ -52,8 +52,7 @@ import {
   ProjectPermissionIdentityActions,
   ProjectPermissionSub,
   useOrganization,
-  useProject,
-  useSubscription
+  useProject
 } from "@app/context";
 import {
   getProjectBaseURL,
@@ -71,7 +70,6 @@ import { ActorType } from "@app/hooks/api/auditLogs/enums";
 import { useRemovePamProductIdentityMember } from "@app/hooks/api/pam";
 import { projectIdentityQuery, useDeleteProjectIdentity } from "@app/hooks/api/projectIdentity";
 import { ProjectType } from "@app/hooks/api/projects/types";
-import { AdditionalPrivilegesRemovedSection } from "@app/pages/project/components/AdditionalPrivilegesRemovedSection";
 import {
   FolderAccessSection,
   hasActiveProjectAdminRole
@@ -94,7 +92,6 @@ const Page = () => {
   });
   const { currentProject, projectId } = useProject();
   const { currentOrg, isSubOrganization } = useOrganization();
-  const { subscription } = useSubscription();
 
   const { data: identityMembershipDetails, isPending: isMembershipDetailsLoading } =
     useGetProjectIdentityMembershipV2(projectId, identityId, currentProject?.type);
@@ -109,7 +106,6 @@ const Page = () => {
   const isAgentVault = currentProject?.type === ProjectType.AgentVault;
   // Products where the underlying project is an internal detail the user never sees
   const isSecretManager = currentProject?.type === ProjectType.SecretManager;
-  const hasFolderRbacPlan = Boolean(subscription?.secretsFolderRbac);
   const isStandaloneProduct = isCertManager || isPam || isAgentVault;
   const canAssumePrivileges = supportsAssumePrivileges(currentProject.type);
 
@@ -421,12 +417,6 @@ const Page = () => {
                   identityMembershipDetails={identityMembershipDetails}
                 />
               )}
-              {isSecretManager &&
-                !hasFolderRbacPlan &&
-                !hasActiveProjectAdminRole(identityMembershipDetails.roles) &&
-                !currentProject.isLegacyAdditionalPrivilegesEnabled && (
-                  <AdditionalPrivilegesRemovedSection />
-                )}
               {isSecretManager && !hasActiveProjectAdminRole(identityMembershipDetails.roles) && (
                 <FolderAccessSection
                   actor={{

@@ -2,10 +2,6 @@ import { useMemo, useState } from "react";
 import { Loader2Icon, Search } from "lucide-react";
 
 import {
-  EnterpriseAppConnectionsUpgradeIntent,
-  UpgradeGate
-} from "@app/components/license/UpgradeGate";
-import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -18,7 +14,6 @@ import {
 import { ProviderIcon } from "@app/components/v3/platform/ProviderIcon";
 import { useSubscription } from "@app/context";
 import { APP_CONNECTION_MAP, POPULAR_APP_CONNECTIONS } from "@app/helpers/appConnections";
-import { usePopUp } from "@app/hooks";
 import { useAppConnectionOptions } from "@app/hooks/api/appConnections";
 import { AppConnection } from "@app/hooks/api/appConnections/enums";
 import { TAppConnectionOption } from "@app/hooks/api/appConnections/types/app-options";
@@ -64,19 +59,19 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
 export const AppConnectionsSelect = ({ onSelect, projectType, apps }: Props) => {
   const { subscription } = useSubscription();
   const { isPending, data: appConnectionOptions } = useAppConnectionOptions(projectType);
-  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["upgradePlan"] as const);
   const [search, setSearch] = useState("");
 
   const visibleOptions = useMemo(
-    () => (appConnectionOptions ?? []).filter((option) => !apps || apps.includes(option.app)),
-    [appConnectionOptions, apps]
+    () =>
+      (appConnectionOptions ?? []).filter(
+        (option) =>
+          (!apps || apps.includes(option.app)) &&
+          (subscription?.enterpriseAppConnections || !APP_CONNECTION_MAP[option.app].enterprise)
+      ),
+    [appConnectionOptions, apps, subscription?.enterpriseAppConnections]
   );
 
   const handleSelect = (app: AppConnection) => {
-    if (APP_CONNECTION_MAP[app].enterprise && !subscription.enterpriseAppConnections) {
-      handlePopUpOpen("upgradePlan", { isEnterpriseFeature: true });
-      return;
-    }
     onSelect(app);
   };
 
@@ -191,38 +186,6 @@ export const AppConnectionsSelect = ({ onSelect, projectType, apps }: Props) => 
           </section>
         </>
       )}
-
-      <p className="text-xs text-muted">
-        Don&apos;t see the app you&apos;re looking for?{" "}
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://community.infisical.com"
-          className="underline underline-offset-2 hover:text-foreground"
-        >
-          Let us know in the community forum
-        </a>{" "}
-        or{" "}
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://github.com/Infisical/infisical/discussions"
-          className="underline underline-offset-2 hover:text-foreground"
-        >
-          request it on GitHub
-        </a>
-        .
-      </p>
-
-      <UpgradeGate
-        paywallKey="organization.app-connection-list"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...EnterpriseAppConnectionsUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
-      />
     </div>
   );
 };

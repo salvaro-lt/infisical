@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { ArrowLeftRight, IdCardIcon, Info, Plus } from "lucide-react";
 
-import {
-  LdapUpgradeIntent,
-  OidcSsoUpgradeIntent,
-  SamlSsoUpgradeIntent,
-  UpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -106,7 +100,6 @@ export const OrgSsoTab = withPermission(
       "addLDAP",
       "addSSO",
       "addOIDC",
-      "upgradePlan",
       "addDomain",
       "verifyDomain"
     ] as const);
@@ -157,8 +150,15 @@ export const OrgSsoTab = withPermission(
     const isLdapConfigured = ldapConfig && ldapConfig.url;
     const isGoogleConfigured = shouldDisplaySection(LoginMethod.GOOGLE);
 
+    // SAML and LDAP are paid; OIDC is implemented by this fork and always offered.
+    const canAddSaml = shouldDisplaySection(LoginMethod.SAML) && Boolean(subscription?.samlSSO);
+    const canAddOidc = shouldDisplaySection(LoginMethod.OIDC);
+    const canAddLdap = shouldDisplaySection(LoginMethod.LDAP) && Boolean(subscription?.ldap);
+    const showSamlSection = Boolean(isSamlConfigured) && canAddSaml;
+    const showLdapSection = Boolean(isLdapConfigured) && canAddLdap;
+
     const shouldShowCreateIdentityProviderView =
-      !isOidcConfigured && !isSamlConfigured && !isLdapConfigured;
+      !isOidcConfigured && !showSamlSection && !showLdapSection;
 
     const showEmailDomainAlert =
       Boolean(subscription?.emailDomainVerification) && !isPending && !emailDomains?.length;
@@ -173,29 +173,21 @@ export const OrgSsoTab = withPermission(
       showEmailDomainAlert &&
       permission.can(OrgPermissionEmailDomainActions.Read, OrgPermissionSubjects.EmailDomains);
 
-    const anyProviderAvailable =
-      shouldDisplaySection(LoginMethod.SAML) ||
-      shouldDisplaySection(LoginMethod.OIDC) ||
-      shouldDisplaySection(LoginMethod.LDAP);
+    const anyProviderAvailable = canAddSaml || canAddOidc || canAddLdap;
 
-    let ssoUpgradeIntent:
-      | typeof SamlSsoUpgradeIntent
-      | typeof OidcSsoUpgradeIntent
-      | typeof LdapUpgradeIntent = SamlSsoUpgradeIntent;
-    if (popUp.upgradePlan.data?.featureName === "OIDC SSO") {
-      ssoUpgradeIntent = OidcSsoUpgradeIntent;
-    } else if (popUp.upgradePlan.data?.featureName === "LDAP") {
-      ssoUpgradeIntent = LdapUpgradeIntent;
-    }
+    const availableProviderNames = [
+      canAddSaml && "SAML",
+      canAddOidc && "OIDC",
+      canAddLdap && "LDAP"
+    ].filter(Boolean) as string[];
+    const availableProvidersLabel =
+      availableProviderNames.length > 1
+        ? `${availableProviderNames.slice(0, -1).join(", ")}${
+            availableProviderNames.length > 2 ? "," : ""
+          } or ${availableProviderNames[availableProviderNames.length - 1]}`
+        : (availableProviderNames[0] ?? "");
 
     const handleConnectSaml = async () => {
-      if (!subscription?.samlSSO) {
-        handlePopUpOpen("upgradePlan", {
-          featureName: "SAML SSO",
-          paywallKey: "organization.org-sso.chooser"
-        });
-        return;
-      }
       if (!currentOrg) return;
       if (!samlConfig) {
         await createSamlAsync({
@@ -215,14 +207,6 @@ export const OrgSsoTab = withPermission(
     };
 
     const handleConnectLdap = () => {
-      if (!subscription?.ldap) {
-        handlePopUpOpen("upgradePlan", {
-          featureName: "LDAP",
-          isEnterpriseFeature: true,
-          paywallKey: "organization.org-ldap.chooser"
-        });
-        return;
-      }
       handlePopUpOpen("addLDAP");
     };
 
@@ -344,8 +328,11 @@ export const OrgSsoTab = withPermission(
             Connect an Identity Provider
           </CardTitle>
           <CardDescription>
-            Connect your identity provider to simplify user management with options like SAML, OIDC,
-            and LDAP.
+            Connect your identity provider to simplify user management
+            {availableProviderNames.length > 1
+              ? ` with options like ${availableProvidersLabel.replace(" or ", " and ")}`
+              : ""}
+            .
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -356,7 +343,7 @@ export const OrgSsoTab = withPermission(
                 <EmptyDescription>
                   {showEmailDomainAlert
                     ? "Verify a domain first to add a connection."
-                    : "Connect SAML, OIDC, or LDAP to authenticate members."}
+                    : `Connect ${availableProvidersLabel} to authenticate members.`}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -429,13 +416,13 @@ export const OrgSsoTab = withPermission(
             ) : (
               <>
                 {canSeeEmailDomainAlert && <EmailDomainAlert />}
-                {isSamlConfigured && shouldDisplaySection(LoginMethod.SAML) && (
+                {showSamlSection && (
                   <OrgSSOSection onSwitchProvider={() => openProviderChooser("saml")} />
                 )}
                 {isOidcConfigured && shouldDisplaySection(LoginMethod.OIDC) && (
                   <OrgOIDCSection onSwitchProvider={() => openProviderChooser("oidc")} />
                 )}
-                {isLdapConfigured && shouldDisplaySection(LoginMethod.LDAP) && (
+                {showLdapSection && (
                   <OrgLDAPSection onSwitchProvider={() => openProviderChooser("ldap")} />
                 )}
               </>
@@ -499,7 +486,7 @@ export const OrgSsoTab = withPermission(
                   <DialogDescription>Pick a protocol to configure.</DialogDescription>
                 </DialogHeader>
                 <RadioGroup value={selectedProvider} onValueChange={setSelectedProvider}>
-                  {shouldDisplaySection(LoginMethod.SAML) && chooserExclude !== "saml" && (
+                  {canAddSaml && chooserExclude !== "saml" && (
                     <FieldLabel htmlFor="provider-saml" variant="org">
                       <Field orientation="horizontal">
                         <FieldContent>
@@ -512,7 +499,7 @@ export const OrgSsoTab = withPermission(
                       </Field>
                     </FieldLabel>
                   )}
-                  {shouldDisplaySection(LoginMethod.OIDC) && chooserExclude !== "oidc" && (
+                  {canAddOidc && chooserExclude !== "oidc" && (
                     <FieldLabel htmlFor="provider-oidc" variant="org">
                       <Field orientation="horizontal">
                         <FieldContent>
@@ -525,7 +512,7 @@ export const OrgSsoTab = withPermission(
                       </Field>
                     </FieldLabel>
                   )}
-                  {shouldDisplaySection(LoginMethod.LDAP) && chooserExclude !== "ldap" && (
+                  {canAddLdap && chooserExclude !== "ldap" && (
                     <FieldLabel htmlFor="provider-ldap" variant="org">
                       <Field orientation="horizontal">
                         <FieldContent>
@@ -591,15 +578,6 @@ export const OrgSsoTab = withPermission(
             </AlertDialog>
           </>
         )}
-        <UpgradeGate
-          paywallKey={popUp.upgradePlan.data?.paywallKey ?? "organization.org-sso.chooser"}
-          isOpen={popUp.upgradePlan.isOpen}
-          onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-          intent={{
-            ...ssoUpgradeIntent,
-            isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-          }}
-        />
       </>
     );
   },

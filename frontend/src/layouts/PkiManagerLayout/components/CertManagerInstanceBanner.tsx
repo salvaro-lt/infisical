@@ -43,16 +43,7 @@ export const CertManagerInstanceBanner = () => {
             >
               Switch to your active project →
             </Link>
-          ) : (
-            <a
-              href="https://infisical.com/docs/documentation/platform/pki/migration"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:text-warning"
-            >
-              Migration guide
-            </a>
-          )}
+          ) : null}
         </p>
       )}
     </div>

@@ -65,7 +65,6 @@ type Props = {
   isOpen?: boolean;
   onClose: () => void;
   onTogglePopUp: (isOpen: boolean) => void;
-  onUpgradePlan: () => void;
 };
 
 export const CreateSecretImportForm = ({
@@ -74,8 +73,7 @@ export const CreateSecretImportForm = ({
   secretPath = "/",
   isOpen,
   onClose,
-  onTogglePopUp,
-  onUpgradePlan
+  onTogglePopUp
 }: Props) => {
   const {
     handleSubmit,
@@ -109,7 +107,8 @@ export const CreateSecretImportForm = ({
   const enforcingPolicy = destinationPolicy?.enforceOnSecretImports ? destinationPolicy : undefined;
   // the choice only matters where a change policy covers the destination. when the lookup fails, offer it anyway
   // and let the server refuse an import the policy does not allow.
-  const isReplicationChoiceShown = Boolean(destinationPolicy) || isPolicyError;
+  const isReplicationChoiceShown =
+    Boolean(subscription?.secretApproval) && (Boolean(destinationPolicy) || isPolicyError);
 
   const canCrossProjectShare =
     subscription?.crossProjectSecretSharing && currentOrg?.allowCrossProjectSecretSharing;
@@ -179,13 +178,9 @@ export const CreateSecretImportForm = ({
     isReplication: isReplicationSelected
   }: TFormSchema) => {
     const isReplication =
-      Boolean(enforcingPolicy) || (isReplicationChoiceShown && isReplicationSelected);
+      Boolean(subscription?.secretApproval) &&
+      (Boolean(enforcingPolicy) || (isReplicationChoiceShown && isReplicationSelected));
     try {
-      if (isReplication && !subscription?.secretApproval) {
-        onUpgradePlan();
-        return;
-      }
-
       await createSecretImport({
         environment,
         projectId,

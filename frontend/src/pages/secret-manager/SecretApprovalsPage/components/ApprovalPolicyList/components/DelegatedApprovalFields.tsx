@@ -1,13 +1,8 @@
-import { useState } from "react";
 import { Control, Controller, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { InfoIcon } from "lucide-react";
 
 import { AppConnectionOptionContent } from "@app/components/app-connections";
 import { useConnectionCreation } from "@app/components/app-connections/useConnectionCreation";
-import {
-  EnterpriseAppConnectionsUpgradeIntent,
-  UpgradeGate
-} from "@app/components/license/UpgradeGate";
 import {
   Combobox,
   DocumentationLinkBadge,
@@ -107,8 +102,11 @@ const DelegatedApprovalConnectionField = ({
 
 export const DelegatedApprovalFields = ({ control, watch, setValue }: Props) => {
   const { subscription } = useSubscription();
-  const [isUpgradeGateOpen, setIsUpgradeGateOpen] = useState(false);
   const { data: options = [], isPending: isOptionsPending } = useDelegatedApprovalOptions();
+  const availableOptions = options.filter(
+    (option) =>
+      !APP_CONNECTION_MAP[option.connection].enterprise || subscription?.enterpriseAppConnections
+  );
 
   const selectedType = watch("delegatedApproval.type");
   const selectedOption = options.find((option) => option.type === selectedType);
@@ -118,14 +116,6 @@ export const DelegatedApprovalFields = ({ control, watch, setValue }: Props) => 
     onChange: (type: DelegatedApprovalPolicyType) => void
   ) => {
     if (!option) return;
-
-    if (
-      APP_CONNECTION_MAP[option.connection].enterprise &&
-      !subscription.enterpriseAppConnections
-    ) {
-      setIsUpgradeGateOpen(true);
-      return;
-    }
 
     onChange(option.type);
     setValue("delegatedApproval.connectionId", undefined, { shouldDirty: true });
@@ -156,7 +146,7 @@ export const DelegatedApprovalFields = ({ control, watch, setValue }: Props) => 
                   <SelectValue placeholder="Select a provider..." />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  {options.map((option) => (
+                  {availableOptions.map((option) => (
                     <SelectItem key={option.type} value={option.type}>
                       <span className="flex items-center gap-2">
                         <img
@@ -231,12 +221,6 @@ export const DelegatedApprovalFields = ({ control, watch, setValue }: Props) => 
           </div>
         </>
       )}
-      <UpgradeGate
-        paywallKey="secret-manager.approval-policy-external-approval"
-        isOpen={isUpgradeGateOpen}
-        onOpenChange={setIsUpgradeGateOpen}
-        intent={EnterpriseAppConnectionsUpgradeIntent}
-      />
     </div>
   );
 };

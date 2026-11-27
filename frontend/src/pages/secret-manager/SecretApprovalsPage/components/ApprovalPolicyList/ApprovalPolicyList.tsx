@@ -9,10 +9,6 @@ import {
 } from "lucide-react";
 
 import {
-  SecretApprovalPoliciesUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
-import {
   AccessRestrictedNotice,
   Alert,
   AlertDescription,
@@ -160,22 +156,16 @@ export const ApprovalPolicyList = ({ projectId, openAddPolicy, onAddPolicyOpened
   const { permission } = useProjectPermission();
   const { subscription } = useSubscription();
   const { currentProject } = useProject();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
   useEffect(() => {
     if (!openAddPolicy) return;
 
-    if (subscription && !subscription.secretApproval) {
-      openUpgradeGate({
-        intent: SecretApprovalPoliciesUpgradeIntent,
-        paywallKey: "secret-manager.approval-policy-list"
-      });
-    } else {
+    if (subscription?.secretApproval) {
       setInitialPolicyType(openAddPolicy);
       handlePopUpOpen("policyForm");
     }
     onAddPolicyOpened();
-  }, [openAddPolicy, subscription, handlePopUpOpen, openUpgradeGate, onAddPolicyOpened]);
+  }, [openAddPolicy, subscription, handlePopUpOpen, onAddPolicyOpened]);
 
   const canReadPolicies = permission.can(
     ProjectPermissionActions.Read,
@@ -349,33 +339,28 @@ export const ApprovalPolicyList = ({ projectId, openAddPolicy, onAddPolicyOpened
           <CardDescription>
             Implement granular policies for access requests and secrets management
           </CardDescription>
-          <CardAction>
-            <Tooltip open={addPolicyDisabledReason ? undefined : false}>
-              <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <Button
-                    onClick={() => {
-                      if (subscription && !subscription?.secretApproval) {
-                        openUpgradeGate({
-                          intent: SecretApprovalPoliciesUpgradeIntent,
-                          paywallKey: "secret-manager.approval-policy-list"
-                        });
-                        return;
-                      }
-                      setInitialPolicyType(undefined);
-                      handlePopUpOpen("policyForm");
-                    }}
-                    variant="project"
-                    isDisabled={Boolean(addPolicyDisabledReason)}
-                  >
-                    <PlusIcon />
-                    Add Policy
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>{addPolicyDisabledReason}</TooltipContent>
-            </Tooltip>
-          </CardAction>
+          {subscription?.secretApproval && (
+            <CardAction>
+              <Tooltip open={addPolicyDisabledReason ? undefined : false}>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button
+                      onClick={() => {
+                        setInitialPolicyType(undefined);
+                        handlePopUpOpen("policyForm");
+                      }}
+                      variant="project"
+                      isDisabled={Boolean(addPolicyDisabledReason)}
+                    >
+                      <PlusIcon />
+                      Add Policy
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{addPolicyDisabledReason}</TooltipContent>
+              </Tooltip>
+            </CardAction>
+          )}
         </CardHeader>
         <CardContent className="@container flex flex-col gap-4">
           {!canReadPolicies ? (
@@ -565,25 +550,20 @@ export const ApprovalPolicyList = ({ projectId, openAddPolicy, onAddPolicyOpened
                 <Empty className="border">
                   <EmptyHeader>
                     <EmptyTitle>No Policies Found</EmptyTitle>
-                    <EmptyDescription>
-                      Create a policy to require approval for secret changes and access requests.
-                    </EmptyDescription>
+                    {subscription?.secretApproval && (
+                      <EmptyDescription>
+                        Create a policy to require approval for secret changes and access requests.
+                      </EmptyDescription>
+                    )}
                   </EmptyHeader>
-                  {canCreatePolicies && (
+                  {canCreatePolicies && subscription?.secretApproval && (
                     <EmptyContent>
                       <Button
                         variant="project"
                         size="sm"
                         onClick={() => {
-                          if (subscription && !subscription.secretApproval) {
-                            openUpgradeGate({
-                              intent: SecretApprovalPoliciesUpgradeIntent,
-                              paywallKey: "secret-manager.approval-policy-list"
-                            });
-                          } else {
-                            setInitialPolicyType(undefined);
-                            handlePopUpOpen("policyForm");
-                          }
+                          setInitialPolicyType(undefined);
+                          handlePopUpOpen("policyForm");
                         }}
                       >
                         <PlusIcon />
@@ -644,7 +624,6 @@ export const ApprovalPolicyList = ({ projectId, openAddPolicy, onAddPolicyOpened
           policyId={popUp.deletePolicy.data.id}
         />
       )}
-      {upgradeGate}
     </>
   );
 };

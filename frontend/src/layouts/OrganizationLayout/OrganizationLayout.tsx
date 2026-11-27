@@ -1,17 +1,11 @@
-import { useEffect } from "react";
 import { Outlet, useParams, useRouterState } from "@tanstack/react-router";
 import { twMerge } from "tailwind-merge";
 
-import {
-  clearSignupTrialIntent,
-  getSignupTrialBillingSearch,
-  getSignupTrialIntent
-} from "@app/components/auth/signupTrialIntent";
 import { CreateOrgModal } from "@app/components/organization/CreateOrgModal";
 import { Banner } from "@app/components/page-frames/Banner";
 import { PageBannerStack } from "@app/components/page-frames/PageBannerStack";
 import { SidebarInset, SidebarProvider } from "@app/components/v3";
-import { useOrganization, useServerConfig, useSubscription } from "@app/context";
+import { useServerConfig, useSubscription } from "@app/context";
 import { usePopUp } from "@app/hooks";
 import { useFetchServerStatus } from "@app/hooks/api";
 import { ProjectType } from "@app/hooks/api/projects/types";
@@ -24,7 +18,6 @@ import { InsecureConnectionBanner } from "./components/InsecureConnectionBanner"
 import { Navbar } from "./components/NavBar";
 import { NetworkHealthBanner } from "./components/NetworkHealthBanner";
 import { OrgSidebar } from "./components/OrgSidebar";
-import { PaymentFailedBanner } from "./components/PaymentFailedBanner";
 import { RedisBanner } from "./components/RedisBanner";
 import { SmtpBanner } from "./components/SmtpBanner";
 
@@ -56,17 +49,6 @@ export const OrganizationLayout = () => {
 
   const { data: serverDetails, isLoading } = useFetchServerStatus();
   const { subscription } = useSubscription();
-  const { currentOrg } = useOrganization();
-  const billingOrgId = currentOrg.rootOrgId ?? currentOrg.id;
-
-  useEffect(() => {
-    const trialIntent = getSignupTrialIntent();
-    if (!trialIntent?.orgId) return;
-    clearSignupTrialIntent();
-    if (trialIntent.orgId !== billingOrgId) return;
-    const search = new URLSearchParams(getSignupTrialBillingSearch(trialIntent));
-    window.location.assign(`/organizations/${billingOrgId}/billing?${search.toString()}`);
-  }, [billingOrgId]);
 
   return (
     <>
@@ -75,7 +57,6 @@ export const OrganizationLayout = () => {
         className={`dark ${containerHeight} flex !min-h-0 w-full flex-col overflow-hidden bg-page transition-all`}
       >
         <PageBannerStack>
-          <PaymentFailedBanner />
           {(isInsideProject || implicitProduct) && <AssumePrivilegeModeBanner />}
           {isCertManagerOverview && <CertManagerInstanceBanner />}
           {!isLoading && !isInsideProject && !serverDetails?.redisConfigured && <RedisBanner />}

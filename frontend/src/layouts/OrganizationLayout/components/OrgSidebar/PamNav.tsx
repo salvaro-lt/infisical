@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { SidebarCollapsibleGroup } from "@app/components/v3";
+import { useSubscription } from "@app/context";
 import { useGetPamAccessCapabilities, useGetPamAccessRequestCount } from "@app/hooks/api/pam";
 
 import { ProjectNavList } from "./ProjectNavLink";
@@ -19,7 +20,9 @@ export const PamNav = ({ onSubmenuOpen }: { onSubmenuOpen: (submenu: Submenu) =>
   const { data: accessRequestCount } = useGetPamAccessRequestCount();
   const isProductAdmin = Boolean(capabilities?.isProductAdmin);
   const canViewSessions = Boolean(capabilities?.canViewSessions);
-  const canViewAuditLogs = Boolean(capabilities?.canViewAuditLogs);
+  const { subscription } = useSubscription();
+  const canViewAuditLogs =
+    Boolean(capabilities?.canViewAuditLogs) && Boolean(subscription?.auditLogs);
   const isApprover = Boolean(accessRequestCount?.isApprover);
   const pendingCount = accessRequestCount?.pendingCount ?? 0;
 

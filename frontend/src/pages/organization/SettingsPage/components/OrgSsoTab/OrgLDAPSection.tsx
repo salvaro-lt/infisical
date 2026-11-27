@@ -1,7 +1,6 @@
 import type { JSX } from "react";
 import { ArrowLeftRight, MoreHorizontal, Pencil } from "lucide-react";
 
-import { LdapUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -24,12 +23,7 @@ import {
   IconButton,
   Toggle
 } from "@app/components/v3";
-import {
-  OrgPermissionActions,
-  OrgPermissionSubjects,
-  useOrganization,
-  useSubscription
-} from "@app/context";
+import { OrgPermissionActions, OrgPermissionSubjects, useOrganization } from "@app/context";
 import { useCreateLDAPConfig, useGetLDAPConfig, useUpdateLDAPConfig } from "@app/hooks/api";
 import { usePopUp } from "@app/hooks/usePopUp";
 
@@ -42,7 +36,6 @@ type Props = {
 
 export const OrgLDAPSection = ({ onSwitchProvider }: Props): JSX.Element => {
   const { currentOrg } = useOrganization();
-  const { subscription } = useSubscription();
 
   const { data } = useGetLDAPConfig(currentOrg?.id ?? "");
 
@@ -50,20 +43,13 @@ export const OrgLDAPSection = ({ onSwitchProvider }: Props): JSX.Element => {
   const { popUp, handlePopUpOpen, handlePopUpClose, handlePopUpToggle } = usePopUp([
     "addLDAP",
     "ldapGroupMap",
-    "deleteLdapGroupMap",
-    "upgradePlan"
+    "deleteLdapGroupMap"
   ] as const);
 
   const { mutateAsync: createMutateAsync } = useCreateLDAPConfig();
 
   const handleLDAPToggle = async (value: boolean) => {
     if (!currentOrg?.id) return;
-    if (!subscription?.ldap) {
-      handlePopUpOpen("upgradePlan", {
-        isEnterpriseFeature: true
-      });
-      return;
-    }
 
     await mutateAsync({
       organizationId: currentOrg?.id,
@@ -78,7 +64,7 @@ export const OrgLDAPSection = ({ onSwitchProvider }: Props): JSX.Element => {
 
   const addLDAPBtnClick = async () => {
     try {
-      if (subscription?.ldap && currentOrg) {
+      if (currentOrg) {
         if (!data) {
           await createMutateAsync({
             organizationId: currentOrg.id,
@@ -95,10 +81,6 @@ export const OrgLDAPSection = ({ onSwitchProvider }: Props): JSX.Element => {
         }
 
         handlePopUpOpen("addLDAP");
-      } else {
-        handlePopUpOpen("upgradePlan", {
-          isEnterpriseFeature: true
-        });
       }
     } catch (err) {
       console.error(err);
@@ -106,13 +88,6 @@ export const OrgLDAPSection = ({ onSwitchProvider }: Props): JSX.Element => {
   };
 
   const openLDAPGroupMapModal = () => {
-    if (!subscription?.ldap) {
-      handlePopUpOpen("upgradePlan", {
-        isEnterpriseFeature: true
-      });
-      return;
-    }
-
     handlePopUpOpen("ldapGroupMap");
   };
 
@@ -215,15 +190,6 @@ export const OrgLDAPSection = ({ onSwitchProvider }: Props): JSX.Element => {
         popUp={popUp}
         handlePopUpOpen={handlePopUpOpen}
         handlePopUpToggle={handlePopUpToggle}
-      />
-      <UpgradeGate
-        paywallKey="organization.org-ldap.section"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...LdapUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
       />
     </>
   );

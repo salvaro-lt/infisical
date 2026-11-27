@@ -1,4 +1,4 @@
-import { ExternalLinkIcon, KeyRoundIcon, TriangleAlertIcon } from "lucide-react";
+import { KeyRoundIcon, TriangleAlertIcon } from "lucide-react";
 
 import {
   Alert,
@@ -54,15 +54,7 @@ export const PersonalTabGroup = ({ selectedTab, onTabChange }: Props) => {
           <AlertDescription>
             <p>
               Existing keys no longer authenticate requests. Use machine identities for programmatic
-              access. See the{" "}
-              <a
-                href="https://infisical.com/docs/documentation/platform/identities/overview"
-                target="_blank"
-                rel="noreferrer"
-              >
-                machine identities documentation <ExternalLinkIcon className="inline size-3" />
-              </a>
-              .
+              access.
             </p>
           </AlertDescription>
         </Alert>

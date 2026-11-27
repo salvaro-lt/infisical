@@ -4,14 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { z } from "zod";
 
-import {
-  CertificateRevocationListsUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
-  Badge,
   Button,
   Card,
   CardAction,
@@ -38,10 +33,7 @@ import {
   FieldLabel,
   IconButton,
   Input,
-  Toggle,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
+  Toggle
 } from "@app/components/v3";
 import {
   ProjectPermissionCertificateAuthorityActions,
@@ -107,7 +99,6 @@ type EditFormData = z.infer<typeof editSchema>;
 export const CaRevocationSection = ({ caId }: Props) => {
   const { popUp, handlePopUpToggle } = usePopUp(["editRevocation"] as const);
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
   const { data } = useGetCa({ caId, type: CaType.INTERNAL });
   const ca = data as TInternalCertificateAuthority | undefined;
@@ -145,17 +136,6 @@ export const CaRevocationSection = ({ caId }: Props) => {
   const isCaExpired = Boolean(
     ca.configuration.notAfter && new Date(ca.configuration.notAfter) <= new Date()
   );
-
-  const handleAddCrlUrl = () => {
-    if (!subscription.caCrl) {
-      openUpgradeGate({
-        intent: CertificateRevocationListsUpgradeIntent,
-        paywallKey: "cert-manager.ca-distribution-points"
-      });
-      return;
-    }
-    crlUrls.append({ value: "" });
-  };
 
   const onEditSubmit = async (values: EditFormData) => {
     const submittedMirrorUrls = values.crlDistributionPointUrls.map(({ value }) => value);
@@ -291,39 +271,25 @@ export const CaRevocationSection = ({ caId }: Props) => {
           </DialogHeader>
           <form onSubmit={handleSubmit(onEditSubmit)} className="flex flex-col gap-4">
             <FieldGroup>
-              <Controller
-                control={control}
-                name="isOcspEnabled"
-                render={({ field: { value, onChange } }) => (
-                  <Field orientation="horizontal">
-                    <FieldContent>
-                      <FieldLabel>
-                        Enable OCSP
-                        {!canUseOcsp && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge variant="info">Enterprise</Badge>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              OCSP is available on Infisical&apos;s Enterprise plan.
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                      </FieldLabel>
-                      <FieldDescription>
-                        Certificates issued by this CA carry an OCSP responder URL, and that
-                        responder answers revocation status checks for them.
-                      </FieldDescription>
-                    </FieldContent>
-                    <Toggle
-                      variant="project"
-                      checked={value}
-                      onCheckedChange={onChange}
-                      disabled={!canUseOcsp && !isOcspEnabled}
-                    />
-                  </Field>
-                )}
-              />
+              {/* Off-plan, the toggle only stays so an already enabled OCSP responder can be turned off. */}
+              {(canUseOcsp || isOcspEnabled) && (
+                <Controller
+                  control={control}
+                  name="isOcspEnabled"
+                  render={({ field: { value, onChange } }) => (
+                    <Field orientation="horizontal">
+                      <FieldContent>
+                        <FieldLabel>Enable OCSP</FieldLabel>
+                        <FieldDescription>
+                          Certificates issued by this CA carry an OCSP responder URL, and that
+                          responder answers revocation status checks for them.
+                        </FieldDescription>
+                      </FieldContent>
+                      <Toggle variant="project" checked={value} onCheckedChange={onChange} />
+                    </Field>
+                  )}
+                />
+              )}
 
               <Controller
                 control={control}
@@ -372,17 +338,21 @@ export const CaRevocationSection = ({ caId }: Props) => {
                         )}
                       />
                     ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="self-start"
-                      isDisabled={crlUrls.fields.length >= MAX_INTERNAL_CA_DISTRIBUTION_POINT_URLS}
-                      onClick={handleAddCrlUrl}
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                      Add URL
-                    </Button>
+                    {subscription?.caCrl && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="self-start"
+                        isDisabled={
+                          crlUrls.fields.length >= MAX_INTERNAL_CA_DISTRIBUTION_POINT_URLS
+                        }
+                        onClick={() => crlUrls.append({ value: "" })}
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                        Add URL
+                      </Button>
+                    )}
                   </div>
                   <FieldDescription>
                     Backup CRL URLs embedded in issued certificates. Up to{" "}
@@ -412,8 +382,6 @@ export const CaRevocationSection = ({ caId }: Props) => {
           </form>
         </DialogContent>
       </Dialog>
-
-      {upgradeGate}
     </>
   );
 };

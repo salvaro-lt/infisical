@@ -5,7 +5,6 @@ import { MoreHorizontalIcon, PencilIcon, PlusIcon, SearchIcon, TrashIcon } from 
 import { DeleteHookDialog } from "@app/components/agent-vault/hooks/DeleteHookDialog";
 import { HookSheet } from "@app/components/agent-vault/hooks/HookSheet";
 import { ServiceIcon } from "@app/components/agent-vault/ServiceIconStack";
-import { AgentVaultHooksUpgradeIntent, useUpgradeGate } from "@app/components/license/UpgradeGate";
 import {
   Button,
   Card,
@@ -96,7 +95,6 @@ export const HooksCard = () => {
     closeSheet
   } = useAgentVaultSheetState("hookId");
   const { permission } = useProjectPermission();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const isOnPlan = Boolean(subscription.agentVaultHooks);
   const canCreate = permission.can(
     ProjectPermissionAgentVaultHookActions.Create,
@@ -141,6 +139,10 @@ export const HooksCard = () => {
     openHookId ?? ""
   );
 
+  const noHooksDescription = isOnPlan
+    ? "Create a hook, then pick it on a service."
+    : "This project has no hooks.";
+
   return (
     <Card>
       <CardHeader>
@@ -153,19 +155,9 @@ export const HooksCard = () => {
           allows it. Pick a hook on a service to check that service&apos;s requests in every
           session.
         </CardDescription>
-        {canCreate && (
+        {canCreate && isOnPlan && (
           <CardAction>
-            <Button
-              variant="av"
-              onClick={() =>
-                isOnPlan
-                  ? setIsCreateOpen(true)
-                  : openUpgradeGate({
-                      intent: AgentVaultHooksUpgradeIntent,
-                      paywallKey: "agent-vault.hooks"
-                    })
-              }
-            >
+            <Button variant="av" onClick={() => setIsCreateOpen(true)}>
               <PlusIcon />
               Create Hook
             </Button>
@@ -194,9 +186,7 @@ export const HooksCard = () => {
             <EmptyHeader>
               <EmptyTitle>{hasHooks ? "No hooks match your search" : "No hooks yet"}</EmptyTitle>
               <EmptyDescription>
-                {hasHooks
-                  ? "Try a different search term."
-                  : "Create a hook, then pick it on a service."}
+                {hasHooks ? "Try a different search term." : noHooksDescription}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -336,8 +326,6 @@ export const HooksCard = () => {
         isLoading={isOpenHookPending}
         isReadOnly={!canEdit || !openHook}
       />
-
-      {upgradeGate}
 
       <DeleteHookDialog
         hook={hookToDelete}

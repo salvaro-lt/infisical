@@ -5,11 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, ArrowUpRight, Plus, Search } from "lucide-react";
 
-import {
-  EnterprisePamAccountsUpgradeIntent,
-  PamAccountLimitUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
+import { PamAccountLimitUpgradeIntent, useUpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { HighlightText } from "@app/components/utilities/HighlightText";
 import {
@@ -169,7 +165,14 @@ export const CreateAccountSheet = ({
   const { data: folders = [] } = useListPamFolders({
     filterByAction: PamResourcePermissionActions.CreateAccounts
   });
-  const { data: templates = [] } = useListPamAccountTemplates();
+  const { data: allTemplates = [] } = useListPamAccountTemplates();
+  // Windows account types are an enterprise PAM feature; hide their templates when not on the plan
+  const templates =
+    subscription.enterprisePamAccount === false
+      ? allTemplates.filter(
+          (tpl) => tpl.type !== PamAccountType.Windows && tpl.type !== PamAccountType.WindowsAd
+        )
+      : allTemplates;
   const { data: gateways = [] } = useQuery(gatewaysQueryKeys.listAll());
   const { map: accountTypeMap } = usePamAccountTypeMap();
 
@@ -254,18 +257,6 @@ export const CreateAccountSheet = ({
   );
 
   const handleContinue = () => {
-    const isEnterpriseAccount =
-      selectedTemplate?.type === PamAccountType.Windows ||
-      selectedTemplate?.type === PamAccountType.WindowsAd;
-
-    if (isEnterpriseAccount && subscription.enterprisePamAccount === false) {
-      openUpgradeGate({
-        intent: EnterprisePamAccountsUpgradeIntent,
-        paywallKey: "pam.enterprise-account"
-      });
-      return;
-    }
-
     setStep(2);
   };
 

@@ -15,10 +15,6 @@ import {
   Trash2Icon
 } from "lucide-react";
 
-import {
-  CertificateApprovalPoliciesUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import {
   Badge,
@@ -185,6 +181,7 @@ const ApplicationPoliciesTable = ({
   canEdit,
   canDelete
 }: ApplicationPoliciesTableProps) => {
+  const { subscription } = useSubscription();
   const { data: issuancePolicies = [], isPending: isIssuancePending } = useQuery(
     approvalPolicyQuery.list({
       policyType: ApprovalPolicyType.CertRequest,
@@ -214,10 +211,12 @@ const ApplicationPoliciesTable = ({
       <Empty className="border">
         <EmptyHeader>
           <EmptyTitle>No approval policies</EmptyTitle>
-          <EmptyDescription>
-            Create one to require approval before certificates are issued or revoked in this
-            application.
-          </EmptyDescription>
+          {subscription?.pkiApprovals && (
+            <EmptyDescription>
+              Create one to require approval before certificates are issued or revoked in this
+              application.
+            </EmptyDescription>
+          )}
         </EmptyHeader>
       </Empty>
     );
@@ -396,19 +395,7 @@ export const ApplicationSettingsTab = ({ application, profiles }: Props) => {
     "policy",
     "deletePolicy"
   ] as const);
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
-  // Creation only; existing policies keep enforcing and their requests can still be approved.
-  const handleCreatePolicy = () => {
-    if (!subscription.pkiApprovals) {
-      openUpgradeGate({
-        intent: CertificateApprovalPoliciesUpgradeIntent,
-        paywallKey: "cert-manager.application-settings"
-      });
-      return;
-    }
-    handlePopUpOpen("policy");
-  };
   const deletePolicy = useDeleteApprovalPolicy();
 
   const handleDeletePolicy = async () => {
@@ -653,28 +640,31 @@ export const ApplicationSettingsTab = ({ application, profiles }: Props) => {
           <CardDescription>
             Require approval before certificates are issued or revoked in this application.
           </CardDescription>
-          <CardAction>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- focusable wrapper required so the tooltip surfaces on keyboard focus despite the inner button being disabled */}
-                <span tabIndex={0}>
-                  <Button
-                    variant="outline"
-                    onClick={handleCreatePolicy}
-                    isDisabled={!canManagePolicies}
-                  >
-                    <FontAwesomeIcon icon={faPlus} />
-                    Create Policy
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!canManagePolicies && (
-                <TooltipContent side="left">
-                  You don&apos;t have permission to create policies
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </CardAction>
+          {/* Creation only; existing policies keep enforcing and their requests can still be approved. */}
+          {subscription?.pkiApprovals && (
+            <CardAction>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- focusable wrapper required so the tooltip surfaces on keyboard focus despite the inner button being disabled */}
+                  <span tabIndex={0}>
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePopUpOpen("policy")}
+                      isDisabled={!canManagePolicies}
+                    >
+                      <FontAwesomeIcon icon={faPlus} />
+                      Create Policy
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!canManagePolicies && (
+                  <TooltipContent side="left">
+                    You don&apos;t have permission to create policies
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </CardAction>
+          )}
         </CardHeader>
         <CardContent>
           <ApplicationPoliciesTable
@@ -705,7 +695,6 @@ export const ApplicationSettingsTab = ({ application, profiles }: Props) => {
         handlePopUpToggle={handlePopUpToggle}
         applicationId={application.id}
       />
-      {upgradeGate}
       <ConfirmationAlertDialog
         isOpen={popUp.deletePolicy.isOpen}
         description="This action is irreversible."

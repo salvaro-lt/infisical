@@ -12,6 +12,7 @@ import {
 import { z } from "zod";
 
 import { Badge, Combobox, Field, FieldError, FieldLabel, ProviderIcon } from "@app/components/v3";
+import { useSubscription } from "@app/context";
 import { MAX_IDENTITY_ACCESS_TOKEN_TTL_FALLBACK } from "@app/helpers/identityAuthSchemas";
 import { IdentityAuthMethod } from "@app/hooks/api/identities";
 import { useFetchServerStatus } from "@app/hooks/api/serverDetails";
@@ -32,9 +33,8 @@ import { IdentityTokenAuthForm } from "./IdentityTokenAuthForm";
 import { IdentityUniversalAuthForm } from "./IdentityUniversalAuthForm";
 
 type Props = {
-  handlePopUpOpen: (popUpName: keyof UsePopUpState<["upgradePlan"]>) => void;
   handlePopUpToggle: (
-    popUpName: keyof UsePopUpState<["identityAuthMethod", "upgradePlan"]>,
+    popUpName: keyof UsePopUpState<["identityAuthMethod"]>,
     state?: boolean
   ) => void;
 
@@ -153,7 +153,6 @@ const schema = z
 export type FormData = z.infer<typeof schema>;
 
 export const IdentityAuthMethodModalContent = ({
-  handlePopUpOpen,
   handlePopUpToggle,
   identity,
   initialAuthMethod,
@@ -161,13 +160,22 @@ export const IdentityAuthMethodModalContent = ({
   isUpdate,
   onSubmittingChange
 }: Props) => {
+  const { subscription } = useSubscription();
+  // LDAP auth is a paid feature: hide it unless the plan includes it or it's already configured.
+  const availableAuthMethodOptions = identityAuthMethodOptions.filter(
+    ({ value }) =>
+      value !== IdentityAuthMethod.LDAP_AUTH ||
+      subscription?.ldap ||
+      identity?.authMethods?.includes(value)
+  );
+
   const { control, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: async () => {
       let authMethod = initialAuthMethod;
 
       if (!authMethod) {
-        const firstAuthMethodNotConfiguredAuthMethod = identityAuthMethodOptions.find(
+        const firstAuthMethodNotConfiguredAuthMethod = availableAuthMethodOptions.find(
           ({ value }) => !identity?.authMethods?.includes(value)
         );
 
@@ -209,7 +217,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityUniversalAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -221,7 +228,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityTlsCertAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -234,7 +240,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityOidcAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -247,7 +252,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityTokenAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -260,7 +264,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityAzureAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -273,7 +276,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityGcpAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -286,7 +288,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityKubernetesAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -299,7 +300,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityAliCloudAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -312,7 +312,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityAwsAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -325,7 +324,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityOciAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -338,7 +336,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityJwtAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -351,7 +348,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentityLdapAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -364,7 +360,6 @@ export const IdentityAuthMethodModalContent = ({
       render: () => (
         <IdentitySpiffeAuthForm
           identityId={identityAuthMethodData.identityId}
-          handlePopUpOpen={handlePopUpOpen}
           handlePopUpToggle={handlePopUpToggle}
           maxAccessTokenTTL={maxAccessTokenTTL}
           isUpdate={isUpdate}
@@ -387,7 +382,7 @@ export const IdentityAuthMethodModalContent = ({
         name="authMethod"
         defaultValue={IdentityAuthMethod.UNIVERSAL_AUTH}
         render={({ field: { onChange, value }, fieldState: { error } }) => {
-          const authMethodOptions = identityAuthMethodOptions.map((authMethod) => {
+          const authMethodOptions = availableAuthMethodOptions.map((authMethod) => {
             const isConfigured = Boolean(isAlreadyConfigured(authMethod.value));
 
             return {

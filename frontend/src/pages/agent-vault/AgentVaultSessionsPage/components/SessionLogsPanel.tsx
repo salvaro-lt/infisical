@@ -4,7 +4,6 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { format } from "date-fns";
 import { SearchIcon, TriangleAlertIcon, XIcon } from "lucide-react";
 
-import { AgentVaultSessionLogUpgradeModal } from "@app/components/agent-vault/AgentVaultSessionLogUpgradeModal";
 import { ServiceSheet } from "@app/components/agent-vault/service-sheet";
 import {
   Alert,
@@ -39,9 +38,13 @@ import {
   ProjectPermissionSub,
   useOrganization,
   useProjectPermission,
-  useProject
+  useProject,
+  useSubscription
 } from "@app/context";
-import { isInfisicalSessionEndpointRequest } from "@app/helpers/agentVaultSessionLogs";
+import {
+  canTurnOnAgentVaultSessionLogs,
+  isInfisicalSessionEndpointRequest
+} from "@app/helpers/agentVaultSessionLogs";
 import { isInfisicalCloud } from "@app/helpers/platform";
 import {
   AGENT_VAULT_SESSION_LOG_LIVE_POLL_MS,
@@ -128,8 +131,8 @@ export const SessionLogsPanel = ({ session }: Props) => {
     ProjectPermissionActions.Edit,
     ProjectPermissionSub.Settings
   );
-  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
-  // The storage type in the settings picks the right upgrade, for those who can read them.
+  const { subscription } = useSubscription();
+  // The storage type in the settings, for those who can read them.
   const { data: sessionLogState } = useGetAgentVaultSessionLogSettings(
     projectId,
     canReadSessionLogSettings
@@ -474,33 +477,15 @@ export const SessionLogsPanel = ({ session }: Props) => {
     );
   }
 
-  // Off and off-plan hide recorded logs, for ended sessions too. Upgrading shows them again, so everyone who can change
-  // the session log settings is offered it; only a running session is offered Settings, since turning logs on can't
-  // record one that ended.
+  // Off and off-plan hide recorded logs, for ended sessions too. Off-plan hides the panel, as does off when no storage
+  // is on the plan; only a running session is offered Settings, since turning logs on can't record one that ended.
   if (!isPending && !isPlaceholderData && !isLoadError && disabledReason) {
-    if (disabledReason === "not-on-plan") {
-      return (
-        <Empty className="border">
-          <EmptyHeader>
-            <EmptyTitle>Session logs aren&apos;t on your plan</EmptyTitle>
-            <EmptyDescription>
-              {canEditSessionLogSettings
-                ? "Upgrade to see recorded logs and record what your agents reach."
-                : "Ask a project admin about upgrading."}
-            </EmptyDescription>
-          </EmptyHeader>
-          {canEditSessionLogSettings && (
-            <Button variant="av" onClick={() => setIsUpgradeOpen(true)}>
-              Upgrade
-            </Button>
-          )}
-          <AgentVaultSessionLogUpgradeModal
-            isOpen={isUpgradeOpen}
-            onOpenChange={setIsUpgradeOpen}
-            storageType={sessionLogState?.settings?.storage.type}
-          />
-        </Empty>
-      );
+    if (
+      disabledReason === "not-on-plan" ||
+      (sessionLogState &&
+        !canTurnOnAgentVaultSessionLogs(sessionLogState.defaultStorage.configured, subscription))
+    ) {
+      return null;
     }
 
     const offDescription = canEditSessionLogSettings

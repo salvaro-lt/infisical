@@ -10,10 +10,7 @@ export const AuditLogBanner = () => {
 
   if (status?.auditLogStorageDisabled && !streams.length) {
     return (
-      <OrgAlertBanner
-        text="Attention: Audit logs storage is disabled but no audit log streams have been configured."
-        link="https://infisical.com/docs/documentation/platform/audit-log-streams/audit-log-streams"
-      />
+      <OrgAlertBanner text="Attention: Audit logs storage is disabled but no audit log streams have been configured." />
     );
   }
 

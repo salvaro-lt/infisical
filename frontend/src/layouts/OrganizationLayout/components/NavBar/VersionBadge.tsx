@@ -1,10 +1,7 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@app/components/v3";
 import { envConfig } from "@app/config/env";
-import { useServerConfig } from "@app/context";
 import { isInfisicalCloud } from "@app/helpers/platform";
 
 export const VersionBadge = () => {
-  const { config } = useServerConfig();
   const version = envConfig.PLATFORM_VERSION;
 
   // We only display the version for on-premise instances, so we disable this
@@ -18,33 +15,10 @@ export const VersionBadge = () => {
 
   if (shouldNotDisplay) return null;
 
-  // only populated on self-hosted instances that are behind the latest release
-  const newerVersion = config.latestAvailableVersion;
-
-  if (!newerVersion) {
-    return (
-      <span className="mt-1 mr-2 hidden items-center gap-x-1.5 text-xs text-muted transition-colors hover:text-accent md:inline-flex">
-        v{version}
-      </span>
-    );
-  }
-
+  // Upstream release notices point at Infisical's upgrade page, which does not apply to this build.
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <a
-          href="https://upgrade.infisical.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-1 mr-2 hidden items-center gap-x-1.5 text-xs text-muted transition-colors hover:text-accent md:inline-flex"
-        >
-          <span aria-hidden className="size-1.5 rounded-full bg-info" />
-          New version available
-        </a>
-      </TooltipTrigger>
-      <TooltipContent>
-        v{version} → v{newerVersion}
-      </TooltipContent>
-    </Tooltip>
+    <span className="mt-1 mr-2 hidden items-center gap-x-1.5 text-xs text-muted transition-colors hover:text-accent md:inline-flex">
+      v{version}
+    </span>
   );
 };

@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   faAngleDown,
-  faArrowUpRightFromSquare,
-  faBookOpen,
   faBugs,
   faCheckCircle,
   faCircleInfo
@@ -16,10 +14,8 @@ import { z, ZodIssueCode } from "zod";
 
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -317,19 +313,6 @@ export const GithubConfigurePage = () => {
             Choose which environment in Infisical you want to sync to environment variables in
             GitHub.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://infisical.com/docs/integrations/cicd/githubactions"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <form className="flex flex-col gap-5" onSubmit={handleSubmit(onFormSubmit)}>
           <CardContent className="flex flex-col gap-5">
@@ -894,18 +877,7 @@ export const GithubConfigurePage = () => {
       ) : (
         <div className="flex h-max max-w-md flex-col rounded-md border border-border-control bg-surface-raised p-6 text-center text-foreground-secondary">
           <FontAwesomeIcon icon={faBugs} className="li my-2 inline text-6xl" />
-          <p>
-            Something went wrong. Please contact{" "}
-            <a
-              className="inline cursor-pointer text-foreground underline decoration-project underline-offset-4 opacity-80 duration-200 hover:opacity-100"
-              target="_blank"
-              rel="noopener noreferrer"
-              href="mailto:support@infisical.com"
-            >
-              support@infisical.com
-            </a>{" "}
-            if the issue persists.
-          </p>
+          <p>Something went wrong.</p>
         </div>
       )}
     </div>

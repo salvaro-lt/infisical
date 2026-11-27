@@ -225,9 +225,9 @@ export const EnvironmentTable = ({
                             </DropdownMenuItem>
                           </TooltipTrigger>
                           <TooltipContent side="left">
-                            You have exceeded the number of environments allowed by your plan. To
-                            edit an existing environment, either upgrade your plan or remove at
-                            least {environmentsOverPlanLimit} environment
+                            You have exceeded the number of environments allowed. To edit an
+                            existing environment, remove at least {environmentsOverPlanLimit}{" "}
+                            environment
                             {environmentsOverPlanLimit === 1 ? "" : "s"}.
                           </TooltipContent>
                         </Tooltip>

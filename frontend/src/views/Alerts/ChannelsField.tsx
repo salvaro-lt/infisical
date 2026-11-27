@@ -1,6 +1,5 @@
 import { get, useFieldArray, useFormContext } from "react-hook-form";
 
-import { useUpgradeGate } from "@app/components/license/UpgradeGate";
 import { Label } from "@app/components/v3";
 import {
   ALERT_CHANNEL_TYPE_LABELS,
@@ -55,7 +54,6 @@ export const ChannelsField = ({
   channelPaywall,
   name = "channels"
 }: Props) => {
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const {
     control,
     getValues,
@@ -86,16 +84,8 @@ export const ChannelsField = ({
           <AddChannelMenu
             onAdd={appendChannel}
             lockedChannelTypes={channelPaywall?.lockedChannelTypes}
-            onLockedSelect={() =>
-              channelPaywall &&
-              openUpgradeGate({
-                intent: channelPaywall.intent,
-                paywallKey: channelPaywall.paywallKey
-              })
-            }
             contentClassName={channelPaywall ? "min-w-56" : undefined}
           />
-          {upgradeGate}
         </div>
 
         {rootError && <p className="text-xs text-danger">{rootError}</p>}

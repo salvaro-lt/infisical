@@ -1,10 +1,6 @@
 import { FocusEvent, KeyboardEvent, useRef, useState } from "react";
 import { KeyIcon, SearchIcon } from "lucide-react";
 
-import {
-  SecretAccessInsightsUpgradeIntent,
-  UpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { SecretValueSearchSheet } from "@app/components/secrets/SecretValueSearchSheet";
 import {
   InputGroup,
@@ -31,9 +27,10 @@ export const ProjectSearchInput = ({ orgId, value, onChange, canSearchByValue }:
   const [isFocused, setIsFocused] = useState(false);
   const [isOptionHighlighted, setIsOptionHighlighted] = useState(false);
   const [isValueSearchOpen, setIsValueSearchOpen] = useState(false);
-  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const { subscription } = useSubscription();
   useSlashFocusSearch(inputRef);
+  // Value search is part of secret insights, so it's only offered when the plan includes it.
+  const isValueSearchAvailable = canSearchByValue && Boolean(subscription?.secretAccessInsights);
 
   const close = () => {
     setIsFocused(false);
@@ -43,9 +40,7 @@ export const ProjectSearchInput = ({ orgId, value, onChange, canSearchByValue }:
   const openValueSearch = () => {
     close();
     inputRef.current?.blur();
-    // Value search is part of secret insights, so a plan without it gets the upgrade prompt.
-    if (subscription?.secretAccessInsights) setIsValueSearchOpen(true);
-    else setIsUpgradeOpen(true);
+    setIsValueSearchOpen(true);
   };
 
   const input = (
@@ -58,7 +53,7 @@ export const ProjectSearchInput = ({ orgId, value, onChange, canSearchByValue }:
         placeholder="Search by project name..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        {...(canSearchByValue && {
+        {...(isValueSearchAvailable && {
           onFocus: () => setIsFocused(true),
           onBlur: (e: FocusEvent<HTMLInputElement>) => {
             if (e.relatedTarget === valueSearchBtnRef.current) return;
@@ -86,7 +81,7 @@ export const ProjectSearchInput = ({ orgId, value, onChange, canSearchByValue }:
   );
 
   // The page is shared across products; only Secret Management with the permission gets the option.
-  if (!canSearchByValue) return input;
+  if (!isValueSearchAvailable) return input;
 
   return (
     <>
@@ -131,12 +126,6 @@ export const ProjectSearchInput = ({ orgId, value, onChange, canSearchByValue }:
         orgId={orgId}
         isOpen={isValueSearchOpen}
         onOpenChange={setIsValueSearchOpen}
-      />
-      <UpgradeGate
-        paywallKey="organization.secret-insights"
-        isOpen={isUpgradeOpen}
-        onOpenChange={setIsUpgradeOpen}
-        intent={SecretAccessInsightsUpgradeIntent}
       />
     </>
   );

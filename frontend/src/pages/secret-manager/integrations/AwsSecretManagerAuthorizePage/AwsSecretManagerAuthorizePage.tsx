@@ -1,16 +1,12 @@
 import { Controller, useForm } from "react-hook-form";
-import { faArrowUpRightFromSquare, faBookOpen } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -104,19 +100,6 @@ export const AWSSecretManagerAuthorizePage = () => {
             After adding the details below, you will be prompted to set up an integration for a
             particular Infisical project and environment.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                href="https://infisical.com/docs/integrations/cloud/aws-secret-manager"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
           <CardContent>

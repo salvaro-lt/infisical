@@ -4,7 +4,6 @@ import slugify from "@sindresorhus/slugify";
 import { useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import {
   Button,
@@ -22,11 +21,10 @@ import {
   Input,
   PageLoader
 } from "@app/components/v3";
-import { useOrganization, useSubscription } from "@app/context";
+import { useOrganization } from "@app/context";
 import { useScopeVariant } from "@app/hooks";
 import { useCreateOrgRole, useGetOrgRole } from "@app/hooks/api";
 import { TOrgRole } from "@app/hooks/api/roles/types";
-import { usePopUp } from "@app/hooks/usePopUp";
 import { slugSchema } from "@app/lib/schemas";
 
 type Props = {
@@ -66,22 +64,10 @@ const Content = ({ role, onClose }: ContentProps) => {
     resolver: zodResolver(schema)
   });
 
-  const { subscription } = useSubscription();
-  const {
-    popUp: upgradePlanPopUp,
-    handlePopUpOpen: handleUpgradePlanPopUpOpen,
-    handlePopUpToggle: handleUpgradePlanPopUpToggle
-  } = usePopUp(["upgradePlan"] as const);
-
   const createRole = useCreateOrgRole();
   const navigate = useNavigate();
 
   const handleDuplicateRole = async (form: FormData) => {
-    if (subscription && !subscription?.rbac) {
-      handleUpgradePlanPopUpOpen("upgradePlan");
-      return;
-    }
-
     const newRole = await createRole.mutateAsync({
       orgId: role.orgId,
       permissions: role.permissions,
@@ -105,92 +91,81 @@ const Content = ({ role, onClose }: ContentProps) => {
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit(handleDuplicateRole)}>
-        <FieldGroup>
-          <Controller
-            control={control}
-            defaultValue=""
-            name="name"
-            render={({ field, fieldState: { error } }) => (
-              <Field>
-                <FieldLabel htmlFor="name">Name</FieldLabel>
-                <Input
-                  id="name"
-                  placeholder="Billing Team"
-                  isError={Boolean(error)}
-                  {...field}
-                  onChange={(e) => {
-                    field.onChange(e);
-                    const slugState = getFieldState("slug");
-                    if (slugState.isDirty) return;
-                    setValue("slug", slugify(e.target.value, { lowercase: true }), {
-                      shouldValidate: Boolean(slugState.error)
-                    });
-                  }}
-                  autoComplete="off"
-                  name="org-role-name"
-                />
-                <FieldError>{error?.message}</FieldError>
-              </Field>
-            )}
-          />
-          <Controller
-            control={control}
-            defaultValue=""
-            name="slug"
-            render={({ field, fieldState: { error } }) => (
-              <Field>
-                <FieldLabel htmlFor="slug">Slug</FieldLabel>
-                <Input id="slug" placeholder="billing" isError={Boolean(error)} {...field} />
-                <FieldError>{error?.message}</FieldError>
-              </Field>
-            )}
-          />
-          <Controller
-            control={control}
-            defaultValue=""
-            name="description"
-            render={({ field, fieldState: { error } }) => (
-              <Field>
-                <FieldLabel htmlFor="description">Description (optional)</FieldLabel>
-                <Input
-                  id="description"
-                  placeholder="To manage billing"
-                  isError={Boolean(error)}
-                  {...field}
-                />
-                <FieldError>{error?.message}</FieldError>
-              </Field>
-            )}
-          />
-        </FieldGroup>
-        <DialogFooter className="mt-6">
-          <DialogClose asChild>
-            <Button type="button" variant="ghost">
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button
-            type="submit"
-            variant={scopeVariant}
-            isPending={isSubmitting}
-            isDisabled={isSubmitting}
-          >
-            Duplicate Role
+    <form onSubmit={handleSubmit(handleDuplicateRole)}>
+      <FieldGroup>
+        <Controller
+          control={control}
+          defaultValue=""
+          name="name"
+          render={({ field, fieldState: { error } }) => (
+            <Field>
+              <FieldLabel htmlFor="name">Name</FieldLabel>
+              <Input
+                id="name"
+                placeholder="Billing Team"
+                isError={Boolean(error)}
+                {...field}
+                onChange={(e) => {
+                  field.onChange(e);
+                  const slugState = getFieldState("slug");
+                  if (slugState.isDirty) return;
+                  setValue("slug", slugify(e.target.value, { lowercase: true }), {
+                    shouldValidate: Boolean(slugState.error)
+                  });
+                }}
+                autoComplete="off"
+                name="org-role-name"
+              />
+              <FieldError>{error?.message}</FieldError>
+            </Field>
+          )}
+        />
+        <Controller
+          control={control}
+          defaultValue=""
+          name="slug"
+          render={({ field, fieldState: { error } }) => (
+            <Field>
+              <FieldLabel htmlFor="slug">Slug</FieldLabel>
+              <Input id="slug" placeholder="billing" isError={Boolean(error)} {...field} />
+              <FieldError>{error?.message}</FieldError>
+            </Field>
+          )}
+        />
+        <Controller
+          control={control}
+          defaultValue=""
+          name="description"
+          render={({ field, fieldState: { error } }) => (
+            <Field>
+              <FieldLabel htmlFor="description">Description (optional)</FieldLabel>
+              <Input
+                id="description"
+                placeholder="To manage billing"
+                isError={Boolean(error)}
+                {...field}
+              />
+              <FieldError>{error?.message}</FieldError>
+            </Field>
+          )}
+        />
+      </FieldGroup>
+      <DialogFooter className="mt-6">
+        <DialogClose asChild>
+          <Button type="button" variant="ghost">
+            Cancel
           </Button>
-        </DialogFooter>
-      </form>
-      <UpgradeGate
-        paywallKey="organization.duplicate-org-role"
-        isOpen={upgradePlanPopUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handleUpgradePlanPopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: false
-        }}
-      />
-    </>
+        </DialogClose>
+        <Button
+          type="submit"
+          variant={scopeVariant}
+          isPending={isSubmitting}
+          isDisabled={isSubmitting}
+        >
+          Duplicate Role
+        </Button>
+      </DialogFooter>
+    </form>
   );
 };
 

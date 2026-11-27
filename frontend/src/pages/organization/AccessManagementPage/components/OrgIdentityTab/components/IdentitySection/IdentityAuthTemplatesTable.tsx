@@ -11,13 +11,11 @@ import { twMerge } from "tailwind-merge";
 
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
@@ -34,7 +32,6 @@ import {
   TableHeader,
   TableRow
 } from "@app/components/v3";
-import { INFISICAL_SCHEDULE_DEMO_LINK } from "@app/const/links";
 import { OrgPermissionSubjects, useOrganization, useSubscription } from "@app/context";
 import { OrgPermissionMachineIdentityAuthTemplateActions } from "@app/context/OrgPermissionContext/types";
 import {
@@ -80,7 +77,7 @@ type Props = {
 };
 
 export const IdentityAuthTemplatesTable = ({ handlePopUpOpen, onEmptyStateChange }: Props) => {
-  const { currentOrg, isSubOrganization } = useOrganization();
+  const { currentOrg } = useOrganization();
 
   const {
     offset,
@@ -144,24 +141,6 @@ export const IdentityAuthTemplatesTable = ({ handlePopUpOpen, onEmptyStateChange
   }, [isEmpty, onEmptyStateChange]);
 
   const renderContent = () => {
-    if (!subscription.machineIdentityAuthTemplates) {
-      return (
-        <Empty className="border">
-          <EmptyHeader>
-            <EmptyTitle>This feature has not been activated for your license.</EmptyTitle>
-            <EmptyDescription>Contact us to learn more.</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button size="sm" variant={isSubOrganization ? "sub-org" : "org"} asChild>
-              <a href={INFISICAL_SCHEDULE_DEMO_LINK} target="_blank" rel="noopener noreferrer">
-                Talk to Us
-              </a>
-            </Button>
-          </EmptyContent>
-        </Empty>
-      );
-    }
-
     if (!isPending && !templates.length) {
       return (
         <Empty className="border">

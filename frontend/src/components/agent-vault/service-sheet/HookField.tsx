@@ -2,15 +2,7 @@ import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { WebhookIcon } from "lucide-react";
 
-import { AgentVaultHooksUpgradeIntent, useUpgradeGate } from "@app/components/license/UpgradeGate";
-import {
-  Button,
-  Combobox,
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel
-} from "@app/components/v3";
+import { Combobox, Field, FieldContent, FieldDescription, FieldLabel } from "@app/components/v3";
 import { useProject, useSubscription } from "@app/context";
 import { useDebounce } from "@app/hooks";
 import { AgentVaultServiceType, useListAgentVaultHooks } from "@app/hooks/api/agentVault";
@@ -42,7 +34,6 @@ export const HookField = () => {
     control,
     name: ["serviceType", "hook.hookId", "hook.hookName"]
   });
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search);
@@ -61,7 +52,7 @@ export const HookField = () => {
     clearErrors("hook");
   };
 
-  const { creation, upgradeGate: creationUpgradeGate } = useHookCreation(pickHook);
+  const { creation } = useHookCreation(pickHook);
 
   // Off-plan, a service's hook can't be set or changed, though the one it has keeps working and can be removed.
   const isOnPlan = Boolean(subscription.agentVaultHooks);
@@ -109,40 +100,19 @@ export const HookField = () => {
             onClear={removeHook}
           />
           <FieldDescription>
-            {isOnPlan ? (
-              `Every session that uses this service ${
-                serviceType === AgentVaultServiceType.Http ||
-                serviceType === AgentVaultServiceType.Mcp
-                  ? "sends matching requests to the hook"
-                  : "asks the hook before each connection"
-              }.`
-            ) : (
-              <>
-                Hooks aren&apos;t included in your plan, so this service&apos;s hook can&apos;t be
-                set or changed. You can still remove it. A hook it already has keeps working.{" "}
-                <Button
-                  type="button"
-                  variant="link"
-                  size="xs"
-                  onClick={() =>
-                    openUpgradeGate({
-                      intent: AgentVaultHooksUpgradeIntent,
-                      paywallKey: "agent-vault.hooks"
-                    })
-                  }
-                >
-                  Upgrade
-                </Button>
-              </>
-            )}
+            {isOnPlan
+              ? `Every session that uses this service ${
+                  serviceType === AgentVaultServiceType.Http ||
+                  serviceType === AgentVaultServiceType.Mcp
+                    ? "sends matching requests to the hook"
+                    : "asks the hook before each connection"
+                }.`
+              : "Hooks aren't included in your plan, so this service's hook can't be set or changed. You can still remove it. A hook it already has keeps working."}
           </FieldDescription>
         </FieldContent>
       </Field>
 
       {hookId && <HookNarrowingFields serviceType={serviceType} isDisabled={!isOnPlan} />}
-
-      {upgradeGate}
-      {creationUpgradeGate}
     </div>
   );
 };

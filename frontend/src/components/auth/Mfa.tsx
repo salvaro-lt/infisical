@@ -503,7 +503,6 @@ export const Mfa = ({
                   <div className="mb-2 text-accent">
                     Contact support with valid proof of account ownership to initiate recovery
                   </div>
-                  <div className="mt-1">support@infisical.com</div>
                 </>
               ) : (
                 <>

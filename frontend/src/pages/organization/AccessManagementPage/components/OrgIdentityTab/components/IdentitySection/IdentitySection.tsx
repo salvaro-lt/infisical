@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { PlusIcon } from "lucide-react";
 
-import {
-  MachineIdentityTemplatesUpgradeIntent,
-  UpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -18,12 +14,7 @@ import {
   ConfirmationAlertDialog,
   DocumentationLinkBadge
 } from "@app/components/v3";
-import {
-  OrgPermissionIdentityActions,
-  OrgPermissionSubjects,
-  useOrganization,
-  useSubscription
-} from "@app/context";
+import { OrgPermissionIdentityActions, OrgPermissionSubjects, useOrganization } from "@app/context";
 import { OrgPermissionMachineIdentityAuthTemplateActions } from "@app/context/OrgPermissionContext/types";
 import { withPermission } from "@app/hoc";
 import { useDeleteOrgIdentity } from "@app/hooks/api";
@@ -68,7 +59,6 @@ const ConfirmDeleteDialog = ({
 );
 
 const IdentitySectionContent = ({ view = "identities" }: Props) => {
-  const { subscription } = useSubscription();
   const { currentOrg, isSubOrganization } = useOrganization();
   const orgId = currentOrg?.id || "";
 
@@ -83,7 +73,6 @@ const IdentitySectionContent = ({ view = "identities" }: Props) => {
     "deleteIdentity",
     "universalAuthClientSecret",
     "deleteUniversalAuthClientSecret",
-    "upgradePlan",
     "tokenAuthToken",
     "createTemplate",
     "editTemplate",
@@ -179,13 +168,6 @@ const IdentitySectionContent = ({ view = "identities" }: Props) => {
                   <Button
                     variant={isSubOrganization ? "sub-org" : "org"}
                     onClick={() => {
-                      if (subscription && !subscription.machineIdentityAuthTemplates) {
-                        handlePopUpOpen("upgradePlan", {
-                          isEnterpriseFeature: true,
-                          text: "Your current plan does not include access to creating Machine Identity Auth Templates. To unlock this feature, please upgrade to Infisical Enterprise plan."
-                        });
-                        return;
-                      }
                       handlePopUpOpen("createTemplate");
                     }}
                     isDisabled={!isAllowed}
@@ -262,15 +244,6 @@ const IdentitySectionContent = ({ view = "identities" }: Props) => {
           />
         </>
       )}
-      <UpgradeGate
-        paywallKey="organization.identity"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...MachineIdentityTemplatesUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
-      />
     </>
   );
 };

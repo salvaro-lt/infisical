@@ -4,7 +4,6 @@ import {
   BuildingIcon,
   CheckIcon,
   CogIcon,
-  CreditCardIcon,
   DatabaseIcon,
   FileTextIcon,
   FolderOpenIcon,
@@ -40,7 +39,6 @@ import {
 import {
   OrgPermissionActions,
   OrgPermissionAuditLogsActions,
-  OrgPermissionBillingActions,
   OrgPermissionGroupActions,
   OrgPermissionIdentityActions,
   OrgPermissionMemberActions,
@@ -57,7 +55,8 @@ import {
   useOrganization,
   useOrgPermission,
   useProject,
-  useProjectPermission
+  useProjectPermission,
+  useSubscription
 } from "@app/context";
 import { OrgPermissionAppConnectionActions } from "@app/context/OrgPermissionContext/types";
 import {
@@ -538,7 +537,6 @@ const getOrganizationItems = ({
   canReadMachineIdentities,
   canReadRoles,
   canReadAuditLogs,
-  canReadBilling,
   canReadAppConnections,
   canReadIntegrations,
   canReadSettings
@@ -551,7 +549,6 @@ const getOrganizationItems = ({
   canReadMachineIdentities: boolean;
   canReadRoles: boolean;
   canReadAuditLogs: boolean;
-  canReadBilling: boolean;
   canReadAppConnections: boolean;
   canReadIntegrations: boolean;
   canReadSettings: boolean;
@@ -657,21 +654,6 @@ const getOrganizationItems = ({
               params: { orgId: organizationId },
               search: { selectedTab: OrgAccessControlTabSections.Roles }
             })
-        }
-      ]
-    : []),
-  ...(isRootOrganization && canReadBilling
-    ? [
-        {
-          id: `organization-${organizationId}-billing`,
-          label: "Usage & Billing",
-          breadcrumb: `${organizationName} / Organization Settings`,
-          icon: CreditCardIcon,
-          iconClassName: "text-org",
-          keywords: ["subscription", "plan"],
-          priority: 25,
-          onSelect: () =>
-            navigate({ to: "/organizations/$orgId/billing", params: { orgId: organizationId } })
         }
       ]
     : []),
@@ -1117,6 +1099,7 @@ const OrganizationCommandMenu = () => {
   const { currentOrg, isRootOrganization } = useOrganization();
   const user = useRouteContext({ from: "/_authenticate", select: (context) => context.user });
   const { permission } = useOrgPermission();
+  const { subscription } = useSubscription();
   const navigate = useNavigate();
   const entityGroups = useEntityCommandGroups({
     currentOrganizationId: currentOrg.id,
@@ -1137,11 +1120,9 @@ const OrganizationCommandMenu = () => {
       OrgPermissionSubjects.Identity
     ),
     canReadRoles: permission.can(OrgPermissionActions.Read, OrgPermissionSubjects.Role),
-    canReadAuditLogs: permission.can(
-      OrgPermissionAuditLogsActions.Read,
-      OrgPermissionSubjects.AuditLogs
-    ),
-    canReadBilling: permission.can(OrgPermissionBillingActions.Read, OrgPermissionSubjects.Billing),
+    canReadAuditLogs:
+      Boolean(subscription?.auditLogs) &&
+      permission.can(OrgPermissionAuditLogsActions.Read, OrgPermissionSubjects.AuditLogs),
     canReadAppConnections: permission.can(
       OrgPermissionAppConnectionActions.Read,
       OrgPermissionSubjects.AppConnections

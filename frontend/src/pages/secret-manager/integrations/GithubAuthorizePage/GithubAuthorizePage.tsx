@@ -1,15 +1,11 @@
 import crypto from "crypto";
 import { useState } from "react";
-import { faArrowUpRightFromSquare, faBookOpen } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate } from "@tanstack/react-router";
 
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -55,19 +51,6 @@ export const GithubAuthorizePage = () => {
             Select how you&apos;d like to integrate with GitHub. We recommend using the GitHub App
             method for fine-grained access.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                href="https://infisical.com/docs/integrations/cicd/githubactions"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <CardContent>
           <Field className="mb-4" data-invalid={false}>
@@ -106,11 +89,7 @@ export const GithubAuthorizePage = () => {
                 });
               } else {
                 if (!githubIntegration?.clientId) {
-                  createIntegrationMissingEnvVarsNotification(
-                    "githubactions",
-                    "cicd",
-                    "connecting-with-github-oauth"
-                  );
+                  createIntegrationMissingEnvVarsNotification();
                   return;
                 }
 

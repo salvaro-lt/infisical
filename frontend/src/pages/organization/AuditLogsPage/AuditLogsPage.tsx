@@ -10,7 +10,7 @@ import {
 } from "@app/components/v3";
 import { PageHeader } from "@app/components/v3/platform";
 import { ROUTE_PATHS } from "@app/const/routes";
-import { useOrganization } from "@app/context";
+import { useOrganization, useSubscription } from "@app/context";
 
 import { LogsSection } from "./components";
 import { AuditLogSettingsTab } from "./components/AuditLogSettingsTab";
@@ -27,18 +27,25 @@ const AuditLogsTab = () => <LogsSection pageView />;
 export const AuditLogsPage = () => {
   const navigate = useNavigate();
   const { isSubOrganization, currentOrg } = useOrganization();
+  const { subscription } = useSubscription();
   const { selectedTab } = useSearch({
     from: ROUTE_PATHS.Organization.AuditLogsPage.id
   });
 
   const tabs = [
     { key: AuditLogsPageTabs.AuditLogs, label: "Audit Logs", component: AuditLogsTab },
-    {
-      key: AuditLogsPageTabs.Streams,
-      label: "External Log Streams",
-      component: AuditLogStreamsTab
-    },
-    { key: AuditLogsPageTabs.Settings, label: "Settings", component: AuditLogSettingsTab }
+    ...(subscription?.auditLogStreams
+      ? [
+          {
+            key: AuditLogsPageTabs.Streams,
+            label: "External Log Streams",
+            component: AuditLogStreamsTab
+          }
+        ]
+      : []),
+    ...(subscription?.auditLogs
+      ? [{ key: AuditLogsPageTabs.Settings, label: "Settings", component: AuditLogSettingsTab }]
+      : [])
   ];
 
   const activeTab = tabs.some((tab) => tab.key === selectedTab)

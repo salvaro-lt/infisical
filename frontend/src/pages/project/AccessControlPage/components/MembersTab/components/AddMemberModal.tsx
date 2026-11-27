@@ -159,7 +159,7 @@ export const AddMemberModal = ({ popUp, handlePopUpToggle }: Props) => {
 
   const { mutateAsync: addUserToProject } = useAddUserToWsNonE2EE();
 
-  const { creation: roleCreation, upgradeGate: roleUpgradeGate } =
+  const { creation: roleCreation } =
     useProjectRoleCreation<TAddMemberForm["projectRoleSlugs"][number]>();
 
   useEffect(() => {
@@ -434,7 +434,6 @@ export const AddMemberModal = ({ popUp, handlePopUpToggle }: Props) => {
             </Button>
           </DialogFooter>
         </form>
-        {roleUpgradeGate}
       </DialogContent>
     </Dialog>
   );

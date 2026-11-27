@@ -23,7 +23,6 @@ type Props = {
   initialFormData?: Partial<TSecretSyncForm>;
   initialFormDataIsDirty?: boolean;
   startOnDestination?: boolean;
-  onEnterpriseUpgrade?: (onGranted: () => void) => void;
 };
 
 type ContentProps = {
@@ -34,7 +33,6 @@ type ContentProps = {
   initialFormDataIsDirty?: boolean;
   startOnDestination?: boolean;
   onDirtyChange: (isDirty: boolean) => void;
-  onEnterpriseUpgrade?: (onGranted: () => void) => void;
 };
 
 const Content = ({
@@ -44,8 +42,7 @@ const Content = ({
   initialFormData,
   initialFormDataIsDirty,
   startOnDestination,
-  onDirtyChange,
-  onEnterpriseUpgrade
+  onDirtyChange
 }: ContentProps) => {
   if (selectedSync) {
     return (
@@ -61,7 +58,7 @@ const Content = ({
     );
   }
 
-  return <SecretSyncSelect onSelect={setSelectedSync} onEnterpriseUpgrade={onEnterpriseUpgrade} />;
+  return <SecretSyncSelect onSelect={setSelectedSync} />;
 };
 
 export const CreateSecretSyncModal = ({
@@ -70,8 +67,7 @@ export const CreateSecretSyncModal = ({
   selectSync = null,
   initialFormData,
   initialFormDataIsDirty,
-  startOnDestination,
-  onEnterpriseUpgrade
+  startOnDestination
 }: Props) => {
   const [selectedSync, setSelectedSync] = useState<SecretSync | null>(selectSync);
   const [isDirty, setIsDirty] = useState(false);
@@ -131,7 +127,6 @@ export const CreateSecretSyncModal = ({
                 initialFormDataIsDirty={initialFormDataIsDirty}
                 startOnDestination={startOnDestination}
                 onDirtyChange={setIsDirty}
-                onEnterpriseUpgrade={onEnterpriseUpgrade}
               />
             </div>
           ) : (
@@ -144,7 +139,6 @@ export const CreateSecretSyncModal = ({
                 initialFormDataIsDirty={initialFormDataIsDirty}
                 startOnDestination={startOnDestination}
                 onDirtyChange={setIsDirty}
-                onEnterpriseUpgrade={onEnterpriseUpgrade}
               />
             </div>
           )}

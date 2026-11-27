@@ -1,10 +1,14 @@
+import { useSubscription } from "@app/context";
+
 import { IdentityAuthTemplatesSection, IdentitySection } from "./components";
 
 export const OrgIdentityTab = () => {
+  const { subscription } = useSubscription();
+
   return (
     <div className="flex flex-col gap-4">
       <IdentitySection />
-      <IdentityAuthTemplatesSection />
+      {subscription?.machineIdentityAuthTemplates && <IdentityAuthTemplatesSection />}
     </div>
   );
 };

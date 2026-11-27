@@ -1,23 +1,18 @@
 import { AppWindow, ChevronLeft, Cog, KeyRound, Lock, Network, ShieldUser } from "lucide-react";
 
-import { SubOrganizationsUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SubOrgIcon } from "@app/components/v3";
 import { useOrganization, useSubscription } from "@app/context";
-import { usePopUp } from "@app/hooks/usePopUp";
 
 import { OrgNavLink } from "./OrgNavLink";
 import type { OrgNavItem } from "./types";
 
 // --- Org settings submenu (secondary sidebar) ---
 
-type OrgSettingsItem = OrgNavItem & { requiresFeature?: boolean };
-
 export const OrgSettingsSubmenuView = ({ onBack }: { onBack: () => void }) => {
   const { isSubOrganization } = useOrganization();
   const { subscription } = useSubscription();
-  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["upgradePlan"] as const);
 
-  const items: OrgSettingsItem[] = [
+  const items: OrgNavItem[] = [
     {
       label: "General",
       icon: Cog,
@@ -40,7 +35,8 @@ export const OrgSettingsSubmenuView = ({ onBack }: { onBack: () => void }) => {
     {
       label: "Networking",
       icon: Network,
-      pathSuffix: "networking"
+      pathSuffix: "networking",
+      hidden: !subscription?.gateway
     },
     {
       label: "Security",
@@ -53,15 +49,15 @@ export const OrgSettingsSubmenuView = ({ onBack }: { onBack: () => void }) => {
       label: "Encryption",
       icon: KeyRound,
       pathSuffix: "settings",
-      search: { selectedTab: "tab-org-encryption" }
+      search: { selectedTab: "tab-org-encryption" },
+      hidden: !subscription?.externalKms
     },
     {
       label: "Sub Organizations",
       icon: SubOrgIcon,
       pathSuffix: "settings",
       search: { selectedTab: "tab-sub-organizations" },
-      hidden: isSubOrganization,
-      requiresFeature: !subscription?.subOrganization
+      hidden: isSubOrganization || !subscription?.subOrganization
     }
   ];
 
@@ -81,22 +77,9 @@ export const OrgSettingsSubmenuView = ({ onBack }: { onBack: () => void }) => {
         {items
           .filter((item) => !item.hidden)
           .map((item) => (
-            <OrgNavLink
-              key={item.label}
-              item={item}
-              onClick={item.requiresFeature ? () => handlePopUpOpen("upgradePlan") : undefined}
-            />
+            <OrgNavLink key={item.label} item={item} />
           ))}
       </SidebarMenu>
-      <UpgradeGate
-        paywallKey="organization.sub-organizations"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...SubOrganizationsUpgradeIntent,
-          isEnterpriseFeature: false
-        }}
-      />
     </SidebarGroup>
   );
 };

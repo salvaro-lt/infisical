@@ -54,10 +54,7 @@ export const IdentityAuthMethodsTable = ({
 
   const projectId = useRouteProjectId();
 
-  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
-    "identityAuthMethod",
-    "upgradePlan"
-  ] as const);
+  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["identityAuthMethod"] as const);
 
   const handleEdit = (authMethod: IdentityAuthMethod) => {
     handlePopUpOpen("identityAuthMethod", {
@@ -191,11 +188,7 @@ export const IdentityAuthMethodsTable = ({
           onMutated={onMutated}
         />
       )}
-      <IdentityAuthMethodModal
-        popUp={popUp}
-        handlePopUpOpen={handlePopUpOpen}
-        handlePopUpToggle={handlePopUpToggle}
-      />
+      <IdentityAuthMethodModal popUp={popUp} handlePopUpToggle={handlePopUpToggle} />
       <IdentityAuthRevokeDialog
         open={revokeAuthMethod !== null}
         onOpenChange={(open) => {

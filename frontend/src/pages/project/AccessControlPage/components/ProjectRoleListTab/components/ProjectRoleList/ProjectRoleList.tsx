@@ -14,11 +14,6 @@ import {
 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
-import {
-  CustomRolesUpgradeIntent,
-  FolderAccessControlsUpgradeIntent,
-  UpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
@@ -93,9 +88,7 @@ export const ProjectRoleList = () => {
   const { popUp, handlePopUpOpen, handlePopUpClose, handlePopUpToggle } = usePopUp([
     "role",
     "deleteRole",
-    "duplicateRole",
-    "upgradePlan",
-    "folderAccessUpgrade"
+    "duplicateRole"
   ] as const);
   const { currentProject } = useProject();
   const { currentOrg } = useOrganization();
@@ -103,14 +96,12 @@ export const ProjectRoleList = () => {
   const projectId = currentProject?.id || "";
   const isCertManager = currentProject?.type === ProjectType.CertificateManager;
   const projectsHidden = hidesProjects(currentProject?.type);
-  const canOfferFolderAccess =
-    currentProject?.type === ProjectType.SecretManager && !subscription?.secretsFolderRbac;
   const navigate = useNavigate();
   const shouldOpenCreateRole = useSearch({ strict: false, select: (el) => el?.createRole });
 
   useEffect(() => {
     if (!shouldOpenCreateRole) return;
-    handlePopUpOpen(subscription && !subscription.rbac ? "upgradePlan" : "role");
+    if (subscription?.rbac) handlePopUpOpen("role");
     navigate({ to: ".", search: (prev) => ({ ...prev, createRole: false }), replace: true });
   }, [shouldOpenCreateRole]);
 
@@ -212,7 +203,7 @@ export const ProjectRoleList = () => {
               ? "View built-in roles for Certificate Manager"
               : "Create and manage project roles"}
           </CardDescription>
-          {!isCertManager && (
+          {!isCertManager && subscription?.rbac && (
             <CardAction>
               <ProjectPermissionCan
                 I={ProjectPermissionActions.Create}
@@ -221,9 +212,7 @@ export const ProjectRoleList = () => {
                 {(isAllowed) => (
                   <Button
                     variant={scopeVariant}
-                    onClick={() =>
-                      handlePopUpOpen(subscription && !subscription.rbac ? "upgradePlan" : "role")
-                    }
+                    onClick={() => handlePopUpOpen("role")}
                     isDisabled={!isAllowed}
                   >
                     <PlusIcon />
@@ -409,7 +398,7 @@ export const ProjectRoleList = () => {
                                   </DropdownMenuItem>
                                 )}
                               </ProjectPermissionCan>
-                              {!isCertManager && (
+                              {!isCertManager && subscription?.rbac && (
                                 <ProjectPermissionCan
                                   I={ProjectPermissionActions.Create}
                                   a={ProjectPermissionSub.Role}
@@ -485,35 +474,6 @@ export const ProjectRoleList = () => {
         isOpen={popUp.duplicateRole.isOpen}
         onOpenChange={(isOpen) => handlePopUpToggle("duplicateRole", isOpen)}
         roleSlug={(popUp?.duplicateRole?.data as TProjectRole)?.slug}
-      />
-      <UpgradeGate
-        paywallKey="project.role"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(open) => handlePopUpToggle("upgradePlan", open)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: false
-        }}
-        alternative={
-          canOfferFolderAccess
-            ? {
-                title: "Only Need Folder-Level Access?",
-                description:
-                  "Folder access controls grant users and machine identities access to specific environments and folders without a custom role. They're included with Secrets Management Pro.",
-                actionLabel: "View Pro Plan",
-                onSelect: () => {
-                  handlePopUpToggle("upgradePlan", false);
-                  handlePopUpOpen("folderAccessUpgrade");
-                }
-              }
-            : undefined
-        }
-      />
-      <UpgradeGate
-        paywallKey="project.role.folder-access"
-        isOpen={popUp.folderAccessUpgrade.isOpen}
-        onOpenChange={(open) => handlePopUpToggle("folderAccessUpgrade", open)}
-        intent={FolderAccessControlsUpgradeIntent}
       />
     </>
   );

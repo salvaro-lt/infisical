@@ -4,7 +4,6 @@ import slugify from "@sindresorhus/slugify";
 import { useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import {
   Button,
@@ -22,12 +21,11 @@ import {
   SheetTitle,
   Skeleton
 } from "@app/components/v3";
-import { useOrganization, useProject, useSubscription } from "@app/context";
+import { useOrganization, useProject } from "@app/context";
 import { getProjectBaseURL } from "@app/helpers/project";
 import { useScopeVariant } from "@app/hooks";
 import { useCreateProjectRole, useGetProjectRoleBySlug } from "@app/hooks/api";
 import { TProjectRole } from "@app/hooks/api/roles/types";
-import { usePopUp } from "@app/hooks/usePopUp";
 import { slugSchema } from "@app/lib/schemas";
 
 import { sanitizeDuplicateRolePermissions } from "./DuplicateProjectRoleModal.utils";
@@ -72,22 +70,11 @@ const Content = ({ role, onClose }: ContentProps) => {
 
   const { currentOrg } = useOrganization();
   const { currentProject } = useProject();
-  const { subscription } = useSubscription();
-  const {
-    popUp: upgradePlanPopUp,
-    handlePopUpOpen: handleUpgradePlanPopUpOpen,
-    handlePopUpToggle: handleUpgradePlanPopUpToggle
-  } = usePopUp(["upgradePlan"] as const);
 
   const createRole = useCreateProjectRole();
   const navigate = useNavigate();
 
   const handleDuplicateRole = async (form: FormData) => {
-    if (subscription && !subscription.rbac) {
-      handleUpgradePlanPopUpOpen("upgradePlan");
-      return;
-    }
-
     const sanitizedPermission = sanitizeDuplicateRolePermissions(role.permissions);
 
     const newRole = await createRole.mutateAsync({
@@ -114,105 +101,94 @@ const Content = ({ role, onClose }: ContentProps) => {
   };
 
   return (
-    <>
-      <form
-        onSubmit={handleSubmit(handleDuplicateRole)}
-        autoComplete="off"
-        className="flex min-h-0 flex-1 flex-col"
-      >
-        <SheetHeader>
-          <SheetTitle>Duplicate Role</SheetTitle>
-          <SheetDescription>
-            Create a new role with the same permissions as {role.name}.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="flex min-h-0 thin-scrollbar flex-1 flex-col overflow-y-auto p-4">
-          <FieldGroup>
-            <Controller
-              control={control}
-              name="name"
-              render={({ field: { onChange, ...field }, fieldState: { error } }) => (
-                <Field data-invalid={Boolean(error)}>
-                  <FieldLabel htmlFor="duplicate-project-role-name">Name</FieldLabel>
-                  <Input
-                    {...field}
-                    id="duplicate-project-role-name"
-                    placeholder="Billing Team"
-                    autoComplete="off"
-                    data-1p-ignore
-                    isError={Boolean(error)}
-                    onChange={(e) => {
-                      onChange(e);
-                      if (getFieldState("slug").isDirty) return;
-                      setValue("slug", slugify(e.target.value, { lowercase: true }), {
-                        shouldValidate: true
-                      });
-                    }}
-                    name="duplicate-project-role-name"
-                  />
-                  <FieldError>{error?.message}</FieldError>
-                </Field>
-              )}
-            />
-            <Controller
-              control={control}
-              name="slug"
-              render={({ field, fieldState: { error } }) => (
-                <Field data-invalid={Boolean(error)}>
-                  <FieldLabel htmlFor="duplicate-project-role-slug">Slug</FieldLabel>
-                  <Input
-                    {...field}
-                    id="duplicate-project-role-slug"
-                    placeholder="billing"
-                    autoComplete="off"
-                    data-1p-ignore
-                    isError={Boolean(error)}
-                  />
-                  <FieldError>{error?.message}</FieldError>
-                </Field>
-              )}
-            />
-            <Controller
-              control={control}
-              name="description"
-              render={({ field, fieldState: { error } }) => (
-                <Field data-invalid={Boolean(error)}>
-                  <FieldLabel htmlFor="duplicate-project-role-description">Description</FieldLabel>
-                  <Input
-                    {...field}
-                    id="duplicate-project-role-description"
-                    placeholder="Manage billing settings"
-                    autoComplete="off"
-                    data-1p-ignore
-                    isError={Boolean(error)}
-                  />
-                  <FieldError>{error?.message}</FieldError>
-                </Field>
-              )}
-            />
-          </FieldGroup>
-        </div>
-        <SheetFooter className="justify-end border-t">
-          <SheetClose asChild>
-            <Button variant="ghost" isDisabled={isSubmitting}>
-              Cancel
-            </Button>
-          </SheetClose>
-          <Button type="submit" variant={scopeVariant} isPending={isSubmitting}>
-            Duplicate Role
+    <form
+      onSubmit={handleSubmit(handleDuplicateRole)}
+      autoComplete="off"
+      className="flex min-h-0 flex-1 flex-col"
+    >
+      <SheetHeader>
+        <SheetTitle>Duplicate Role</SheetTitle>
+        <SheetDescription>
+          Create a new role with the same permissions as {role.name}.
+        </SheetDescription>
+      </SheetHeader>
+      <div className="flex min-h-0 thin-scrollbar flex-1 flex-col overflow-y-auto p-4">
+        <FieldGroup>
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, ...field }, fieldState: { error } }) => (
+              <Field data-invalid={Boolean(error)}>
+                <FieldLabel htmlFor="duplicate-project-role-name">Name</FieldLabel>
+                <Input
+                  {...field}
+                  id="duplicate-project-role-name"
+                  placeholder="Billing Team"
+                  autoComplete="off"
+                  data-1p-ignore
+                  isError={Boolean(error)}
+                  onChange={(e) => {
+                    onChange(e);
+                    if (getFieldState("slug").isDirty) return;
+                    setValue("slug", slugify(e.target.value, { lowercase: true }), {
+                      shouldValidate: true
+                    });
+                  }}
+                  name="duplicate-project-role-name"
+                />
+                <FieldError>{error?.message}</FieldError>
+              </Field>
+            )}
+          />
+          <Controller
+            control={control}
+            name="slug"
+            render={({ field, fieldState: { error } }) => (
+              <Field data-invalid={Boolean(error)}>
+                <FieldLabel htmlFor="duplicate-project-role-slug">Slug</FieldLabel>
+                <Input
+                  {...field}
+                  id="duplicate-project-role-slug"
+                  placeholder="billing"
+                  autoComplete="off"
+                  data-1p-ignore
+                  isError={Boolean(error)}
+                />
+                <FieldError>{error?.message}</FieldError>
+              </Field>
+            )}
+          />
+          <Controller
+            control={control}
+            name="description"
+            render={({ field, fieldState: { error } }) => (
+              <Field data-invalid={Boolean(error)}>
+                <FieldLabel htmlFor="duplicate-project-role-description">Description</FieldLabel>
+                <Input
+                  {...field}
+                  id="duplicate-project-role-description"
+                  placeholder="Manage billing settings"
+                  autoComplete="off"
+                  data-1p-ignore
+                  isError={Boolean(error)}
+                />
+                <FieldError>{error?.message}</FieldError>
+              </Field>
+            )}
+          />
+        </FieldGroup>
+      </div>
+      <SheetFooter className="justify-end border-t">
+        <SheetClose asChild>
+          <Button variant="ghost" isDisabled={isSubmitting}>
+            Cancel
           </Button>
-        </SheetFooter>
-      </form>
-      <UpgradeGate
-        paywallKey="project.duplicate-project-role"
-        isOpen={upgradePlanPopUp.upgradePlan.isOpen}
-        onOpenChange={(open) => handleUpgradePlanPopUpToggle("upgradePlan", open)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: false
-        }}
-      />
-    </>
+        </SheetClose>
+        <Button type="submit" variant={scopeVariant} isPending={isSubmitting}>
+          Duplicate Role
+        </Button>
+      </SheetFooter>
+    </form>
   );
 };
 

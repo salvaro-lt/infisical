@@ -33,7 +33,6 @@ import {
 } from "@app/components/v3";
 import { AgentVaultCredentialType, AgentVaultOauthStatus } from "@app/hooks/api/agentVault";
 import { TAgentVaultService } from "@app/hooks/api/agentVault/types";
-import { AgentVaultDocsUrls } from "@app/pages/agent-vault/agent-vault-docs-urls";
 
 import { ClientSecretInput } from "../ClientSecretInput";
 import { OAuthAppSelect } from "../OAuthAppSelect";
@@ -434,7 +433,6 @@ export const OAuthAuthorizeCard = ({
           isOn={isMemberProvided}
           onChange={changeMemberProvided}
           isDisabled={isWaiting}
-          docsUrl={AgentVaultDocsUrls.mcpMemberProvidedCredential}
           about={
             <>
               <p>Choose whose account the proxy uses to reach {host}.</p>

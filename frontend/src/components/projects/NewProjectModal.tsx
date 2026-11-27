@@ -5,7 +5,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { InfoIcon, Plus } from "lucide-react";
 import z from "zod";
 
-import { ExternalKmsUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -51,7 +50,6 @@ import {
   getProjectTitle,
   hasProjectTemplates
 } from "@app/helpers/project";
-import { usePopUp } from "@app/hooks";
 import { useCreateWorkspace, useGetExternalKmsList, useGetUserProjects } from "@app/hooks/api";
 import { INTERNAL_KMS_KEY_ID } from "@app/hooks/api/kms/types";
 import { ProjectType } from "@app/hooks/api/projects/types";
@@ -89,7 +87,6 @@ const NewProjectForm = ({ onOpenChange, projectType: fixedProjectType }: NewProj
   const createWs = useCreateWorkspace();
   const { refetch: refetchWorkspaces } = useGetUserProjects();
   const { subscription } = useSubscription();
-  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["upgradePlan"] as const);
 
   const canReadProjectTemplates = permission.can(
     OrgPermissionActions.Read,
@@ -132,11 +129,6 @@ const NewProjectForm = ({ onOpenChange, projectType: fixedProjectType }: NewProj
   }, [errors]);
 
   const handleAddExternalKms = () => {
-    if (!subscription?.externalKms) {
-      handlePopUpOpen("upgradePlan", { isEnterpriseFeature: true });
-      return;
-    }
-
     if (!currentOrg) return;
 
     onOpenChange(false);
@@ -228,7 +220,7 @@ const NewProjectForm = ({ onOpenChange, projectType: fixedProjectType }: NewProj
             <AccordionTrigger>Advanced Settings</AccordionTrigger>
             <AccordionContent>
               <div className="flex flex-col gap-4">
-                {hasProjectTemplates(selectedProjectType) && (
+                {hasProjectTemplates(selectedProjectType) && subscription?.projectTemplates && (
                   <Controller
                     control={control}
                     name="template"
@@ -250,17 +242,10 @@ const NewProjectForm = ({ onOpenChange, projectType: fixedProjectType }: NewProj
                                     Create this project from a template to provision it with custom
                                     environments and roles.
                                   </p>
-                                  {subscription && !subscription.projectTemplates && (
-                                    <p className="pt-2">Project templates are a paid feature.</p>
-                                  )}
                                 </TooltipContent>
                               </Tooltip>
                             </FieldLabel>
-                            <Select
-                              value={value}
-                              onValueChange={onChange}
-                              disabled={!isAllowed || !subscription?.projectTemplates}
-                            >
+                            <Select value={value} onValueChange={onChange} disabled={!isAllowed}>
                               <SelectTrigger id="new-project-template" className="w-full">
                                 <SelectValue placeholder={InfisicalProjectTemplate.Default} />
                               </SelectTrigger>
@@ -312,36 +297,37 @@ const NewProjectForm = ({ onOpenChange, projectType: fixedProjectType }: NewProj
                               {kms.name}
                             </SelectItem>
                           ))}
-                          <SelectSeparator />
-                          {canAddExternalKms ? (
-                            <SelectItem value={ADD_EXTERNAL_KMS_OPTION} key="kms-add-external">
-                              <span className="flex items-center gap-2 text-accent">
-                                <Plus />
-                                Add external KMS
-                              </span>
-                            </SelectItem>
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-                                <span tabIndex={0} className="block">
-                                  <SelectItem
-                                    value={ADD_EXTERNAL_KMS_OPTION}
-                                    key="kms-add-external"
-                                    disabled
-                                  >
-                                    <span className="flex items-center gap-2 text-accent">
-                                      <Plus />
-                                      Add external KMS
-                                    </span>
-                                  </SelectItem>
+                          {subscription?.externalKms && <SelectSeparator />}
+                          {subscription?.externalKms &&
+                            (canAddExternalKms ? (
+                              <SelectItem value={ADD_EXTERNAL_KMS_OPTION} key="kms-add-external">
+                                <span className="flex items-center gap-2 text-accent">
+                                  <Plus />
+                                  Add external KMS
                                 </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="right">
-                                You do not have permission to add an external KMS.
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
+                              </SelectItem>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+                                  <span tabIndex={0} className="block">
+                                    <SelectItem
+                                      value={ADD_EXTERNAL_KMS_OPTION}
+                                      key="kms-add-external"
+                                      disabled
+                                    >
+                                      <span className="flex items-center gap-2 text-accent">
+                                        <Plus />
+                                        Add external KMS
+                                      </span>
+                                    </SelectItem>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">
+                                  You do not have permission to add an external KMS.
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
                         </SelectContent>
                       </Select>
                       {error && <FieldError>{error.message}</FieldError>}
@@ -369,15 +355,6 @@ const NewProjectForm = ({ onOpenChange, projectType: fixedProjectType }: NewProj
           Create Project
         </Button>
       </DialogFooter>
-      <UpgradeGate
-        paywallKey="project.external-kms"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...ExternalKmsUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
-      />
     </>
   );
 };

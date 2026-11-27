@@ -207,6 +207,9 @@ const CmekForm = ({ onComplete, cmek }: FormProps) => {
                         {Object.entries(AllowedEncryptionKeyAlgorithms)
                           // eslint-disable-next-line @typescript-eslint/no-unused-vars
                           ?.filter(([_, value]) => {
+                            if (value.startsWith("ML_DSA") && !subscription?.kmsPqc) {
+                              return false;
+                            }
                             if (selectedKeyUsage === KmsKeyUsage.ENCRYPT_DECRYPT) {
                               return Object.values(SymmetricKeyAlgorithm).includes(
                                 value as unknown as SymmetricKeyAlgorithm
@@ -227,20 +230,13 @@ const CmekForm = ({ onComplete, cmek }: FormProps) => {
                           })
                           // eslint-disable-next-line @typescript-eslint/no-unused-vars
                           .map(([_, value]) => {
-                            const isPqc = value.startsWith("ML_DSA");
-                            const isDisabled = isPqc && !subscription?.kmsPqc;
                             const isLegacyHmac =
                               value === HmacAlgorithm.HMAC_SHA_1 ||
                               value === HmacAlgorithm.HMAC_SHA_224;
                             return (
-                              <SelectItem
-                                value={value}
-                                key={`encryption-algorithm-${value}`}
-                                disabled={isDisabled}
-                              >
+                              <SelectItem value={value} key={`encryption-algorithm-${value}`}>
                                 <div className="flex items-center gap-2">
                                   <span>{formatKmsKeyAlgorithm(value)}</span>
-                                  {isDisabled && <Badge variant="info">Enterprise</Badge>}
                                   {isLegacyHmac && <Badge variant="warning">Legacy</Badge>}
                                 </div>
                               </SelectItem>

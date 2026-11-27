@@ -74,10 +74,6 @@ const buildSchema = (maxAccessTokenTTL: number) =>
 export type FormData = z.infer<ReturnType<typeof buildSchema>>;
 
 type Props = {
-  handlePopUpOpen: (
-    popUpName: keyof UsePopUpState<["upgradePlan"]>,
-    data?: { featureName?: string }
-  ) => void;
   handlePopUpToggle: (
     popUpName: keyof UsePopUpState<["identityAuthMethod"]>,
     state?: boolean
@@ -89,7 +85,6 @@ type Props = {
 };
 
 export const IdentityUniversalAuthForm = ({
-  handlePopUpOpen,
   handlePopUpToggle,
   identityId,
   isUpdate,
@@ -271,7 +266,9 @@ export const IdentityUniversalAuthForm = ({
         <TabsList variant={scopeVariant}>
           <TabsTrigger value={IdentityFormTab.Configuration}>Configuration</TabsTrigger>
           <TabsTrigger value={IdentityFormTab.Lockout}>Lockout</TabsTrigger>
-          <TabsTrigger value={IdentityFormTab.Advanced}>Advanced</TabsTrigger>
+          {subscription?.ipAllowlisting && (
+            <TabsTrigger value={IdentityFormTab.Advanced}>Advanced</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value={IdentityFormTab.Configuration}>
           <FieldGroup>
@@ -319,28 +316,22 @@ export const IdentityUniversalAuthForm = ({
           lockoutCounterResetValue={lockoutCounterResetValueWatch}
           lockoutCounterResetUnit={lockoutCounterResetUnitWatch}
         />
-        <TabsContent value={IdentityFormTab.Advanced}>
-          <FieldGroup>
-            <TrustedIpsField
-              control={control}
-              name="clientSecretTrustedIps"
-              label="Client Secret Trusted IPs"
-              isAllowed={Boolean(subscription?.ipAllowlisting)}
-              onUpgradeRequired={() =>
-                handlePopUpOpen("upgradePlan", { featureName: "IP allowlisting" })
-              }
-            />
-            <TrustedIpsField
-              control={control}
-              name="accessTokenTrustedIps"
-              label="Access Token Trusted IPs"
-              isAllowed={Boolean(subscription?.ipAllowlisting)}
-              onUpgradeRequired={() =>
-                handlePopUpOpen("upgradePlan", { featureName: "IP allowlisting" })
-              }
-            />
-          </FieldGroup>
-        </TabsContent>
+        {subscription?.ipAllowlisting && (
+          <TabsContent value={IdentityFormTab.Advanced}>
+            <FieldGroup>
+              <TrustedIpsField
+                control={control}
+                name="clientSecretTrustedIps"
+                label="Client Secret Trusted IPs"
+              />
+              <TrustedIpsField
+                control={control}
+                name="accessTokenTrustedIps"
+                label="Access Token Trusted IPs"
+              />
+            </FieldGroup>
+          </TabsContent>
+        )}
       </Tabs>
     </form>
   );

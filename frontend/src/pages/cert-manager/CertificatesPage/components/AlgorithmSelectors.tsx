@@ -2,11 +2,6 @@ import { ReactNode } from "react";
 import { Control, Controller } from "react-hook-form";
 
 import {
-  PostQuantumCertificatesUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
-import {
-  Badge,
   Field,
   FieldDescription,
   FieldError,
@@ -46,10 +41,11 @@ const AlgorithmOptions = ({ options, nonePlaceholder, caKeyAlgorithm }: Algorith
     <>
       {nonePlaceholder && <SelectItem value={NONE_VALUE}>{nonePlaceholder}</SelectItem>}
       {options.map((algorithm) => {
-        const isGated = isPqcAlgorithm(algorithm.value) && !subscription?.pkiPqc;
-        const incompatibilityReason = isGated
-          ? undefined
-          : getCaSignatureIncompatibilityReason(algorithm.value, caKeyAlgorithm);
+        if (isPqcAlgorithm(algorithm.value) && !subscription?.pkiPqc) return null;
+        const incompatibilityReason = getCaSignatureIncompatibilityReason(
+          algorithm.value,
+          caKeyAlgorithm
+        );
 
         const item = (
           <SelectItem
@@ -57,10 +53,7 @@ const AlgorithmOptions = ({ options, nonePlaceholder, caKeyAlgorithm }: Algorith
             value={algorithm.value}
             disabled={Boolean(incompatibilityReason)}
           >
-            <span className="flex items-center gap-2">
-              {algorithm.label}
-              {isGated && <Badge variant="info">Enterprise</Badge>}
-            </span>
+            <span className="flex items-center gap-2">{algorithm.label}</span>
           </SelectItem>
         );
 
@@ -112,9 +105,6 @@ const AlgorithmSelect = ({
   children,
   disabledReason
 }: AlgorithmSelectProps) => {
-  const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
-
   return (
     <Controller
       control={control}
@@ -129,13 +119,6 @@ const AlgorithmSelect = ({
             value={value ?? (nonePlaceholder ? NONE_VALUE : "")}
             onValueChange={(nextValue) => {
               const normalizedValue = nextValue === NONE_VALUE ? null : nextValue;
-              if (normalizedValue && isPqcAlgorithm(normalizedValue) && !subscription.pkiPqc) {
-                openUpgradeGate({
-                  intent: PostQuantumCertificatesUpgradeIntent,
-                  paywallKey: "cert-manager.certificate-algorithm"
-                });
-                return;
-              }
               onChange(normalizedValue);
             }}
             disabled={Boolean(disabledReason)}
@@ -153,7 +136,6 @@ const AlgorithmSelect = ({
           </Select>
           {disabledReason && <FieldDescription>{disabledReason}</FieldDescription>}
           <FieldError>{error}</FieldError>
-          {upgradeGate}
         </Field>
       )}
     />

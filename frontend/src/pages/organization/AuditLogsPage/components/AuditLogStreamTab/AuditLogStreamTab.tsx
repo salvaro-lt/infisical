@@ -1,6 +1,5 @@
 import { PlusIcon } from "lucide-react";
 
-import { AuditLogStreamsUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
   Button,
@@ -12,11 +11,7 @@ import {
   CardTitle,
   DocumentationLinkBadge
 } from "@app/components/v3";
-import {
-  OrgPermissionAuditLogsActions,
-  OrgPermissionSubjects,
-  useSubscription
-} from "@app/context";
+import { OrgPermissionAuditLogsActions, OrgPermissionSubjects } from "@app/context";
 import { withPermission } from "@app/hoc";
 import { usePopUp, useScopeVariant } from "@app/hooks";
 
@@ -25,13 +20,9 @@ import { AuditLogStreamTable } from "./components/AuditLogStreamTable";
 
 export const AuditLogStreamsTab = withPermission(
   () => {
-    const { subscription } = useSubscription();
     const scopeVariant = useScopeVariant();
 
-    const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
-      "auditLogStreamForm",
-      "upgradePlan"
-    ] as const);
+    const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["auditLogStreamForm"] as const);
 
     return (
       <>
@@ -55,12 +46,6 @@ export const AuditLogStreamsTab = withPermission(
                     variant={scopeVariant}
                     isDisabled={!isAllowed}
                     onClick={() => {
-                      if (subscription && !subscription?.auditLogStreams) {
-                        handlePopUpOpen("upgradePlan", {
-                          isEnterpriseFeature: true
-                        });
-                        return;
-                      }
                       handlePopUpOpen("auditLogStreamForm");
                     }}
                   >
@@ -78,15 +63,6 @@ export const AuditLogStreamsTab = withPermission(
         <AddAuditLogStreamModal
           isOpen={popUp.auditLogStreamForm.isOpen}
           onOpenChange={(isOpen) => handlePopUpToggle("auditLogStreamForm", isOpen)}
-        />
-        <UpgradeGate
-          paywallKey="organization.audit-log-stream"
-          isOpen={popUp.upgradePlan.isOpen}
-          onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-          intent={{
-            ...AuditLogStreamsUpgradeIntent,
-            isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-          }}
         />
       </>
     );

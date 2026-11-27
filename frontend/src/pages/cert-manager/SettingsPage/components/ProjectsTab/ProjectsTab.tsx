@@ -157,15 +157,7 @@ export const ProjectsTab = () => {
                 <p>
                   Your organization has multiple Certificate Manager projects. Going forward, only
                   one project per organization is supported. Select your active project and remove
-                  the others once migrated.{" "}
-                  <a
-                    href="https://infisical.com/docs/documentation/platform/pki/migration"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-foreground-secondary"
-                  >
-                    Learn more →
-                  </a>
+                  the others once migrated.
                 </p>
               </AlertDescription>
             </Alert>

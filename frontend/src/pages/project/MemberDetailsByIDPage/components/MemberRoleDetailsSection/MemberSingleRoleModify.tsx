@@ -4,11 +4,10 @@ import { CircleAlertIcon, RefreshCwIcon } from "lucide-react";
 
 import { createNotification } from "@app/components/notifications";
 import { Alert, AlertDescription, AlertTitle, Button, PageLoader } from "@app/components/v3";
-import { useProject, useSubscription } from "@app/context";
+import { useProject } from "@app/context";
 import { useScopeVariant } from "@app/hooks";
 import { useUpdateUserWorkspaceRole } from "@app/hooks/api";
 import { ProjectType } from "@app/hooks/api/projects/types";
-import { ProjectMembershipRole } from "@app/hooks/api/roles/types";
 import { TWorkspaceUser } from "@app/hooks/api/types";
 
 import {
@@ -25,18 +24,11 @@ import { useMemberRoleGrant } from "./useMemberRoleGrant";
 type Props = {
   projectMember: TWorkspaceUser;
   role: MemberRoleAssignment;
-  onOpenUpgradeModal: () => void;
   onSuccess?: () => void;
 };
 
-export const MemberSingleRoleModify = ({
-  projectMember,
-  role,
-  onOpenUpgradeModal,
-  onSuccess
-}: Props) => {
+export const MemberSingleRoleModify = ({ projectMember, role, onSuccess }: Props) => {
   const scopeVariant = useScopeVariant();
-  const { subscription } = useSubscription();
   const { projectId, currentProject } = useProject();
   const {
     isRolesLoading,
@@ -57,14 +49,6 @@ export const MemberSingleRoleModify = ({
     if (updateMembershipRole.isPending) return;
 
     const nextRolePayload = formRoleToPayload(data);
-    const hasCustomRoleSelected = !Object.values(ProjectMembershipRole).includes(
-      nextRolePayload.role as ProjectMembershipRole
-    );
-
-    if (hasCustomRoleSelected && subscription && !subscription?.rbac) {
-      onOpenUpgradeModal();
-      return;
-    }
 
     // The PATCH replaces the whole role set, so re-send every current assignment and swap in the
     // edited one — otherwise the member's other roles would be dropped.

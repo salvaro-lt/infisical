@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { AuditLogsUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import {
   Alert,
   AlertDescription,
@@ -22,8 +21,7 @@ import {
   OrgPermissionAuditLogsActions,
   OrgPermissionSubjects,
   ProjectPermissionAuditLogsActions,
-  ProjectPermissionSub,
-  useSubscription
+  ProjectPermissionSub
 } from "@app/context";
 import { Timezone } from "@app/helpers/datetime";
 import { isInfisicalCloud } from "@app/helpers/platform";
@@ -31,7 +29,6 @@ import { isOrgScopedProduct } from "@app/helpers/project";
 import { withPermission, withProjectPermission } from "@app/hoc";
 import { useGetAuditLogPostgresStorageStatus } from "@app/hooks/api/auditLogs";
 import { Project, ProjectType } from "@app/hooks/api/projects/types";
-import { usePopUp } from "@app/hooks/usePopUp";
 
 import {
   AppliedFilter,
@@ -58,8 +55,6 @@ const LogsSectionComponent = ({
   pageView = false,
   project
 }: Props) => {
-  const { subscription } = useSubscription();
-  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["upgradePlan"] as const);
   const { data: postgresStorageStatus } = useGetAuditLogPostgresStorageStatus();
 
   const AUDIT_LOG_ROW_WARNING_THRESHOLD = 350_000_000;
@@ -106,12 +101,6 @@ const LogsSectionComponent = ({
   if (project?.type === ProjectType.AgentVault) dateRangeAccent = "av";
   if (project?.type === ProjectType.SecretScanning) dateRangeAccent = "ss";
 
-  useEffect(() => {
-    if (subscription && !subscription.auditLogs) {
-      handlePopUpOpen("upgradePlan");
-    }
-  }, [subscription]);
-
   if (pageView)
     return (
       <Card>
@@ -120,25 +109,8 @@ const LogsSectionComponent = ({
             <AlertDescription>
               <p>
                 Your audit log volume is growing. To keep searches fast and reduce database load, we
-                recommend streaming logs to an{" "}
-                <a
-                  href="https://infisical.com/docs/documentation/platform/audit-log-streams/audit-log-streams"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2 hover:opacity-80"
-                >
-                  external destination
-                </a>{" "}
-                like Splunk or using the built-in{" "}
-                <a
-                  href="https://infisical.com/docs/documentation/platform/audit-logs-clickhouse-setup"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2 hover:opacity-80"
-                >
-                  ClickHouse integration
-                </a>
-                .
+                recommend streaming logs to an external destination like Splunk or using the
+                built-in ClickHouse integration.
               </p>
             </AlertDescription>
           </Alert>
@@ -218,17 +190,6 @@ const LogsSectionComponent = ({
             timezone={timezone}
           />
         </CardContent>
-        <UpgradeGate
-          paywallKey="organization.logs"
-          isOpen={popUp.upgradePlan.isOpen}
-          onOpenChange={(isOpen) => {
-            handlePopUpToggle("upgradePlan", isOpen);
-          }}
-          intent={{
-            ...AuditLogsUpgradeIntent,
-            isEnterpriseFeature: false
-          }}
-        />
       </Card>
     );
 
@@ -239,25 +200,8 @@ const LogsSectionComponent = ({
           <AlertDescription>
             <p>
               Your audit log volume is growing. To keep searches fast and reduce database load, we
-              recommend streaming logs to an{" "}
-              <a
-                href="https://infisical.com/docs/documentation/platform/audit-log-streams/audit-log-streams"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 hover:opacity-80"
-              >
-                external destination
-              </a>{" "}
-              like Splunk or using the built-in{" "}
-              <a
-                href="https://infisical.com/docs/documentation/platform/audit-logs-clickhouse-setup"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 hover:opacity-80"
-              >
-                ClickHouse integration
-              </a>
-              .
+              recommend streaming logs to an external destination like Splunk or using the built-in
+              ClickHouse integration.
             </p>
           </AlertDescription>
         </Alert>
@@ -306,17 +250,6 @@ const LogsSectionComponent = ({
           actor: logFilter?.actor
         }}
         timezone={timezone}
-      />
-      <UpgradeGate
-        paywallKey="organization.logs"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => {
-          handlePopUpToggle("upgradePlan", isOpen);
-        }}
-        intent={{
-          ...AuditLogsUpgradeIntent,
-          isEnterpriseFeature: false
-        }}
       />
     </div>
   );

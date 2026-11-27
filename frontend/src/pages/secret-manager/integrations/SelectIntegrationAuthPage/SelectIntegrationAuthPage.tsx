@@ -100,7 +100,7 @@ export const SelectIntegrationAuthPage = () => {
 
     if (integrationSlug === "github") {
       if (!currentIntegration?.clientSlug) {
-        createIntegrationMissingEnvVarsNotification("githubactions", "cicd");
+        createIntegrationMissingEnvVarsNotification();
         return;
       }
 

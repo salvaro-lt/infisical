@@ -14,12 +14,7 @@ import {
   PageLoader,
   SheetFooter
 } from "@app/components/v3";
-import {
-  ProjectPermissionActions,
-  ProjectPermissionSub,
-  useProject,
-  useSubscription
-} from "@app/context";
+import { ProjectPermissionActions, ProjectPermissionSub, useProject } from "@app/context";
 import { useScopeVariant } from "@app/hooks";
 import { useUpdateUserWorkspaceRole } from "@app/hooks/api";
 import { ProjectType } from "@app/hooks/api/projects/types";
@@ -35,13 +30,11 @@ type TRoleForm = z.infer<typeof roleFormSchema>;
 
 type Props = {
   projectMember: TWorkspaceUser;
-  onOpenUpgradeModal: () => void;
   onClose: () => void;
 };
 
-export const MemberMultiRoleModify = ({ projectMember, onOpenUpgradeModal, onClose }: Props) => {
+export const MemberMultiRoleModify = ({ projectMember, onClose }: Props) => {
   const scopeVariant = useScopeVariant();
-  const { subscription } = useSubscription();
   const { projectId, currentProject } = useProject();
   const {
     isRolesLoading,
@@ -63,14 +56,6 @@ export const MemberMultiRoleModify = ({ projectMember, onOpenUpgradeModal, onClo
     if (updateMembershipRole.isPending) return;
 
     const sanitizedRoles = data.roles.map(formRoleToPayload);
-    const hasCustomRoleSelected = sanitizedRoles.some(
-      (el) => !Object.values(ProjectMembershipRole).includes(el.role as ProjectMembershipRole)
-    );
-
-    if (hasCustomRoleSelected && subscription && !subscription?.rbac) {
-      onOpenUpgradeModal();
-      return;
-    }
 
     const isCertManager = currentProject?.type === ProjectType.CertificateManager;
     await updateMembershipRole.mutateAsync({

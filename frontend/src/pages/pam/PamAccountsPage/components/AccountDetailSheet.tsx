@@ -651,17 +651,7 @@ const SettingsTab = ({
                 {
                   title: "Bucket CORS not configured",
                   type: "warning",
-                  text: "Session playback requires the bucket to allow GET requests from this origin.",
-                  callToAction: (
-                    <a
-                      href="https://infisical.com/docs/documentation/platform/pam/recording-storage"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs underline"
-                    >
-                      CORS setup docs
-                    </a>
-                  )
+                  text: "Session playback requires the bucket to allow GET requests from this origin."
                 },
                 { autoClose: 10000 }
               );

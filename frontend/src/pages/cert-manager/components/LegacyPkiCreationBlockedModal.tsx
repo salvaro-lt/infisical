@@ -13,8 +13,6 @@ import { LEGACY_PKI_DEPRECATION_DATE, LegacyPkiResource } from "@app/const/legac
 import { useOrganization } from "@app/context";
 import { useScopeVariant } from "@app/hooks";
 
-import { PkiDocsUrls } from "../pki-docs-urls";
-
 type Props = {
   resource: LegacyPkiResource;
   isOpen: boolean;
@@ -50,16 +48,7 @@ export const LegacyPkiCreationBlockedModal = ({ resource, isOpen, onOpenChange }
           <DialogDescription>
             {noun} are being removed on {LEGACY_PKI_DEPRECATION_DATE}, and new ones can no longer be
             created. Certificate applications replace them. Your existing {noun.toLowerCase()} keep
-            issuing certificates until the removal date.{" "}
-            <a
-              href={PkiDocsUrls.applications.overview}
-              target="_blank"
-              rel="noreferrer"
-              className="underline hover:opacity-80"
-            >
-              Read about certificate applications
-            </a>
-            .
+            issuing certificates until the removal date.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

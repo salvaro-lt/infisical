@@ -65,16 +65,7 @@ export const NativeIntegrationsCreationBlockedModal = ({ isOpen, onOpenChange }:
             Native Integrations are being retired on {NATIVE_INTEGRATION_DEPRECATION_DATE}, and new
             ones can no longer be created. Secret Syncs are the recommended way to sync secrets to
             third-party services. Your existing integrations will keep syncing until the retirement
-            date.{" "}
-            <a
-              href="https://infisical.com/docs/integrations/secret-syncs/native-integrations-migration"
-              target="_blank"
-              rel="noreferrer"
-              className="underline hover:opacity-80"
-            >
-              Read more about the migration to Secret Syncs
-            </a>
-            .
+            date.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

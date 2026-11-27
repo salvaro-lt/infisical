@@ -141,16 +141,7 @@ export const MicrosoftTeamsIntegrationForm = ({ id, onClose, onBack }: Props) =>
     >
       <p className="text-xs text-muted">
         For seamless installations, ensure that the Infisical bot is already installed in your
-        Microsoft Teams tenant. See the{" "}
-        <a
-          className="text-org underline underline-offset-2"
-          href="https://infisical.com/docs/documentation/platform/workflow-integrations/microsoft-teams-integration"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          documentation
-        </a>{" "}
-        for the download and installation process.
+        Microsoft Teams tenant.
       </p>
       <Controller
         control={control}

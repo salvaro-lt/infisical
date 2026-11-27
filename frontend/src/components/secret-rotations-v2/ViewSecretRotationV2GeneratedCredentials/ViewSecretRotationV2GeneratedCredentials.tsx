@@ -291,16 +291,9 @@ const Content = ({ secretRotation }: ContentProps) => {
           <AlertDescription>
             <p>
               Due to {SECRET_ROTATION_MAP[type].name} Rotations utilizing a single credential set,
-              retired credentials will not be able to authenticate with {appName} during their{" "}
-              <a
-                target="_blank"
-                href="https://infisical.com/docs/documentation/platform/secret-rotation/overview#how-rotation-works"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 hover:text-info"
-              >
-                inactive period
-              </a>
-              . This is a limitation of {appName} and cannot be rectified by Infisical.
+              retired credentials will not be able to authenticate with {appName} during their
+              inactive period. This is a limitation of {appName} and cannot be rectified by
+              Infisical.
             </p>
           </AlertDescription>
         </Alert>

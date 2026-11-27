@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 
 import { AssumePrivilegesDialog } from "@app/components/assume-privileges";
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { PageTitle } from "@app/components/PageTitle";
 import { ProjectPermissionCan } from "@app/components/permissions";
@@ -43,7 +42,6 @@ import {
   ProjectPermissionSub,
   useOrganization,
   useProject,
-  useSubscription,
   useUser
 } from "@app/context";
 import {
@@ -56,7 +54,6 @@ import { usePopUp } from "@app/hooks";
 import { useDeleteUserFromWorkspace, useGetWorkspaceUserDetails } from "@app/hooks/api";
 import { ActorType } from "@app/hooks/api/auditLogs/enums";
 import { ProjectType } from "@app/hooks/api/projects/types";
-import { AdditionalPrivilegesRemovedSection } from "@app/pages/project/components/AdditionalPrivilegesRemovedSection";
 import {
   FolderAccessSection,
   hasActiveProjectAdminRole
@@ -76,7 +73,6 @@ export const Page = () => {
   });
   const { currentOrg } = useOrganization();
   const { currentProject, projectId } = useProject();
-  const { subscription } = useSubscription();
   const {
     user: { id: currentUserId }
   } = useUser();
@@ -92,7 +88,6 @@ export const Page = () => {
 
   const { handlePopUpToggle, popUp, handlePopUpOpen, handlePopUpClose } = usePopUp([
     "removeMember",
-    "upgradePlan",
     "assumePrivileges"
   ] as const);
 
@@ -157,7 +152,6 @@ export const Page = () => {
   const isCertManager = currentProject?.type === ProjectType.CertificateManager;
   const projectLabel = getProjectLabel(currentProject?.type);
   const isSecretManager = currentProject.type === ProjectType.SecretManager;
-  const hasFolderRbacPlan = Boolean(subscription?.secretsFolderRbac);
   const canAssumePrivileges = !isCertManager && supportsAssumePrivileges(currentProject.type);
   let memberDisplayName = "Unnamed User";
   if (membershipDetails) {
@@ -290,22 +284,10 @@ export const Page = () => {
               <MemberRoleDetailsSection
                 membershipDetails={membershipDetails}
                 isMembershipDetailsLoading={isMembershipDetailsLoading}
-                onOpenUpgradeModal={() =>
-                  handlePopUpOpen("upgradePlan", {
-                    text: "Assigning custom roles to members can be unlocked if you upgrade to Infisical Enterprise plan.",
-                    isEnterpriseFeature: true
-                  })
-                }
               />
               {!isCertManager && currentProject.isLegacyAdditionalPrivilegesEnabled && (
                 <MemberProjectAdditionalPrivilegeSection membershipDetails={membershipDetails} />
               )}
-              {isSecretManager &&
-                !hasFolderRbacPlan &&
-                !hasActiveProjectAdminRole(membershipDetails.roles) &&
-                !currentProject.isLegacyAdditionalPrivilegesEnabled && (
-                  <AdditionalPrivilegesRemovedSection />
-                )}
               {isSecretManager && !hasActiveProjectAdminRole(membershipDetails.roles) && (
                 <FolderAccessSection
                   actor={{
@@ -345,15 +327,6 @@ export const Page = () => {
             onOpenChange={(isOpen) => handlePopUpToggle("assumePrivileges", isOpen)}
             actorType={ActorType.USER}
             actorId={(popUp.assumePrivileges.data as { userId: string })?.userId}
-          />
-          <UpgradeGate
-            paywallKey="project.member-details-by-id"
-            isOpen={popUp.upgradePlan.isOpen}
-            onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-            intent={{
-              ...CustomRolesUpgradeIntent,
-              isEnterpriseFeature: Boolean(popUp.upgradePlan?.data?.isEnterpriseFeature)
-            }}
           />
           {isPermissionAuditOpen && (
             <MemberPermissionAuditSheet

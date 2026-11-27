@@ -1,16 +1,12 @@
 import crypto from "crypto";
 import { Controller, useForm } from "react-hook-form";
-import { faArrowUpRightFromSquare, faBookOpen } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -53,7 +49,7 @@ export const GitlabAuthorizePage = () => {
     if (!integrationOption) return;
 
     if (!integrationOption.clientId) {
-      createIntegrationMissingEnvVarsNotification(integrationOption.slug, "cicd");
+      createIntegrationMissingEnvVarsNotification();
       return;
     }
 
@@ -86,19 +82,6 @@ export const GitlabAuthorizePage = () => {
             Authorize this integration to sync secrets from Infisical to GitLab. If no self-hosted
             GitLab URL is specified, then Infisical will connect you to GitLab Cloud.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                href="https://infisical.com/docs/integrations/cicd/gitlab"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col gap-5">
           <CardContent>

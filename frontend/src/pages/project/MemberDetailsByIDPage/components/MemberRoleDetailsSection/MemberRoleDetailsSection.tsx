@@ -71,13 +71,11 @@ import { MemberSingleRoleModify } from "./MemberSingleRoleModify";
 type Props = {
   membershipDetails: TWorkspaceUser;
   isMembershipDetailsLoading?: boolean;
-  onOpenUpgradeModal: () => void;
 };
 
 export const MemberRoleDetailsSection = ({
   membershipDetails,
-  isMembershipDetailsLoading,
-  onOpenUpgradeModal
+  isMembershipDetailsLoading
 }: Props) => {
   const scopeVariant = useScopeVariant();
   const { user } = useUser();
@@ -418,7 +416,6 @@ export const MemberRoleDetailsSection = ({
           </SheetHeader>
           <MemberMultiRoleModify
             projectMember={membershipDetails}
-            onOpenUpgradeModal={onOpenUpgradeModal}
             onClose={() => handlePopUpClose("modifyManyRoles")}
           />
         </SheetContent>
@@ -438,7 +435,6 @@ export const MemberRoleDetailsSection = ({
             <MemberSingleRoleModify
               projectMember={membershipDetails}
               role={popUp.modifyRole.data as TWorkspaceUser["roles"][number]}
-              onOpenUpgradeModal={onOpenUpgradeModal}
               onSuccess={() => handlePopUpClose("modifyRole")}
             />
           )}

@@ -1,14 +1,10 @@
 import { useState } from "react";
-import { faArrowUpRightFromSquare, faBookOpen } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate } from "@tanstack/react-router";
 
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -82,19 +78,6 @@ export const CircleCIAuthorizePage = () => {
             After adding your API Token, you will be prompted to set up an integration for a
             particular Infisical project and environment.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://infisical.com/docs/integrations/cicd/circleci"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <Field data-invalid={apiKeyErrorText !== ""}>

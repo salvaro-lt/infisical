@@ -23,7 +23,8 @@ import {
   OrgPermissionMemberActions,
   OrgPermissionSubjects,
   useOrganization,
-  useOrgPermission
+  useOrgPermission,
+  useSubscription
 } from "@app/context";
 import { OrgAccessControlTabSections } from "@app/types/org";
 
@@ -34,6 +35,7 @@ export const AccessManagementPage = () => {
   const { t } = useTranslation();
   const { permission } = useOrgPermission();
   const { currentOrg, isSubOrganization } = useOrganization();
+  const { subscription } = useSubscription();
 
   const navigate = useNavigate({
     from: ROUTE_PATHS.Organization.AccessControlPage.path
@@ -76,16 +78,23 @@ export const AccessManagementPage = () => {
       },
       component: OrgIdentityTab
     },
-    {
-      key: OrgAccessControlTabSections.Groups,
-      label: "Groups",
-      isHidden: permission.cannot(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups),
-      requirement: {
-        action: OrgPermissionGroupActions.Read,
-        subject: OrgPermissionSubjects.Groups
-      },
-      component: OrgGroupsTab
-    },
+    ...(subscription?.groups
+      ? [
+          {
+            key: OrgAccessControlTabSections.Groups,
+            label: "Groups",
+            isHidden: permission.cannot(
+              OrgPermissionGroupActions.Read,
+              OrgPermissionSubjects.Groups
+            ),
+            requirement: {
+              action: OrgPermissionGroupActions.Read,
+              subject: OrgPermissionSubjects.Groups
+            },
+            component: OrgGroupsTab
+          }
+        ]
+      : []),
     {
       key: OrgAccessControlTabSections.Roles,
       label: "Roles",

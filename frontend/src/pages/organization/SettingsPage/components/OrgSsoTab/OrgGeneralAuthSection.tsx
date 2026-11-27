@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
-import { SsoEnforcementUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -47,13 +46,6 @@ enum EnforceAuthType {
   OIDC = "oidc"
 }
 
-const upgradeDescriptions: Record<string, string> = {
-  "enforce SAML SSO": "Require SAML single sign-on for organization members.",
-  "enforce Google OAuth": "Require Google sign-in for organization members.",
-  "OIDC SSO": "Authenticate organization members with OIDC single sign-on.",
-  "Admin SSO Bypass": "Allow organization admins to sign in without single sign-on."
-};
-
 export const OrgGeneralAuthSection = ({
   isSamlConfigured,
   isOidcConfigured,
@@ -72,7 +64,6 @@ export const OrgGeneralAuthSection = ({
   const { currentOrg } = useOrganization();
   const { subscription } = useSubscription();
   const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
-    "upgradePlan",
     "enforceSamlSsoConfirmation"
   ] as const);
 
@@ -141,11 +132,6 @@ export const OrgGeneralAuthSection = ({
     if (!currentOrg?.id) return;
 
     if (type === EnforceAuthType.SAML) {
-      if (!subscription?.samlSSO) {
-        handlePopUpOpen("upgradePlan", { featureName: "enforce SAML SSO", planName: "Pro" });
-        return;
-      }
-
       if (value) {
         setBypassEnabledInModal(true);
         setEnforcementTypeInModal(EnforceAuthType.SAML);
@@ -166,14 +152,6 @@ export const OrgGeneralAuthSection = ({
     }
 
     if (type === EnforceAuthType.GOOGLE) {
-      if (!subscription?.enforceGoogleSSO) {
-        handlePopUpOpen("upgradePlan", {
-          featureName: "enforce Google OAuth",
-          planName: "Advanced"
-        });
-        return;
-      }
-
       if (value) {
         setBypassEnabledInModal(true);
         setEnforcementTypeInModal(EnforceAuthType.GOOGLE);
@@ -191,11 +169,6 @@ export const OrgGeneralAuthSection = ({
         type: "success"
       });
     } else if (type === EnforceAuthType.OIDC) {
-      if (!subscription?.oidcSSO) {
-        handlePopUpOpen("upgradePlan", { featureName: "OIDC SSO", planName: "Enterprise" });
-        return;
-      }
-
       await mutateAsync({
         orgId: currentOrg?.id,
         authEnforced: value
@@ -221,10 +194,6 @@ export const OrgGeneralAuthSection = ({
   const handleEnableBypassOrgAuthToggle = async (value: boolean) => {
     try {
       if (!currentOrg?.id) return;
-      if (!subscription?.samlSSO) {
-        handlePopUpOpen("upgradePlan", { featureName: "Admin SSO Bypass", planName: "Pro" });
-        return;
-      }
 
       await mutateAsync({
         orgId: currentOrg?.id,
@@ -244,6 +213,28 @@ export const OrgGeneralAuthSection = ({
   const isAnySsoEnforced = Boolean(currentOrg?.authEnforced || isGoogleOAuthEnforced);
   const enforcementLabel = enforcementTypeInModal === EnforceAuthType.SAML ? "SAML" : "Google";
 
+  // SAML and Google enforcement are paid; OIDC is implemented by this fork and always offered.
+  const showSamlEnforcement =
+    isSamlConfigured && Boolean(subscription?.samlSSO) && !isGoogleOAuthEnforced;
+  const showOidcEnforcement = isOidcConfigured && !isGoogleOAuthEnforced;
+  const showGoogleEnforcement =
+    isGoogleConfigured &&
+    Boolean(subscription?.enforceGoogleSSO) &&
+    !isSamlActive &&
+    !isOidcActive &&
+    !isLdapActive;
+  const showAdminBypass = Boolean(subscription?.samlSSO) || isOidcConfigured;
+
+  if (
+    !showSamlEnforcement &&
+    !showOidcEnforcement &&
+    !showGoogleEnforcement &&
+    !showAdminBypass &&
+    !subscription?.enforceMfa
+  ) {
+    return null;
+  }
+
   return (
     <>
       <Card>
@@ -257,10 +248,7 @@ export const OrgGeneralAuthSection = ({
         </CardHeader>
         <CardContent>
           <FieldGroup>
-            <Field
-              orientation="horizontal"
-              className={twMerge((!isSamlConfigured || isGoogleOAuthEnforced) && "hidden")}
-            >
+            <Field orientation="horizontal" className={twMerge(!showSamlEnforcement && "hidden")}>
               <FieldContent>
                 <FieldTitle>Enforce SAML SSO</FieldTitle>
                 <FieldDescription>Members can only sign in via SAML.</FieldDescription>
@@ -280,10 +268,7 @@ export const OrgGeneralAuthSection = ({
               </OrgPermissionCan>
             </Field>
 
-            <Field
-              orientation="horizontal"
-              className={twMerge((!isOidcConfigured || isGoogleOAuthEnforced) && "hidden")}
-            >
+            <Field orientation="horizontal" className={twMerge(!showOidcEnforcement && "hidden")}>
               <FieldContent>
                 <FieldTitle>Enforce OIDC SSO</FieldTitle>
                 <FieldDescription>Members can only sign in via OIDC.</FieldDescription>
@@ -303,12 +288,7 @@ export const OrgGeneralAuthSection = ({
               </OrgPermissionCan>
             </Field>
 
-            <Field
-              orientation="horizontal"
-              className={twMerge(
-                (!isGoogleConfigured || isSamlActive || isOidcActive || isLdapActive) && "hidden"
-              )}
-            >
+            <Field orientation="horizontal" className={twMerge(!showGoogleEnforcement && "hidden")}>
               <FieldContent>
                 <FieldTitle>Enforce Google OAuth</FieldTitle>
                 <FieldDescription>Members can only sign in via Google OAuth.</FieldDescription>
@@ -328,7 +308,9 @@ export const OrgGeneralAuthSection = ({
               </OrgPermissionCan>
             </Field>
 
-            <div className="ml-1 border-l border-border pl-4">
+            <div
+              className={twMerge("ml-1 border-l border-border pl-4", !showAdminBypass && "hidden")}
+            >
               <Field orientation="horizontal">
                 <FieldContent>
                   <FieldTitle>Admin SSO Bypass</FieldTitle>
@@ -361,15 +343,20 @@ export const OrgGeneralAuthSection = ({
                 <Alert variant="warning" className="mt-3">
                   <AlertTriangle />
                   <AlertDescription>
-                    Org MFA is off, so bypass is password-only.{" "}
-                    <Link
-                      to="/organizations/$orgId/settings"
-                      params={{ orgId: currentOrg.id }}
-                      search={{ selectedTab: "tab-org-security" }}
-                      className="underline underline-offset-2 hover:text-foreground"
-                    >
-                      Enforce MFA
-                    </Link>
+                    Org MFA is off, so bypass is password-only.
+                    {subscription?.enforceMfa && (
+                      <>
+                        {" "}
+                        <Link
+                          to="/organizations/$orgId/settings"
+                          params={{ orgId: currentOrg.id }}
+                          search={{ selectedTab: "tab-org-security" }}
+                          className="underline underline-offset-2 hover:text-foreground"
+                        >
+                          Enforce MFA
+                        </Link>
+                      </>
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
@@ -379,19 +366,6 @@ export const OrgGeneralAuthSection = ({
           </FieldGroup>
         </CardContent>
       </Card>
-
-      <UpgradeGate
-        paywallKey="organization.org-general-auth"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...SsoEnforcementUpgradeIntent,
-          description:
-            upgradeDescriptions[popUp.upgradePlan.data?.featureName ?? ""] ??
-            SsoEnforcementUpgradeIntent.description,
-          isEnterpriseFeature: popUp.upgradePlan.data?.planName === "Enterprise"
-        }}
-      />
 
       <Dialog
         open={popUp.enforceSamlSsoConfirmation.isOpen}

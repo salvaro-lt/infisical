@@ -30,6 +30,7 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@app/components/v3";
+import { useSubscription } from "@app/context";
 import type {
   SecretsAddResourceAction,
   SecretsAddResourceMenuLevel,
@@ -126,6 +127,7 @@ export function AddResourceButtons({
   canCreateHoneyTokens,
   canCreateSecretSyncs
 }: AddResourceButtonsProps) {
+  const { subscription } = useSubscription();
   const selectAction = (action: SecretsAddResourceAction, callback: () => void) => () => {
     onActionSelect(action, variant);
     callback();
@@ -200,40 +202,46 @@ export function AddResourceButtons({
             Import Secrets
           </DropdownMenuItem>
         </MenuItemTooltip>
-        <MenuItemTooltip isDisabled={!isDyanmicSecretAvailable} content="Access Restricted">
-          <DropdownMenuItem
-            onClick={selectAction("dynamic-secret", onAddDyanamicSecret)}
-            isDisabled={!isDyanmicSecretAvailable}
-          >
-            <FingerprintIcon className="text-dynamic-secret" />
-            Add Dynamic Secret
-          </DropdownMenuItem>
-        </MenuItemTooltip>
-        <MenuItemTooltip isDisabled={!isSecretRotationAvailable} content="Access Restricted">
-          <DropdownMenuItem
-            onClick={selectAction("secret-rotation", onAddSecretRotation)}
-            isDisabled={!isSecretRotationAvailable}
-          >
-            <RefreshCwIcon className="text-secret-rotation" />
-            Add Secret Rotation
-          </DropdownMenuItem>
-        </MenuItemTooltip>
+        {subscription?.dynamicSecret && (
+          <MenuItemTooltip isDisabled={!isDyanmicSecretAvailable} content="Access Restricted">
+            <DropdownMenuItem
+              onClick={selectAction("dynamic-secret", onAddDyanamicSecret)}
+              isDisabled={!isDyanmicSecretAvailable}
+            >
+              <FingerprintIcon className="text-dynamic-secret" />
+              Add Dynamic Secret
+            </DropdownMenuItem>
+          </MenuItemTooltip>
+        )}
+        {subscription?.secretRotation && (
+          <MenuItemTooltip isDisabled={!isSecretRotationAvailable} content="Access Restricted">
+            <DropdownMenuItem
+              onClick={selectAction("secret-rotation", onAddSecretRotation)}
+              isDisabled={!isSecretRotationAvailable}
+            >
+              <RefreshCwIcon className="text-secret-rotation" />
+              Add Secret Rotation
+            </DropdownMenuItem>
+          </MenuItemTooltip>
+        )}
         <DropdownMenuItem onClick={selectAction("proxied-service", onAddProxiedService)}>
           <ChevronsLeftRightEllipsisIcon className="text-proxied-service" />
           Add Proxied Service
         </DropdownMenuItem>
-        <MenuItemTooltip
-          isDisabled={!isHoneyTokenAvailable || !canCreateHoneyTokens}
-          content="Access Restricted"
-        >
-          <DropdownMenuItem
-            onClick={selectAction("honey-token", onAddHoneyToken)}
+        {subscription?.honeyTokens && (
+          <MenuItemTooltip
             isDisabled={!isHoneyTokenAvailable || !canCreateHoneyTokens}
+            content="Access Restricted"
           >
-            <HexagonIcon className="text-warning" />
-            Add Honey Token
-          </DropdownMenuItem>
-        </MenuItemTooltip>
+            <DropdownMenuItem
+              onClick={selectAction("honey-token", onAddHoneyToken)}
+              isDisabled={!isHoneyTokenAvailable || !canCreateHoneyTokens}
+            >
+              <HexagonIcon className="text-warning" />
+              Add Honey Token
+            </DropdownMenuItem>
+          </MenuItemTooltip>
+        )}
         <DropdownMenuSub onOpenChange={(isOpen) => isOpen && onMenuOpen(variant, "more")}>
           <DropdownMenuSubTrigger>
             <ListPlusIcon />

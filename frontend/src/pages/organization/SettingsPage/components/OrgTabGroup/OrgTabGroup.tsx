@@ -47,7 +47,8 @@ export const OrgTabGroup = () => {
       component: OrgEncryptionTab,
       description: `Configure the key management systems (KMS) used to encrypt your ${
         isSubOrganization ? "sub-" : ""
-      }organization's data.`
+      }organization's data.`,
+      requiresFeature: !subscription?.externalKms
     },
     {
       name: "Sub Organizations",
@@ -91,17 +92,23 @@ export const OrgTabGroup = () => {
             <AlertTitle>Some Settings Have Moved</AlertTitle>
             <AlertDescription>
               <p>
-                Audit log streams now live under{" "}
-                <Link
-                  to="/organizations/$orgId/audit-logs"
-                  params={{ orgId: currentOrg.id }}
-                  search={{ selectedTab: "streams" }}
-                  className="underline hover:opacity-80"
-                >
-                  Audit Logs
-                </Link>
-                , and workflow integrations, OAuth applications, and external migrations have moved
-                to{" "}
+                {subscription?.auditLogStreams ? (
+                  <>
+                    Audit log streams now live under{" "}
+                    <Link
+                      to="/organizations/$orgId/audit-logs"
+                      params={{ orgId: currentOrg.id }}
+                      search={{ selectedTab: "streams" }}
+                      className="underline hover:opacity-80"
+                    >
+                      Audit Logs
+                    </Link>
+                    , and workflow integrations
+                  </>
+                ) : (
+                  "Workflow integrations"
+                )}
+                , OAuth applications, and external migrations have moved to{" "}
                 <Link
                   to="/organizations/$orgId/integrations"
                   params={{ orgId: currentOrg.id }}

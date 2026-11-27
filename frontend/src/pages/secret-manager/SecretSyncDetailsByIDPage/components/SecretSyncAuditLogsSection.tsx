@@ -1,5 +1,4 @@
-import { Link } from "@tanstack/react-router";
-import { FingerprintIcon, RefreshCwIcon } from "lucide-react";
+import { RefreshCwIcon } from "lucide-react";
 
 import { createNotification } from "@app/components/notifications";
 import { ProjectPermissionCan } from "@app/components/permissions";
@@ -10,14 +9,9 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle
+  CardTitle
 } from "@app/components/v3";
-import { useOrganization, useProject, useSubscription } from "@app/context";
+import { useProject, useSubscription } from "@app/context";
 import { ProjectPermissionSecretSyncActions } from "@app/context/ProjectPermissionContext/types";
 import { SECRET_SYNC_MAP } from "@app/helpers/secretSyncs";
 import { EventType } from "@app/hooks/api/auditLogs/enums";
@@ -37,7 +31,6 @@ type Props = {
 
 export const SecretSyncAuditLogsSection = ({ secretSync }: Props) => {
   const { subscription } = useSubscription();
-  const { currentOrg } = useOrganization();
   const { currentProject } = useProject();
 
   const triggerSyncSecrets = useTriggerSecretSyncSyncSecrets();
@@ -62,15 +55,15 @@ export const SecretSyncAuditLogsSection = ({ secretSync }: Props) => {
     });
   };
 
+  if (!subscription?.auditLogs) return null;
+
   return (
     <Card className="max-h-full min-w-0">
       <CardHeader>
         <CardTitle>Sync Logs</CardTitle>
-        {subscription.auditLogs && (
-          <CardDescription>
-            Displaying audit logs from the last {Math.min(auditLogsRetentionDays, 60)} days
-          </CardDescription>
-        )}
+        <CardDescription>
+          Displaying audit logs from the last {Math.min(auditLogsRetentionDays, 60)} days
+        </CardDescription>
         <CardAction>
           <ProjectPermissionCan
             I={ProjectPermissionSecretSyncActions.SyncSecrets}
@@ -91,50 +84,18 @@ export const SecretSyncAuditLogsSection = ({ secretSync }: Props) => {
         </CardAction>
       </CardHeader>
       <CardContent>
-        {subscription.auditLogs ? (
-          <LogsSection
-            refetchInterval={15_000}
-            showFilters={false}
-            project={currentProject}
-            presets={{
-              eventMetadata: { syncId: secretSync.id },
-              startDate: new Date(
-                new Date().setDate(new Date().getDate() - Math.min(auditLogsRetentionDays, 60))
-              ),
-              eventType: INTEGRATION_EVENTS
-            }}
-          />
-        ) : (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <FingerprintIcon />
-              </EmptyMedia>
-              <EmptyTitle>Audit logs require an upgrade</EmptyTitle>
-              <EmptyDescription>
-                {subscription && subscription.slug !== null ? (
-                  <Link
-                    to="/organizations/$orgId/billing"
-                    params={{ orgId: currentOrg.id }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Upgrade your subscription
-                  </Link>
-                ) : (
-                  <a
-                    href="https://infisical.com/scheduledemo"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Upgrade your subscription
-                  </a>
-                )}{" "}
-                to view sync logs.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        )}
+        <LogsSection
+          refetchInterval={15_000}
+          showFilters={false}
+          project={currentProject}
+          presets={{
+            eventMetadata: { syncId: secretSync.id },
+            startDate: new Date(
+              new Date().setDate(new Date().getDate() - Math.min(auditLogsRetentionDays, 60))
+            ),
+            eventType: INTEGRATION_EVENTS
+          }}
+        />
       </CardContent>
     </Card>
   );

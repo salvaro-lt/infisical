@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { GitBranch } from "lucide-react";
 
-import { GithubSyncUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -36,7 +35,6 @@ import { GithubOrgSyncConfigModal } from "./GithubOrgSyncConfigModal";
 export const OrgGithubSyncSection = () => {
   const { subscription } = useSubscription();
   const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
-    "upgradePlan",
     "githubOrgSyncConfig",
     "deleteGithubOrgSyncConfig"
   ] as const);
@@ -86,6 +84,8 @@ export const OrgGithubSyncSection = () => {
     });
   };
 
+  if (!subscription?.githubOrgSync) return null;
+
   return (
     <>
       <Card>
@@ -102,13 +102,7 @@ export const OrgGithubSyncSection = () => {
                   variant="outline"
                   isDisabled={!isAllowed}
                   isPending={isPending}
-                  onClick={() =>
-                    subscription.githubOrgSync
-                      ? handlePopUpOpen("githubOrgSyncConfig")
-                      : handlePopUpOpen("upgradePlan", {
-                          isEnterpriseFeature: true
-                        })
-                  }
+                  onClick={() => handlePopUpOpen("githubOrgSyncConfig")}
                 >
                   Configure
                 </Button>
@@ -188,15 +182,6 @@ export const OrgGithubSyncSection = () => {
         popUp={popUp}
         handlePopUpOpen={handlePopUpOpen}
         handlePopUpToggle={handlePopUpToggle}
-      />
-      <UpgradeGate
-        paywallKey="organization.org-github-sync"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...GithubSyncUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
       />
     </>
   );

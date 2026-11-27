@@ -1,7 +1,5 @@
 import { ReactNode } from "react";
-import { BookOpen } from "lucide-react";
 
-import { Button } from "@app/components/v3";
 import { cn } from "@app/components/v3/utils";
 
 import { AuthPageBackground } from "./AuthPageBackground";
@@ -19,6 +17,7 @@ type Props = {
   children: ReactNode;
   contentClassName?: string;
   headerAction?: ReactNode;
+  /** No-op: this build shows no documentation link. Kept so existing callers compile. */
   onDocumentationClick?: () => void;
   showFooter?: boolean;
   variant?: "focused" | "split";
@@ -31,7 +30,6 @@ export const AuthPageLayout = ({
   children,
   contentClassName,
   headerAction,
-  onDocumentationClick,
   showFooter = true,
   variant = "split"
 }: Props) => {
@@ -82,19 +80,7 @@ export const AuthPageLayout = ({
       {isSplit && (
         <aside className="relative hidden h-dvh min-w-0 overflow-hidden lg:sticky lg:top-0 lg:flex lg:flex-col">
           <AuthPageBackground />
-          <div className="relative z-10 flex h-16 items-center justify-end px-8 xl:px-12">
-            <Button asChild variant="outline" size="sm">
-              <a
-                href="https://infisical.com/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={onDocumentationClick}
-              >
-                <BookOpen />
-                Documentation
-              </a>
-            </Button>
-          </div>
+          <div className="relative z-10 h-16" />
 
           <div className="relative z-10 flex flex-1 items-center justify-center px-10 pb-16 xl:px-20">
             <div className="max-w-xl">

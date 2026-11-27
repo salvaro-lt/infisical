@@ -1,7 +1,6 @@
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
 
 import {
-  Badge,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +19,8 @@ import { getChannelIcon } from "./channelIcons";
 type Props = {
   onAdd: (channelType: AlertChannelType) => void;
   isDisabled?: boolean;
+  // Channel types the plan doesn't include; they're left out of the menu.
   lockedChannelTypes?: AlertChannelType[];
-  onLockedSelect?: () => void;
   label?: string;
   contentClassName?: string;
 };
@@ -30,7 +29,6 @@ export const AddChannelMenu = ({
   onAdd,
   isDisabled,
   lockedChannelTypes = [],
-  onLockedSelect,
   label = "Add channel",
   contentClassName = "w-[var(--radix-dropdown-menu-trigger-width)]"
 }: Props) => {
@@ -56,21 +54,14 @@ export const AddChannelMenu = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={4} className={contentClassName}>
-        {ADD_MENU_CHANNEL_TYPES.map((channelType) => {
+        {ADD_MENU_CHANNEL_TYPES.filter(
+          (channelType) => !lockedChannelTypes.includes(channelType)
+        ).map((channelType) => {
           const Icon = getChannelIcon(channelType);
-          const isLocked = lockedChannelTypes.includes(channelType);
           return (
-            <DropdownMenuItem
-              key={channelType}
-              onClick={() => (isLocked ? onLockedSelect?.() : addChannel(channelType))}
-            >
+            <DropdownMenuItem key={channelType} onClick={() => addChannel(channelType)}>
               <Icon className="size-4" />
               {ALERT_CHANNEL_TYPE_LABELS[channelType]}
-              {isLocked && (
-                <Badge variant="neutral" className="ml-auto">
-                  Enterprise
-                </Badge>
-              )}
             </DropdownMenuItem>
           );
         })}

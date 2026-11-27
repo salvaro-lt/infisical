@@ -4,13 +4,8 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Info, PencilIcon, Plus, ShieldCheck, Trash2 } from "lucide-react";
 
-import {
-  PostQuantumCertificatesUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import {
-  Badge,
   Button,
   Checkbox,
   DocumentationLinkBadge,
@@ -501,7 +496,6 @@ export const CertificatePolicyWizard = forwardRef<CertificatePolicyWizardHandle,
   ) => {
     const { currentProject } = useProject();
     const { subscription } = useSubscription();
-    const { openUpgradeGate, upgradeGate } = useUpgradeGate();
     const createPolicy = useCreateCertificatePolicy();
     const updatePolicy = useUpdateCertificatePolicy();
 
@@ -1230,6 +1224,8 @@ export const CertificatePolicyWizard = forwardRef<CertificatePolicyWizardHandle,
         {options.map((alg) => {
           const isSelected = selected.includes(alg);
           const isPqcGated = isPqcAlgorithm(alg) && !subscription?.pkiPqc;
+          // A PQC algorithm off-plan is hidden unless an existing policy already allows it.
+          if (isPqcGated && !isSelected) return null;
           return (
             <div key={alg} className="flex items-center gap-3">
               <Checkbox
@@ -1237,13 +1233,6 @@ export const CertificatePolicyWizard = forwardRef<CertificatePolicyWizardHandle,
                 variant="project"
                 isChecked={isSelected}
                 onCheckedChange={(checked) => {
-                  if (isPqcGated && checked) {
-                    openUpgradeGate({
-                      intent: PostQuantumCertificatesUpgradeIntent,
-                      paywallKey: "cert-manager.policy-algorithm"
-                    });
-                    return;
-                  }
                   toggleAlgorithm(fieldName, key, selected, alg, Boolean(checked));
                 }}
               />
@@ -1252,7 +1241,6 @@ export const CertificatePolicyWizard = forwardRef<CertificatePolicyWizardHandle,
                 className="flex cursor-pointer items-center gap-2 text-sm text-foreground"
               >
                 {alg}
-                {isPqcGated && <Badge variant="info">Enterprise</Badge>}
               </label>
             </div>
           );
@@ -1906,7 +1894,6 @@ export const CertificatePolicyWizard = forwardRef<CertificatePolicyWizardHandle,
             </SectionToggle>
           </div>
         )}
-        {upgradeGate}
       </div>
     );
   }

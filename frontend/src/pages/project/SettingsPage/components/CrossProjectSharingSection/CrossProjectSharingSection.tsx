@@ -14,10 +14,6 @@ import {
   TrashIcon
 } from "lucide-react";
 
-import {
-  CrossProjectSecretSharingUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { PermissionDeniedBanner } from "@app/components/permissions";
 import {
@@ -218,7 +214,6 @@ export const CrossProjectSharingSection = () => {
   const { currentProject } = useProject();
   const { permission } = useProjectPermission();
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const canEditGrants =
     permission.can(
       ProjectPermissionProjectFolderGrantActions.CreateGrant,
@@ -415,13 +410,6 @@ export const CrossProjectSharingSection = () => {
               variant="project"
               size="sm"
               onClick={() => {
-                if (!subscription?.crossProjectSecretSharing) {
-                  openUpgradeGate({
-                    intent: CrossProjectSecretSharingUpgradeIntent,
-                    paywallKey: "project.cross-project-sharing"
-                  });
-                  return;
-                }
                 setEditData(null);
                 setIsShareSheetOpen(true);
               }}
@@ -464,7 +452,6 @@ export const CrossProjectSharingSection = () => {
         }}
         sourceProjectId={currentProject.id}
       />
-      {upgradeGate}
     </Card>
   );
 };

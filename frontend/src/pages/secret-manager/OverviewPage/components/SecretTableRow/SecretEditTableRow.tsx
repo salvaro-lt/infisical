@@ -210,7 +210,6 @@ type Props = {
   pendingKeyName?: string;
   revokedProjectFolderGrant?: boolean;
   onCopySecret?: () => void;
-  onAccessInsightsUpgrade: (onGranted: () => void) => void;
   onExpandedChange?: (isExpanded: boolean) => void;
   lastEdited?: Pick<SecretV3RawSanitized, "createdAt" | "updatedAt" | "version">;
   timestampField?: "createdAt" | "updatedAt";
@@ -260,7 +259,6 @@ export const SecretEditTableRow = ({
   pendingKeyName,
   revokedProjectFolderGrant,
   onCopySecret,
-  onAccessInsightsUpgrade,
   onExpandedChange,
   nameCellContent,
   initialAction,
@@ -2162,35 +2160,31 @@ export const SecretEditTableRow = ({
                   </Tooltip>
                 )}
               </ProjectPermissionCan>
-              <Tooltip
-                open={isPendingBatchChange || isImportedSecret || isCreatable ? undefined : false}
-              >
-                <TooltipTrigger className="block w-full">
-                  <DropdownMenuItem
-                    className="px-2.5 py-1.5"
-                    onClick={() => {
-                      if (!subscription?.secretAccessInsights) {
-                        onAccessInsightsUpgrade(() => setIsAccessInsightsOpen(true));
-                      } else {
-                        setIsAccessInsightsOpen(true);
+              {subscription?.secretAccessInsights && (
+                <Tooltip
+                  open={isPendingBatchChange || isImportedSecret || isCreatable ? undefined : false}
+                >
+                  <TooltipTrigger className="block w-full">
+                    <DropdownMenuItem
+                      className="px-2.5 py-1.5"
+                      onClick={() => setIsAccessInsightsOpen(true)}
+                      isDisabled={
+                        isPendingBatchChange || !secretId || isCreatable || isImportedSecret
                       }
-                    }}
-                    isDisabled={
-                      isPendingBatchChange || !secretId || isCreatable || isImportedSecret
-                    }
-                  >
-                    <UsersIcon />
-                    View Access
-                  </DropdownMenuItem>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  {isPendingBatchChange
-                    ? "Discard Pending Changes First"
-                    : isImportedSecret
-                      ? "Cannot View Access for Imported Secret"
-                      : "Create Secret to View Access"}
-                </TooltipContent>
-              </Tooltip>
+                    >
+                      <UsersIcon />
+                      View Access
+                    </DropdownMenuItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    {isPendingBatchChange
+                      ? "Discard Pending Changes First"
+                      : isImportedSecret
+                        ? "Cannot View Access for Imported Secret"
+                        : "Create Secret to View Access"}
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
               <div className="my-1" />
               <DropdownMenuLabel className="px-2.5 py-0.5 text-[10px]">Manage</DropdownMenuLabel>

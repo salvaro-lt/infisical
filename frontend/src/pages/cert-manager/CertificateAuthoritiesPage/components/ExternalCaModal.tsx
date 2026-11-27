@@ -4,13 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import slugify from "@sindresorhus/slugify";
 import { ArrowLeftIcon, Loader2Icon, Lock, type LucideIcon, Search } from "lucide-react";
 
-import {
-  ExternalCertificateAuthoritiesUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import {
-  Badge,
   Button,
   DiscardChangesAlertDialog,
   Field,
@@ -189,15 +184,7 @@ const CA_TYPE_MEDIA: Partial<Record<CaType, Pick<ExternalCaOption, "image" | "ic
     EXTERNAL_CA_OPTIONS.map((option) => [option.type, { image: option.image, icon: option.icon }])
   );
 
-const CaTypeCard = ({
-  option,
-  onClick,
-  isLocked
-}: {
-  option: ExternalCaOption;
-  onClick: () => void;
-  isLocked?: boolean;
-}) => {
+const CaTypeCard = ({ option, onClick }: { option: ExternalCaOption; onClick: () => void }) => {
   const Icon = option.icon;
   return (
     <button
@@ -217,13 +204,9 @@ const CaTypeCard = ({
             Icon && <Icon className="h-5 w-5 text-foreground" />
           )}
         </div>
-        {isLocked ? (
-          <Badge variant="info">Enterprise</Badge>
-        ) : (
-          <span className="text-[10px] font-medium tracking-wider text-muted uppercase">
-            {option.category}
-          </span>
-        )}
+        <span className="text-[10px] font-medium tracking-wider text-muted uppercase">
+          {option.category}
+        </span>
       </div>
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold text-foreground">{option.name}</p>
@@ -236,7 +219,6 @@ const CaTypeCard = ({
 export const ExternalCaModal = ({ popUp, handlePopUpToggle, onComplete }: Props) => {
   const { currentProject } = useProject();
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
   const { data: ca, isLoading: isCaLoading } = useGetCa({
     caId: (popUp?.ca?.data as { caId: string })?.caId || "",
@@ -395,13 +377,6 @@ export const ExternalCaModal = ({ popUp, handlePopUpToggle, onComplete }: Props)
     type !== CaType.ACME && !subscription.pkiEnterpriseCaIntegrations;
 
   const handleSelectType = (type: CaType) => {
-    if (isCaTypeLocked(type)) {
-      openUpgradeGate({
-        intent: ExternalCertificateAuthoritiesUpgradeIntent,
-        paywallKey: "cert-manager.external-ca-type"
-      });
-      return;
-    }
     reset(getInitialValuesForType(type));
     setSelectedType(type);
   };
@@ -974,6 +949,7 @@ export const ExternalCaModal = ({ popUp, handlePopUpToggle, onComplete }: Props)
   }`;
 
   const filteredCaOptions = EXTERNAL_CA_OPTIONS.filter((option) => {
+    if (isCaTypeLocked(option.type)) return false;
     const query = search.trim().toLowerCase();
     if (!query) return true;
     return (
@@ -1064,7 +1040,6 @@ export const ExternalCaModal = ({ popUp, handlePopUpToggle, onComplete }: Props)
                     key={option.type}
                     option={option}
                     onClick={() => handleSelectType(option.type)}
-                    isLocked={isCaTypeLocked(option.type)}
                   />
                 ))}
               </div>
@@ -1215,7 +1190,6 @@ export const ExternalCaModal = ({ popUp, handlePopUpToggle, onComplete }: Props)
         title="Discard Changes?"
         description="Your certificate authority configuration changes will be lost."
       />
-      {upgradeGate}
     </>
   );
 };

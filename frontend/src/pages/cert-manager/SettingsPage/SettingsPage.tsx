@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { PageTitle } from "@app/components/PageTitle";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import { PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from "@app/components/v3";
-import { ProjectPermissionActions, ProjectPermissionSub } from "@app/context";
+import { ProjectPermissionActions, ProjectPermissionSub, useSubscription } from "@app/context";
 import {
   ProjectPermissionAppConnectionActions,
   ProjectPermissionHsmConnectorActions
@@ -21,6 +21,8 @@ export const SettingsPage = () => {
   const { orgId } = useParams({ strict: false });
   const search = useSearch({ strict: false }) as { selectedTab?: string };
   const navigate = useNavigate();
+  const { subscription } = useSubscription();
+  const isHsmLicensed = Boolean(subscription?.hsm);
   const { data: instanceState } = useCertManagerInstanceState();
   const isMultiInstance = Boolean(instanceState?.isMultiInstance);
   const activeTab = search.selectedTab ?? "app-connections";
@@ -32,7 +34,11 @@ export const SettingsPage = () => {
         <PageHeader
           scope={ProjectType.CertificateManager}
           title="Settings"
-          description="Configure app connections, HSM connectors, cleanup rules, and alerts."
+          description={
+            isHsmLicensed
+              ? "Configure app connections, HSM connectors, cleanup rules, and alerts."
+              : "Configure app connections, cleanup rules, and alerts."
+          }
         />
 
         <Tabs
@@ -47,7 +53,7 @@ export const SettingsPage = () => {
         >
           <TabsList variant="project" aria-label="Certificate Manager settings sections">
             <TabsTrigger value="app-connections">App Connections</TabsTrigger>
-            <TabsTrigger value="hsm-connectors">HSM Connectors</TabsTrigger>
+            {isHsmLicensed && <TabsTrigger value="hsm-connectors">HSM Connectors</TabsTrigger>}
             <TabsTrigger value="cleanup">Cleanup</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
             {isMultiInstance && <TabsTrigger value="projects">Projects</TabsTrigger>}
@@ -63,15 +69,17 @@ export const SettingsPage = () => {
             </ProjectPermissionCan>
           </TabsContent>
 
-          <TabsContent value="hsm-connectors">
-            <ProjectPermissionCan
-              renderGuardBanner
-              I={ProjectPermissionHsmConnectorActions.Read}
-              a={ProjectPermissionSub.HsmConnectors}
-            >
-              <HsmConnectorsTab />
-            </ProjectPermissionCan>
-          </TabsContent>
+          {isHsmLicensed && (
+            <TabsContent value="hsm-connectors">
+              <ProjectPermissionCan
+                renderGuardBanner
+                I={ProjectPermissionHsmConnectorActions.Read}
+                a={ProjectPermissionSub.HsmConnectors}
+              >
+                <HsmConnectorsTab />
+              </ProjectPermissionCan>
+            </TabsContent>
+          )}
 
           <TabsContent value="cleanup">
             <CertificateCleanupTab />

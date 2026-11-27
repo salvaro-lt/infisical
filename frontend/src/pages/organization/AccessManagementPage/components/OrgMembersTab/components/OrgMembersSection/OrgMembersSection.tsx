@@ -3,7 +3,6 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { BanIcon, TrashIcon, UserPlusIcon } from "lucide-react";
 
 import { EmailServiceSetupModal } from "@app/components/auth/EmailServiceSetupModal";
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -58,7 +57,6 @@ export const OrgMembersSection = () => {
     "addMemberToSubOrg",
     "removeMember",
     "deactivateMember",
-    "upgradePlan",
     "setUpEmail",
     "removeMembers"
   ] as const);
@@ -298,15 +296,6 @@ export const OrgMembersSection = () => {
           </div>
         </div>
       </ConfirmationAlertDialog>
-      <UpgradeGate
-        paywallKey="organization.org-members"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan?.data?.isEnterpriseFeature)
-        }}
-      />
       <EmailServiceSetupModal
         isOpen={popUp.setUpEmail?.isOpen}
         onOpenChange={(isOpen) => handlePopUpToggle("setUpEmail", isOpen)}

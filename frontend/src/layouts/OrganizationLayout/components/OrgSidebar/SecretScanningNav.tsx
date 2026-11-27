@@ -62,7 +62,12 @@ export const SecretScanningNav = ({
       activeMatch: /\/groups\/|\/identities\/|\/members\/|\/roles\//,
       submenu: PROJECT_ACCESS_CONTROL_SUBMENU
     },
-    { label: "Audit Logs", icon: FileText, pathSuffix: "audit-logs" },
+    {
+      label: "Audit Logs",
+      icon: FileText,
+      pathSuffix: "audit-logs",
+      hidden: !subscription?.auditLogs
+    },
     {
       label: "Settings",
       icon: Settings,

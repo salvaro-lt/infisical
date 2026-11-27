@@ -132,22 +132,9 @@ export const SecretRotationV2ConnectionField = ({ onChange: callback, isUpdate }
             <FieldFeedback
               id="secret-rotation-connection-feedback"
               description={
-                isUpdate ? (
-                  "Cannot be updated"
-                ) : (
-                  <>
-                    Check out{" "}
-                    <a
-                      href={`https://infisical.com/docs/integrations/app-connections/${value?.app ?? app}`}
-                      target="_blank"
-                      className="underline"
-                      rel="noopener noreferrer"
-                    >
-                      our docs
-                    </a>{" "}
-                    to ensure your connection has the required permissions for secret rotation.
-                  </>
-                )
+                isUpdate
+                  ? "Cannot be updated"
+                  : "Ensure your connection has the required permissions for secret rotation."
               }
               error={error?.message}
             />

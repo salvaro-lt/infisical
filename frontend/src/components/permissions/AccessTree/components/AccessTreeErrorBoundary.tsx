@@ -41,16 +41,8 @@ const ErrorDisplay = ({
       <div className="flex items-center gap-2 text-foreground">
         <TriangleAlertIcon className="size-4 shrink-0 text-danger" />
         <p>
-          Error displaying access tree. Please contact{" "}
-          <a
-            className="inline text-accent underline decoration-accent underline-offset-4 transition-colors hover:text-foreground"
-            target="_blank"
-            rel="noopener noreferrer"
-            href="mailto:support@infisical.com"
-          >
-            support@infisical.com
-          </a>{" "}
-          with the following information.
+          Error displaying access tree. Share the following information with your instance
+          administrator.
         </p>
       </div>
       <div className="relative flex flex-1 flex-col overflow-hidden">

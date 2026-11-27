@@ -1,12 +1,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { Button, PageLoader } from "@app/components/v3";
-import { useProject, useSubscription } from "@app/context";
-import { isCustomProjectRole } from "@app/helpers/roles";
-import { usePopUp, useScopeVariant } from "@app/hooks";
+import { useProject } from "@app/context";
+import { useScopeVariant } from "@app/hooks";
 import { useUpdateProjectIdentityMembership } from "@app/hooks/api";
 import { IdentityProjectMembershipV1 } from "@app/hooks/api/identities/types";
 
@@ -30,14 +28,8 @@ type Props = {
 export const IdentitySingleRoleModify = ({ identityProjectMembership, role, onSuccess }: Props) => {
   const scopeVariant = useScopeVariant();
   const { projectId, currentProject } = useProject();
-  const { subscription } = useSubscription();
   const { isRolesLoading, assignableRoleSlugs, getRolesForSelect, isEditDisabled } =
     useIdentityRoleGrant(identityProjectMembership);
-  const {
-    popUp: upgradePlanPopUp,
-    handlePopUpOpen: handleUpgradePlanPopUpOpen,
-    handlePopUpToggle: handleUpgradePlanPopUpToggle
-  } = usePopUp(["upgradePlan"] as const);
   const updateProjectIdentityMembership = useUpdateProjectIdentityMembership();
 
   const roleForm = useForm<TIdentityRoleForm>({
@@ -50,11 +42,6 @@ export const IdentitySingleRoleModify = ({ identityProjectMembership, role, onSu
 
     const [updatedRole] = data.roles;
     if (!updatedRole) return;
-
-    if (isCustomProjectRole(updatedRole.slug) && subscription && !subscription.rbac) {
-      handleUpgradePlanPopUpOpen("upgradePlan");
-      return;
-    }
 
     const updatedRolePayload = identityRoleFormAssignmentToPayload(updatedRole);
     const roles = identityProjectMembership.roles.map((existingRole) =>
@@ -101,15 +88,6 @@ export const IdentitySingleRoleModify = ({ identityProjectMembership, role, onSu
           Save Role
         </Button>
       </div>
-      <UpgradeGate
-        paywallKey="project.identity-single-role-modify"
-        isOpen={upgradePlanPopUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handleUpgradePlanPopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: true
-        }}
-      />
     </form>
   );
 };

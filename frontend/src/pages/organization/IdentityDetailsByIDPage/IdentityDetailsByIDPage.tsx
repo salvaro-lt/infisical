@@ -64,7 +64,6 @@ const Page = () => {
     "identity",
     "deleteIdentity",
     "identityAuthMethod",
-    "upgradePlan",
     "viewAuthMethod"
   ] as const);
 
@@ -235,11 +234,7 @@ const Page = () => {
           <OrgIdentityModal popUp={popUp} handlePopUpToggle={handlePopUpToggle} />
         </DialogContent>
       </Dialog>
-      <IdentityAuthMethodModal
-        popUp={popUp}
-        handlePopUpOpen={handlePopUpOpen}
-        handlePopUpToggle={handlePopUpToggle}
-      />
+      <IdentityAuthMethodModal popUp={popUp} handlePopUpToggle={handlePopUpToggle} />
       <ConfirmationAlertDialog
         isOpen={popUp.deleteIdentity.isOpen}
         title={`Are you sure you want to delete ${

@@ -1,4 +1,4 @@
-import { ExternalLink, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 
 import { PreviewBadge } from "@app/components/agent-vault/PreviewBadge";
 import {
@@ -11,16 +11,10 @@ import {
   IconButton
 } from "@app/components/v3";
 import { ProjectType } from "@app/hooks/api/projects/types";
-import { AgentVaultDocsUrls } from "@app/pages/agent-vault/agent-vault-docs-urls";
 
 const PARAGRAPHS = [
   "Run AI agents with the access, context, and capabilities they need to do work. Today that means secure access to the services they call: LLM providers, GitHub, Slack, and more.",
   "You describe what an agent may reach in an access bundle and grant it to whoever runs agents. They create a session to launch with, and a proxy in your network attaches the real credential on the way out, only for the services you allowed and only until the session expires."
-];
-
-const LINKS = [
-  { label: "Documentation", href: AgentVaultDocsUrls.overview },
-  { label: "Quickstart", href: AgentVaultDocsUrls.quickstart }
 ];
 
 type Props = {
@@ -54,20 +48,6 @@ export const AgentVaultIntroModal = ({ isOpen, onOpenChange }: Props) => (
         <DialogDescription className="whitespace-pre-line">
           {PARAGRAPHS.join("\n\n")}
         </DialogDescription>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          {LINKS.map(({ label, href }) => (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-foreground underline outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {label}
-              <ExternalLink className="size-3.5 shrink-0" />
-            </a>
-          ))}
-        </div>
       </div>
       <DialogClose asChild>
         <IconButton

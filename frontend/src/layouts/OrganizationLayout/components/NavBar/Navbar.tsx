@@ -2,17 +2,12 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
-  Book,
   Check,
   ChevronLeft,
   CircleHelp,
   Clipboard,
-  ExternalLink,
-  Github,
   Info,
   LogOut,
-  Mail,
-  MessagesSquare,
   Monitor,
   Moon,
   Plus,
@@ -71,7 +66,6 @@ import {
   OrgPermissionSubjects,
   useOrganization,
   useOrgPermission,
-  useServerConfig,
   useSubscription,
   useUser
 } from "@app/context";
@@ -102,52 +96,12 @@ import { NavbarPageBreadcrumbs } from "./NavbarPageBreadcrumbs";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { VersionBadge } from "./VersionBadge";
 
-const getFormattedSupportEmailLink = (variables: {
-  org_id: string;
-  domain: string;
-  root_org_id?: string;
-}) => {
-  const email = "support@infisical.com";
-
-  const body = `Hello Infisical Support Team,
-
-Issue Details:
-[What you did]
-[What you expected to happen]
-[What actually happened]
-[Any error request IDs]
-[Any supporting screenshots or video recording of the issue/request at hand]
-
-Account Info:
-- Organization ID: ${variables.org_id}
-${variables.root_org_id ? `- Root Organization ID: ${variables.root_org_id}` : ""}
-- Domain: ${variables.domain}
-
-Thank you,
-[Your Name]`;
-
-  return `mailto:${email}?body=${encodeURIComponent(body)}`;
-};
-
-export const INFISICAL_SUPPORT_OPTIONS = [
-  [MessagesSquare, "Support Forum", () => "https://community.infisical.com"],
-  [
-    Book,
-    "Read Docs",
-    () => "https://infisical.com/docs/documentation/getting-started/introduction"
-  ],
-  [Github, "GitHub Issues", () => "https://github.com/Infisical/infisical/issues"],
-  [Mail, "Email Support", getFormattedSupportEmailLink],
-  [Users, "Instance Admins", () => "server-admins"]
-] as const;
-
 export const Navbar = () => {
   const { user } = useUser();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const { subscription } = useSubscription();
   const { currentOrg, isSubOrganization } = useOrganization();
   const { permission } = useOrgPermission();
-  const { config: serverConfig } = useServerConfig();
 
   const [showAdminsModal, setShowAdminsModal] = useState(false);
   const [showSubOrgForm, setShowSubOrgForm] = useState(false);
@@ -580,53 +534,18 @@ export const Navbar = () => {
             </IconButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="bottom">
-            {INFISICAL_SUPPORT_OPTIONS.map(([Icon, text, getUrl]) => {
-              const url =
-                text === "Email Support"
-                  ? getUrl({
-                      org_id: currentOrg.id,
-                      domain: window.location.origin,
-                      ...(isSubOrganization && { root_org_id: rootOrg.id })
-                    })
-                  : getUrl();
-
-              if (url === "server-admins" && isInfisicalCloud()) {
-                return null;
-              }
-              if (url === "server-admins") {
-                return (
-                  <DropdownMenuItem key="server-admins" onSelect={() => setShowAdminsModal(true)}>
-                    <Icon className="size-4" />
-                    {text}
-                  </DropdownMenuItem>
-                );
-              }
-
-              return (
-                <DropdownMenuItem key={url as string} asChild>
-                  <a target="_blank" rel="noopener noreferrer" href={String(url)}>
-                    <Icon />
-                    {text}
-                  </a>
-                </DropdownMenuItem>
-              );
-            })}
+            {!isInfisicalCloud() && (
+              <DropdownMenuItem onSelect={() => setShowAdminsModal(true)}>
+                <Users className="size-4" />
+                Instance Admins
+              </DropdownMenuItem>
+            )}
             {envConfig.PLATFORM_VERSION && (
               <>
                 <DropdownMenuSeparator />
                 <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted">
                   <Info className="size-3.5" />
                   Version: {envConfig.PLATFORM_VERSION}
-                  {serverConfig.latestAvailableVersion && (
-                    <a
-                      href="https://upgrade.infisical.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-info hover:underline"
-                    >
-                      (v{serverConfig.latestAvailableVersion} available)
-                    </a>
-                  )}
                 </div>
               </>
             )}
@@ -715,25 +634,6 @@ export const Navbar = () => {
                 Light
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <a
-                href="https://infisical.com/docs/documentation/getting-started/introduction"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Book />
-                Documentation
-                <ExternalLink className="ml-auto size-3.5 opacity-50" />
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href="https://community.infisical.com" target="_blank" rel="noopener noreferrer">
-                <MessagesSquare />
-                Join Community
-                <ExternalLink className="ml-auto size-3.5 opacity-50" />
-              </a>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleCopyToken}>
               <Clipboard />

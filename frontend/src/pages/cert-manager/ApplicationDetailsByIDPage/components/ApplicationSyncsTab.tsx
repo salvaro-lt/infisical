@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 
-import { CertificateSyncsUpgradeIntent, useUpgradeGate } from "@app/components/license/UpgradeGate";
 import { CreatePkiSyncModal } from "@app/components/pki-syncs";
 import { TPkiSyncForm } from "@app/components/pki-syncs/forms";
 import {
@@ -73,19 +72,6 @@ export const ApplicationSyncsTab = ({ applicationId, applicationName, projectId 
   }, [connectionId, connectionName]);
 
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
-
-  // Every sync destination is enterprise, so refuse here rather than after the destination picker.
-  const handleAddSync = () => {
-    if (!subscription.pkiSyncs) {
-      openUpgradeGate({
-        intent: CertificateSyncsUpgradeIntent,
-        paywallKey: "cert-manager.application-syncs"
-      });
-      return;
-    }
-    setIsAddSyncOpen(true);
-  };
 
   const { data, isPending } = useListPkiSyncs(projectId, {
     enabled: Boolean(projectId),
@@ -114,12 +100,19 @@ export const ApplicationSyncsTab = ({ applicationId, applicationName, projectId 
           Push certificates from this application out to AWS ACM, Cloudflare, Azure Key Vault, and
           other destinations.
         </CardDescription>
-        <CardAction>
-          <Button variant="outline" onClick={handleAddSync} isDisabled={!canCreateSync}>
-            <PlusIcon />
-            Add Sync
-          </Button>
-        </CardAction>
+        {/* Every sync destination is enterprise, so the entry point is hidden off-plan. */}
+        {subscription?.pkiSyncs && (
+          <CardAction>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddSyncOpen(true)}
+              isDisabled={!canCreateSync}
+            >
+              <PlusIcon />
+              Add Sync
+            </Button>
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent>
         {isPending ? (
@@ -138,7 +131,6 @@ export const ApplicationSyncsTab = ({ applicationId, applicationName, projectId 
         initialData={restoredSync?.initialData}
         applicationId={applicationId}
       />
-      {upgradeGate}
     </Card>
   );
 };

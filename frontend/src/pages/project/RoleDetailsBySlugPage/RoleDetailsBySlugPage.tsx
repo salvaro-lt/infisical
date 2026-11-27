@@ -28,7 +28,8 @@ import {
   ProjectPermissionSub,
   useOrganization,
   useProject,
-  useProjectPermission
+  useProjectPermission,
+  useSubscription
 } from "@app/context";
 import { getProjectBaseURL, hidesProjects } from "@app/helpers/project";
 import { useDeleteProjectRole, useGetProjectRoleBySlug } from "@app/hooks/api";
@@ -49,6 +50,7 @@ const Page = () => {
   });
   const { currentProject } = useProject();
   const { permission } = useProjectPermission();
+  const { subscription } = useSubscription();
   const { currentOrg } = useOrganization();
   const projectId = currentProject?.id || "";
   const orgId = currentOrg?.id || "";
@@ -157,40 +159,44 @@ const Page = () => {
                     <CopyIcon />
                     Copy Slug
                   </DropdownMenuItem>
-                  <ProjectPermissionCan
-                    I={ProjectPermissionActions.Edit}
-                    a={ProjectPermissionSub.Role}
-                  >
-                    {(isAllowed) => (
-                      <DropdownMenuItem
-                        onClick={() =>
-                          handlePopUpOpen("role", {
-                            roleSlug
-                          })
-                        }
-                        isDisabled={!isAllowed}
-                      >
-                        <PencilIcon />
-                        Edit Role
-                      </DropdownMenuItem>
-                    )}
-                  </ProjectPermissionCan>
-                  <ProjectPermissionCan
-                    I={ProjectPermissionActions.Create}
-                    a={ProjectPermissionSub.Role}
-                  >
-                    {(isAllowed) => (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          handlePopUpOpen("duplicateRole");
-                        }}
-                        isDisabled={!isAllowed}
-                      >
-                        <CopyIcon />
-                        Duplicate Role
-                      </DropdownMenuItem>
-                    )}
-                  </ProjectPermissionCan>
+                  {subscription?.rbac && (
+                    <ProjectPermissionCan
+                      I={ProjectPermissionActions.Edit}
+                      a={ProjectPermissionSub.Role}
+                    >
+                      {(isAllowed) => (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handlePopUpOpen("role", {
+                              roleSlug
+                            })
+                          }
+                          isDisabled={!isAllowed}
+                        >
+                          <PencilIcon />
+                          Edit Role
+                        </DropdownMenuItem>
+                      )}
+                    </ProjectPermissionCan>
+                  )}
+                  {subscription?.rbac && (
+                    <ProjectPermissionCan
+                      I={ProjectPermissionActions.Create}
+                      a={ProjectPermissionSub.Role}
+                    >
+                      {(isAllowed) => (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            handlePopUpOpen("duplicateRole");
+                          }}
+                          isDisabled={!isAllowed}
+                        >
+                          <CopyIcon />
+                          Duplicate Role
+                        </DropdownMenuItem>
+                      )}
+                    </ProjectPermissionCan>
+                  )}
                   <ProjectPermissionCan
                     I={ProjectPermissionActions.Delete}
                     a={ProjectPermissionSub.Role}

@@ -85,14 +85,13 @@ import { GroupAccessPopover } from "./GroupAccessPopover";
 type Props = {
   handlePopUpOpen: (
     popUpName: keyof UsePopUpState<
-      ["addMember", "removeMember", "deactivateMember", "upgradePlan", "removeMembers"]
+      ["addMember", "removeMember", "deactivateMember", "removeMembers"]
     >,
     data?: {
       orgMembershipId?: string;
       username?: string;
       text?: string;
       selectedOrgMemberships?: TOrgUserAccess[];
-      isEnterpriseFeature?: boolean;
     }
   ) => void;
   setCompleteInviteLinks: (links: Array<{ email: string; link: string }> | null) => void;
@@ -139,16 +138,6 @@ export const OrgMembersTable = ({
 
   const onRoleChange = async (membershipId: string, role: string) => {
     if (!currentOrg?.id) return;
-
-    const isCustomRole = isCustomOrgRole(role);
-
-    if (isCustomRole && subscription && !subscription?.rbac) {
-      handlePopUpOpen("upgradePlan", {
-        text: "Your current plan does not include access to assigning custom roles to members. To unlock this feature, please upgrade to Infisical Enterprise plan.",
-        isEnterpriseFeature: true
-      });
-      return;
-    }
 
     await updateOrgMembership({
       organizationId: currentOrg?.id,
@@ -658,6 +647,12 @@ export const OrgMembersTable = ({
                                       slug === "owner"
                                         ? isIamOwner || membership.role === "owner"
                                         : true
+                                    )
+                                    .filter(
+                                      ({ slug }) =>
+                                        subscription?.rbac ||
+                                        !isCustomOrgRole(slug) ||
+                                        slug === getRoleSlug(membership)
                                     )
                                     .map(({ slug, name: roleName }) => (
                                       <SelectItem value={slug} key={`owner-option-${slug}`}>

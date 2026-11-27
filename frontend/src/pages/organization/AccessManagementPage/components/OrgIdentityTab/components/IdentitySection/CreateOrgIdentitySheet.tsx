@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { RoleOptionContent } from "@app/components/roles";
 import {
@@ -30,7 +29,6 @@ import { findOrgMembershipRole, isCustomOrgRole } from "@app/helpers/roles";
 import { useScopeVariant } from "@app/hooks";
 import { useCreateOrgIdentity, useGetOrgRoles } from "@app/hooks/api";
 import { useAddIdentityUniversalAuth } from "@app/hooks/api/identities";
-import { usePopUp } from "@app/hooks/usePopUp";
 
 import { OrgIdentityLinkForm } from "./OrgIdentityLinkForm";
 
@@ -57,11 +55,6 @@ const CreateOrgIdentityForm = ({ onClose }: { onClose: () => void }) => {
   const { currentOrg } = useOrganization();
   const orgId = currentOrg?.id || "";
   const { subscription } = useSubscription();
-  const {
-    popUp: upgradePlanPopUp,
-    handlePopUpOpen: handleUpgradePlanPopUpOpen,
-    handlePopUpToggle: handleUpgradePlanPopUpToggle
-  } = usePopUp(["upgradePlan"] as const);
 
   const { data: roles } = useGetOrgRoles(orgId);
 
@@ -87,11 +80,6 @@ const CreateOrgIdentityForm = ({ onClose }: { onClose: () => void }) => {
   }, [roles]);
 
   const onFormSubmit = async ({ name, role }: FormData) => {
-    if (role?.slug && isCustomOrgRole(role.slug) && subscription && !subscription?.rbac) {
-      handleUpgradePlanPopUpOpen("upgradePlan");
-      return;
-    }
-
     const { id: createdId } = await createMutateAsync({
       name,
       role: role.slug || undefined,
@@ -161,7 +149,9 @@ const CreateOrgIdentityForm = ({ onClose }: { onClose: () => void }) => {
                 <Combobox
                   placeholder="Select role..."
                   searchAriaLabel="Search roles"
-                  options={roles}
+                  options={roles?.filter(
+                    ({ slug }) => subscription?.rbac || !isCustomOrgRole(slug)
+                  )}
                   isClearable={false}
                   onValueChange={onChange}
                   value={value}
@@ -190,15 +180,6 @@ const CreateOrgIdentityForm = ({ onClose }: { onClose: () => void }) => {
           Create
         </Button>
       </SheetFooter>
-      <UpgradeGate
-        paywallKey="organization.create-org-identity-sheet"
-        isOpen={upgradePlanPopUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handleUpgradePlanPopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: true
-        }}
-      />
     </form>
   );
 };

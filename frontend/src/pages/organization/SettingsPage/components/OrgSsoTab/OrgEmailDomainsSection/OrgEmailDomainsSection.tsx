@@ -48,25 +48,14 @@ export const OrgEmailDomainsSection = ({
     handlePopUpOpen("verifyDomain", emailDomain);
 
   const renderBody = () => {
-    if (!hasEmailDomainVerification) {
-      return (
-        <div className="rounded-md border border-border bg-container p-6 text-center">
-          <p className="text-sm text-foreground">
-            Your current plan does not include email domain verification.
-          </p>
-          <p className="mt-1 text-xs text-accent">
-            Upgrade your plan to verify email domains for SSO and identity provider enforcement.
-          </p>
-        </div>
-      );
-    }
-
     if (!permission.can(OrgPermissionEmailDomainActions.Read, OrgPermissionSubjects.EmailDomains)) {
       return <PermissionDeniedBanner />;
     }
 
     return <OrgEmailDomainsTable onVerifyDomain={handleVerifyDomain} />;
   };
+
+  if (!hasEmailDomainVerification) return null;
 
   return (
     <>
@@ -78,25 +67,23 @@ export const OrgEmailDomainsSection = ({
             <DocumentationLinkBadge href="https://infisical.com/docs/documentation/platform/email-domain" />
           </CardTitle>
           <CardDescription>Verified domains for your IDP.</CardDescription>
-          {hasEmailDomainVerification && (
-            <CardAction>
-              <OrgPermissionCan
-                I={OrgPermissionEmailDomainActions.Create}
-                a={OrgPermissionSubjects.EmailDomains}
-              >
-                {(isAllowed) => (
-                  <Button
-                    variant="outline"
-                    isDisabled={!isAllowed}
-                    onClick={() => handlePopUpOpen("addDomain")}
-                  >
-                    <Plus />
-                    Add Domain
-                  </Button>
-                )}
-              </OrgPermissionCan>
-            </CardAction>
-          )}
+          <CardAction>
+            <OrgPermissionCan
+              I={OrgPermissionEmailDomainActions.Create}
+              a={OrgPermissionSubjects.EmailDomains}
+            >
+              {(isAllowed) => (
+                <Button
+                  variant="outline"
+                  isDisabled={!isAllowed}
+                  onClick={() => handlePopUpOpen("addDomain")}
+                >
+                  <Plus />
+                  Add Domain
+                </Button>
+              )}
+            </OrgPermissionCan>
+          </CardAction>
         </CardHeader>
         <CardContent>{renderBody()}</CardContent>
       </Card>

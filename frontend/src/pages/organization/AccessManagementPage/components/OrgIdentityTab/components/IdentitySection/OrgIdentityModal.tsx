@@ -5,7 +5,6 @@ import { PlusIcon, TrashIcon } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { z } from "zod";
 
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { RoleOptionContent } from "@app/components/roles";
 import {
@@ -32,7 +31,7 @@ import {
 } from "@app/context";
 import { findOrgMembershipRole, formatProjectRoleName, isCustomOrgRole } from "@app/helpers/roles";
 import { useGetOrgRoles, useUpdateOrgIdentity } from "@app/hooks/api";
-import { usePopUp, UsePopUpState } from "@app/hooks/usePopUp";
+import { UsePopUpState } from "@app/hooks/usePopUp";
 
 const schema = z.object({
   name: z.string().min(1, "Required"),
@@ -59,11 +58,6 @@ export const OrgIdentityModal = ({ popUp, handlePopUpToggle }: Props) => {
   const { currentOrg, isSubOrganization } = useOrganization();
   const orgId = currentOrg?.id || "";
   const { subscription } = useSubscription();
-  const {
-    popUp: upgradePlanPopUp,
-    handlePopUpOpen: handleUpgradePlanPopUpOpen,
-    handlePopUpToggle: handleUpgradePlanPopUpToggle
-  } = usePopUp(["upgradePlan"] as const);
 
   const { permission } = useOrgPermission();
   const canReadRoles = permission.can(OrgPermissionActions.Read, OrgPermissionSubjects.Role);
@@ -142,16 +136,6 @@ export const OrgIdentityModal = ({ popUp, handlePopUpToggle }: Props) => {
         ? role.slug
         : undefined;
 
-    if (
-      changedRoleSlug &&
-      isCustomOrgRole(changedRoleSlug) &&
-      subscription &&
-      !subscription?.rbac
-    ) {
-      handleUpgradePlanPopUpOpen("upgradePlan");
-      return;
-    }
-
     await updateMutateAsync({
       identityId: identity.identityId,
       name,
@@ -206,7 +190,10 @@ export const OrgIdentityModal = ({ popUp, handlePopUpToggle }: Props) => {
                 <Combobox
                   placeholder="Select role..."
                   searchAriaLabel="Search roles"
-                  options={roles}
+                  options={roles?.filter(
+                    ({ slug }) =>
+                      subscription?.rbac || !isCustomOrgRole(slug) || slug === value?.slug
+                  )}
                   isClearable={false}
                   onValueChange={onChange}
                   value={roles?.find((role) => role.slug === value?.slug) ?? value}
@@ -336,15 +323,6 @@ export const OrgIdentityModal = ({ popUp, handlePopUpToggle }: Props) => {
           Update
         </Button>
       </DialogFooter>
-      <UpgradeGate
-        paywallKey="organization.org-identity"
-        isOpen={upgradePlanPopUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handleUpgradePlanPopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: true
-        }}
-      />
     </form>
   );
 };

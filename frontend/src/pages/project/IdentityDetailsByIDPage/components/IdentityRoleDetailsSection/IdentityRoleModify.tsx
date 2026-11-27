@@ -12,7 +12,6 @@ import { ChevronDownIcon, ClockIcon, PlusIcon, TrashIcon } from "lucide-react";
 import ms from "ms";
 
 import { TtlFormLabel } from "@app/components/features";
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
@@ -38,14 +37,8 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@app/components/v3";
-import {
-  ProjectPermissionActions,
-  ProjectPermissionSub,
-  useProject,
-  useSubscription
-} from "@app/context";
-import { isCustomProjectRole } from "@app/helpers/roles";
-import { usePopUp, useScopeVariant } from "@app/hooks";
+import { ProjectPermissionActions, ProjectPermissionSub, useProject } from "@app/context";
+import { useScopeVariant } from "@app/hooks";
 import { useUpdateProjectIdentityMembership } from "@app/hooks/api";
 import { IdentityProjectMembershipV1 } from "@app/hooks/api/identities/types";
 import { useCreateProjectRole } from "@app/pages/project/RoleDetailsBySlugPage/components/useCreateProjectRole";
@@ -289,14 +282,8 @@ type Props = {
 export const IdentityRoleModify = ({ identityProjectMembership, onClose }: Props) => {
   const scopeVariant = useScopeVariant();
   const { projectId, currentProject } = useProject();
-  const { subscription } = useSubscription();
   const { filteredRoles, isRolesLoading, assignableRoleSlugs, getRolesForSelect, isEditDisabled } =
     useIdentityRoleGrant(identityProjectMembership);
-  const {
-    popUp: upgradePlanPopUp,
-    handlePopUpOpen: handleUpgradePlanPopUpOpen,
-    handlePopUpToggle: handleUpgradePlanPopUpToggle
-  } = usePopUp(["upgradePlan"] as const);
 
   const roleForm = useForm<TIdentityRoleForm>({
     resolver: zodResolver(identityRoleFormSchema),
@@ -309,12 +296,6 @@ export const IdentityRoleModify = ({ identityProjectMembership, onClose }: Props
   const updateProjectIdentityMembership = useUpdateProjectIdentityMembership();
   const handleRoleUpdate = async (data: TIdentityRoleForm) => {
     if (updateProjectIdentityMembership.isPending) return;
-
-    const hasCustomRole = data.roles.some((role) => isCustomProjectRole(role.slug));
-    if (hasCustomRole && subscription && !subscription?.rbac) {
-      handleUpgradePlanPopUpOpen("upgradePlan");
-      return;
-    }
 
     const roles = data.roles.map(identityRoleFormAssignmentToPayload);
 
@@ -394,15 +375,6 @@ export const IdentityRoleModify = ({ identityProjectMembership, onClose }: Props
           Save Roles
         </Button>
       </SheetFooter>
-      <UpgradeGate
-        paywallKey="project.identity-role-modify"
-        isOpen={upgradePlanPopUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handleUpgradePlanPopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: true
-        }}
-      />
     </form>
   );
 };

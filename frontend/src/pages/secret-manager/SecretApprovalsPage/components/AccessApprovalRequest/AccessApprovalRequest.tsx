@@ -20,10 +20,6 @@ import {
 } from "lucide-react";
 
 import {
-  SecretAccessRequestsUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
-import {
   Badge,
   Button,
   Card,
@@ -151,7 +147,6 @@ export const AccessApprovalRequest = ({
   const { user } = useUser();
   const { subscription } = useSubscription();
   const { currentProject } = useProject();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const canReadMembers = permission.can(
     ProjectPermissionMemberActions.Read,
     ProjectPermissionSub.Member
@@ -617,46 +612,39 @@ export const AccessApprovalRequest = ({
           <CardDescription>
             Request and review access to secrets in sensitive environments and folders
           </CardDescription>
-          <CardAction>
-            {(() => {
-              const requestAccessButton = (
-                <Button
-                  onClick={() => {
-                    if (subscription && !subscription?.secretApproval) {
-                      openUpgradeGate({
-                        intent: SecretAccessRequestsUpgradeIntent,
-                        paywallKey: "secret-manager.access-approval-request"
-                      });
-                      return;
-                    }
-                    handlePopUpOpen("requestAccess");
-                  }}
-                  variant="project"
-                  isDisabled={policiesLoading || !policies?.length}
-                >
-                  <PlusIcon />
-                  Request Access
-                </Button>
-              );
-
-              if (!policiesLoading && !policies?.length) {
-                return (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- focusable wrapper required so the tooltip surfaces on keyboard focus despite the inner button being disabled */}
-                      <span tabIndex={0}>{requestAccessButton}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      To submit Access Requests, your project needs to create Access Request
-                      policies first.
-                    </TooltipContent>
-                  </Tooltip>
+          {subscription?.secretApproval && (
+            <CardAction>
+              {(() => {
+                const requestAccessButton = (
+                  <Button
+                    onClick={() => handlePopUpOpen("requestAccess")}
+                    variant="project"
+                    isDisabled={policiesLoading || !policies?.length}
+                  >
+                    <PlusIcon />
+                    Request Access
+                  </Button>
                 );
-              }
 
-              return requestAccessButton;
-            })()}
-          </CardAction>
+                if (!policiesLoading && !policies?.length) {
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- focusable wrapper required so the tooltip surfaces on keyboard focus despite the inner button being disabled */}
+                        <span tabIndex={0}>{requestAccessButton}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        To submit Access Requests, your project needs to create Access Request
+                        policies first.
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+
+                return requestAccessButton;
+              })()}
+            </CardAction>
+          )}
         </CardHeader>
         <CardContent className="@container flex flex-col">
           <div className="mb-4 flex flex-wrap items-center gap-2 @4xl:flex-nowrap">
@@ -774,14 +762,17 @@ export const AccessApprovalRequest = ({
                     : "Approved, rejected, revoked, or expired access requests will appear here."}
                 </EmptyDescription>
               </EmptyHeader>
-              {canCreatePolicies && arePoliciesLoaded && !policies?.length && (
-                <EmptyContent>
-                  <Button variant="project" size="sm" onClick={onConfigurePolicies}>
-                    <PlusIcon />
-                    Configure Policy
-                  </Button>
-                </EmptyContent>
-              )}
+              {subscription?.secretApproval &&
+                canCreatePolicies &&
+                arePoliciesLoaded &&
+                !policies?.length && (
+                  <EmptyContent>
+                    <Button variant="project" size="sm" onClick={onConfigurePolicies}>
+                      <PlusIcon />
+                      Configure Policy
+                    </Button>
+                  </EmptyContent>
+                )}
             </Empty>
           )}
           {Boolean(!filteredRequests?.length && isFiltered && !areRequestsPending) && (
@@ -1092,8 +1083,6 @@ export const AccessApprovalRequest = ({
           canBypass={generateRequestDetails(selectedRequest).canBypass}
         />
       )}
-
-      {upgradeGate}
     </>
   );
 };

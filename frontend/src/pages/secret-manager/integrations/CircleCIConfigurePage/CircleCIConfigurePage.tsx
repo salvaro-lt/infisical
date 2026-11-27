@@ -1,6 +1,4 @@
 import { Controller, useForm } from "react-hook-form";
-import { faArrowUpRightFromSquare, faBookOpen } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
@@ -8,10 +6,8 @@ import { z } from "zod";
 import { createNotification } from "@app/components/notifications";
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -153,19 +149,6 @@ export const CircleCIConfigurePage = () => {
           <CardDescription>
             Choose which environment or folder in Infisical you want to sync to CircleCI.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                href="https://infisical.com/docs/integrations/cicd/circleci"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <Controller

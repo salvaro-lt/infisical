@@ -1,6 +1,5 @@
-import { ReactNode, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
-import { AgentVaultHooksUpgradeIntent, useUpgradeGate } from "@app/components/license/UpgradeGate";
 import {
   ComboboxActionCreationConfig,
   ComboboxSheetCreationConfig,
@@ -18,8 +17,7 @@ import { TAgentVaultHook } from "@app/hooks/api/agentVault/types";
 import { HookForm } from "./HookForm";
 
 /**
- * The "Create new hook" row of a hook picker, for whoever can create hooks. Off-plan the row opens the upgrade dialog,
- * which the caller renders from `upgradeGate`.
+ * The "Create new hook" row of a hook picker, for whoever can create hooks while hooks are on the plan.
  */
 export const useHookCreation = (
   onCreated: (hook: TAgentVaultHook) => void
@@ -28,11 +26,9 @@ export const useHookCreation = (
     | ComboboxSheetCreationConfig<TAgentVaultHook>
     | ComboboxActionCreationConfig<TAgentVaultHook>
     | undefined;
-  upgradeGate: ReactNode;
 } => {
   const { permission } = useProjectPermission();
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const [isDirty, setIsDirty] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const cancelRef = useRef<VoidFunction>(() => {});
@@ -58,19 +54,7 @@ export const useHookCreation = (
     ProjectPermissionAgentVaultHookActions.Create,
     ProjectPermissionSub.AgentVaultHooks
   );
-  if (!canCreate) return { creation: undefined, upgradeGate };
-  if (!subscription.agentVaultHooks) {
-    return {
-      creation: {
-        mode: "action",
-        emptyLabel: "Create New Hook",
-        formatLabel: () => "Create New Hook",
-        onAction: () =>
-          openUpgradeGate({ intent: AgentVaultHooksUpgradeIntent, paywallKey: "agent-vault.hooks" })
-      },
-      upgradeGate
-    };
-  }
+  if (!canCreate || !subscription.agentVaultHooks) return { creation: undefined };
 
   const attempt = attemptRef.current;
 
@@ -107,5 +91,5 @@ export const useHookCreation = (
       </>
     )
   };
-  return { creation, upgradeGate };
+  return { creation };
 };

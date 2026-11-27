@@ -79,12 +79,11 @@ import { IdentityAuthMethodSheet } from "@app/views/IdentityAuthMethods";
 
 type Props = {
   handlePopUpOpen: (
-    popUpName: keyof UsePopUpState<["deleteIdentity", "upgradePlan"]>,
+    popUpName: keyof UsePopUpState<["deleteIdentity"]>,
     data?: {
       identityId?: string;
       name?: string;
       text?: string;
-      isEnterpriseFeature?: boolean;
     }
   ) => void;
 };
@@ -511,7 +510,7 @@ export const IdentityTable = ({ handlePopUpOpen }: Props) => {
     popUp: authMethodPopUp,
     handlePopUpOpen: handleAuthMethodPopUpOpen,
     handlePopUpToggle: handleAuthMethodPopUpToggle
-  } = usePopUp(["identityAuthMethod", "upgradePlan"] as const);
+  } = usePopUp(["identityAuthMethod"] as const);
 
   const [viewAuthMethodState, setViewAuthMethodState] = useState<{
     identityId: string;
@@ -687,7 +686,6 @@ export const IdentityTable = ({ handlePopUpOpen }: Props) => {
       )}
       <IdentityAuthMethodModal
         popUp={authMethodPopUp}
-        handlePopUpOpen={handleAuthMethodPopUpOpen}
         handlePopUpToggle={handleAuthMethodPopUpToggle}
       />
       {viewAuthMethodState &&

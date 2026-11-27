@@ -32,7 +32,7 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@app/components/v3";
-import { useProject } from "@app/context";
+import { useProject, useSubscription } from "@app/context";
 import { usePopUp, useToggle } from "@app/hooks";
 import {
   PkiApplicationResourceActions,
@@ -87,6 +87,7 @@ export const ApplicationDetailsByIDPage = () => {
   };
   const { applicationName, orgId } = params;
   const { currentProject } = useProject();
+  const { subscription } = useSubscription();
   const projectId = currentProject.id;
   const search = useSearch({ strict: false }) as { selectedTab?: string; search?: string };
   const navigate = useNavigate();
@@ -119,10 +120,9 @@ export const ApplicationDetailsByIDPage = () => {
     PkiApplicationResourceActions.Read,
     PkiApplicationResourceSub.Certificates
   );
-  const canViewSyncs = ability?.can(
-    PkiApplicationResourceActions.Read,
-    PkiApplicationResourceSub.PkiSyncs
-  );
+  const canViewSyncs =
+    Boolean(subscription?.pkiSyncs) &&
+    ability?.can(PkiApplicationResourceActions.Read, PkiApplicationResourceSub.PkiSyncs);
   const canViewRequests = canViewCertificates;
   const canEditApplication = Boolean(
     ability?.can(PkiApplicationResourceActions.Edit, PkiApplicationResourceSub.Application)
@@ -298,7 +298,7 @@ export const ApplicationDetailsByIDPage = () => {
                     blockedReason="You do not have permission to view certificate requests"
                   />
                 )}
-                {(canViewSyncs || isNonMemberAdmin) && (
+                {(canViewSyncs || (isNonMemberAdmin && subscription?.pkiSyncs)) && (
                   <PermissionedTab
                     value="syncs"
                     label="Certificate Syncs"

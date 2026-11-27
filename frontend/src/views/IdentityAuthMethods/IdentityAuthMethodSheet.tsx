@@ -123,8 +123,7 @@ export const IdentityAuthMethodSheet = ({
 
   const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
     "revokeAuthMethod",
-    "identityAuthMethod",
-    "upgradePlan"
+    "identityAuthMethod"
   ] as const);
 
   const [removeConfirmInput, setRemoveConfirmInput] = useState("");
@@ -316,11 +315,7 @@ export const IdentityAuthMethodSheet = ({
           </AlertDialog>
         </SheetContent>
       </Sheet>
-      <IdentityAuthMethodModal
-        popUp={popUp}
-        handlePopUpOpen={handlePopUpOpen}
-        handlePopUpToggle={handlePopUpToggle}
-      />
+      <IdentityAuthMethodModal popUp={popUp} handlePopUpToggle={handlePopUpToggle} />
     </>
   );
 };

@@ -178,6 +178,8 @@ export const CredentialSourceFields = ({
   });
 
   const dynamicOptions = useMemo<DynamicOption[]>(() => {
+    // Dynamic secrets are a paid feature, so they aren't offered when the plan leaves them out.
+    if (!hasDynamicSecretPlan) return [];
     return dynamicSecrets.map((ds) => {
       const isBrokerable = Boolean(ds.type && BROKERABLE_DYNAMIC_SECRETS[ds.type]);
       const canLease = permission.can(
@@ -190,14 +192,13 @@ export const CredentialSourceFields = ({
       );
       let disabledReason: string | undefined;
       if (!isBrokerable) disabledReason = "This dynamic secret type can't be brokered over HTTP.";
-      else if (!hasDynamicSecretPlan) disabledReason = "Upgrade your plan to use dynamic secrets.";
       else if (!canLease)
         disabledReason =
           "You need permission to lease this dynamic secret to use it in a proxied service.";
       return {
         name: ds.name,
         provider: ds.type,
-        isSelectable: isBrokerable && hasDynamicSecretPlan && canLease,
+        isSelectable: isBrokerable && canLease,
         disabledReason
       };
     });

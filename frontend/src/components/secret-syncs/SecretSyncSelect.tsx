@@ -2,10 +2,6 @@ import { useMemo, useState } from "react";
 import { Loader2Icon, Search } from "lucide-react";
 
 import {
-  EnterpriseSecretSyncsUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
-import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -22,7 +18,6 @@ import { SecretSync, useSecretSyncOptions } from "@app/hooks/api/secretSyncs";
 
 type Props = {
   onSelect: (destination: SecretSync) => void;
-  onEnterpriseUpgrade?: (onGranted: () => void) => void;
 };
 
 type SyncOption = {
@@ -65,24 +60,20 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <p className="mb-3 text-[11px] font-medium tracking-wider text-muted uppercase">{children}</p>
 );
 
-export const SecretSyncSelect = ({ onSelect, onEnterpriseUpgrade }: Props) => {
+export const SecretSyncSelect = ({ onSelect }: Props) => {
   const { subscription } = useSubscription();
-  const { isPending, data: secretSyncOptions } = useSecretSyncOptions();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
+  const { isPending, data: allSecretSyncOptions } = useSecretSyncOptions();
   const [search, setSearch] = useState("");
 
+  const secretSyncOptions = useMemo(
+    () =>
+      allSecretSyncOptions?.filter(
+        (option) => !option.enterprise || subscription?.enterpriseSecretSyncs
+      ),
+    [allSecretSyncOptions, subscription?.enterpriseSecretSyncs]
+  );
+
   const handleSelect = (option: SyncOption) => {
-    if (option.enterprise && !subscription.enterpriseSecretSyncs) {
-      if (onEnterpriseUpgrade) {
-        onEnterpriseUpgrade(() => onSelect(option.destination));
-        return;
-      }
-      openUpgradeGate({
-        intent: EnterpriseSecretSyncsUpgradeIntent,
-        paywallKey: "secret-manager.secret-sync-provider"
-      });
-      return;
-    }
     onSelect(option.destination);
   };
 
@@ -197,8 +188,6 @@ export const SecretSyncSelect = ({ onSelect, onEnterpriseUpgrade }: Props) => {
           </section>
         </>
       )}
-
-      {upgradeGate}
     </div>
   );
 };

@@ -2,10 +2,6 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { MoreHorizontalIcon, PlusIcon, RefreshCwIcon, SearchIcon } from "lucide-react";
 
-import {
-  CertificateDiscoveryUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
   Button,
@@ -109,18 +105,6 @@ export const DiscoveryJobsTab = ({ projectId }: Props) => {
     "editJob",
     "deleteJob"
   ] as const);
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
-
-  const handleCreateJob = () => {
-    if (!subscription.pkiDiscovery) {
-      openUpgradeGate({
-        intent: CertificateDiscoveryUpgradeIntent,
-        paywallKey: "cert-manager.discovery-jobs"
-      });
-      return;
-    }
-    handlePopUpOpen("createJob");
-  };
 
   const { data, isPending } = useListPkiDiscoveries({
     projectId,
@@ -160,19 +144,25 @@ export const DiscoveryJobsTab = ({ projectId }: Props) => {
         <CardDescription>
           Configure scans to find certificates served on your network or stored on your servers.
         </CardDescription>
-        <CardAction>
-          <ProjectPermissionCan
-            I={ProjectPermissionPkiDiscoveryActions.Create}
-            a={ProjectPermissionSub.PkiDiscovery}
-          >
-            {(isAllowed) => (
-              <Button variant="project" onClick={handleCreateJob} isDisabled={!isAllowed}>
-                <PlusIcon />
-                Add Job
-              </Button>
-            )}
-          </ProjectPermissionCan>
-        </CardAction>
+        {subscription?.pkiDiscovery && (
+          <CardAction>
+            <ProjectPermissionCan
+              I={ProjectPermissionPkiDiscoveryActions.Create}
+              a={ProjectPermissionSub.PkiDiscovery}
+            >
+              {(isAllowed) => (
+                <Button
+                  variant="project"
+                  onClick={() => handlePopUpOpen("createJob")}
+                  isDisabled={!isAllowed}
+                >
+                  <PlusIcon />
+                  Add Job
+                </Button>
+              )}
+            </ProjectPermissionCan>
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent>
         <div className="mb-4">
@@ -199,10 +189,12 @@ export const DiscoveryJobsTab = ({ projectId }: Props) => {
           <Empty className="border">
             <EmptyHeader>
               <EmptyTitle>No discovery jobs defined</EmptyTitle>
-              <EmptyDescription>
-                Define a job to scan your network or your servers and surface the certificates it
-                finds.
-              </EmptyDescription>
+              {subscription?.pkiDiscovery && (
+                <EmptyDescription>
+                  Define a job to scan your network or your servers and surface the certificates it
+                  finds.
+                </EmptyDescription>
+              )}
             </EmptyHeader>
           </Empty>
         ) : (
@@ -360,8 +352,6 @@ export const DiscoveryJobsTab = ({ projectId }: Props) => {
         onConfirm={handleDelete}
         discoveryName={(popUp.deleteJob.data as TPkiDiscovery)?.name || ""}
       />
-
-      {upgradeGate}
     </Card>
   );
 };

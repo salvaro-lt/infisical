@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { Ban, FileText, Loader2Icon, Lock } from "lucide-react";
+import { Ban, FileText, Loader2Icon } from "lucide-react";
 
 import {
   Button,
@@ -62,9 +62,9 @@ export const LogsTable = ({ filter, refetchInterval, timezone }: Props) => {
       <Empty className="border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <Lock />
+            <Ban />
           </EmptyMedia>
-          <EmptyTitle>Upgrade your plan to view audit logs</EmptyTitle>
+          <EmptyTitle>Audit logs are not available on this instance</EmptyTitle>
         </EmptyHeader>
       </Empty>
     );

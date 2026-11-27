@@ -125,7 +125,6 @@ type Props = {
     source: { id: string; name: string; path: string; isValueHidden: boolean };
     environmentSlug: string;
   }) => void;
-  onAccessInsightsUpgrade: (onGranted: () => void) => void;
   timestampSortField?: "createdAt" | "updatedAt";
   activityId: TableRowActivityId;
   onActivityChange: TableRowActivityChangeHandler;
@@ -162,7 +161,6 @@ export const SecretTableRow = ({
   onPendingSave,
   isSelectionDisabled,
   onCopySecret,
-  onAccessInsightsUpgrade,
   timestampSortField,
   activityId,
   onActivityChange,
@@ -431,7 +429,6 @@ export const SecretTableRow = ({
               environmentSlug: slug
             })
         : undefined,
-      onAccessInsightsUpgrade,
       onExpandedChange: (isActive) => setEnvActive(slug, isActive)
     };
   };
@@ -573,7 +570,6 @@ export const SecretTableRow = ({
                     })
                 : undefined
             }
-            onAccessInsightsUpgrade={onAccessInsightsUpgrade}
             onExpandedChange={setIsSingleEnvBaseActive}
             lastEdited={timestampSortField ? singleEnvSecret : undefined}
             timestampField={timestampSortField}

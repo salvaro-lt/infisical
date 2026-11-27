@@ -3,10 +3,6 @@ import { Controller, UseFormReturn } from "react-hook-form";
 
 import { AppConnectionOptionContent } from "@app/components/app-connections";
 import { useConnectionCreation } from "@app/components/app-connections/useConnectionCreation";
-import {
-  PostQuantumCertificatesUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { AwsRegionSelect } from "@app/components/secret-syncs/forms/SecretSyncDestinationFields/shared/AwsRegionSelect";
 import {
   Badge,
@@ -64,7 +60,6 @@ export const KeyValidityStep = ({
   isAwsConnectionsLoading
 }: Props) => {
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const isHsmLicensed = Boolean(subscription?.hsm);
   const isAwsKmsLicensed = Boolean(subscription?.pkiAwsKmsSigning);
   const { permission } = useProjectPermission();
@@ -124,21 +119,17 @@ export const KeyValidityStep = ({
                 </SelectTrigger>
                 <SelectContent position="popper">
                   <SelectItem value={CertKeySource.Infisical}>Infisical</SelectItem>
-                  <SelectItem value={CertKeySource.Hsm} disabled={!isHsmLicensed || !canAttachHsm}>
-                    <div className="flex items-center gap-2">
-                      HSM
-                      {!isHsmLicensed && <Badge variant="info">Enterprise</Badge>}
-                      {isHsmLicensed && !canAttachHsm && (
-                        <Badge variant="warning">Permission required</Badge>
-                      )}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value={CertKeySource.AwsKms} disabled={!isAwsKmsLicensed}>
-                    <div className="flex items-center gap-2">
-                      AWS KMS
-                      {!isAwsKmsLicensed && <Badge variant="info">Enterprise</Badge>}
-                    </div>
-                  </SelectItem>
+                  {isHsmLicensed && (
+                    <SelectItem value={CertKeySource.Hsm} disabled={!canAttachHsm}>
+                      <div className="flex items-center gap-2">
+                        HSM
+                        {!canAttachHsm && <Badge variant="warning">Permission required</Badge>}
+                      </div>
+                    </SelectItem>
+                  )}
+                  {isAwsKmsLicensed && (
+                    <SelectItem value={CertKeySource.AwsKms}>AWS KMS</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <FieldDescription>{KEY_SOURCE_DESCRIPTIONS[field.value]}</FieldDescription>
@@ -278,8 +269,10 @@ export const KeyValidityStep = ({
         name="keyAlgorithm"
         control={form.control}
         render={({ field, fieldState: { error } }) => {
-          const options = certKeyAlgorithms.filter(({ value }) =>
-            isKeyAlgorithmSupportedByKeySource(keySource, value)
+          const options = certKeyAlgorithms.filter(
+            ({ value }) =>
+              isKeyAlgorithmSupportedByKeySource(keySource, value) &&
+              (!isPqcAlgorithm(value) || subscription?.pkiPqc)
           );
           return (
             <Field>
@@ -287,34 +280,16 @@ export const KeyValidityStep = ({
                 Key algorithm <span className="text-danger">*</span>
               </FieldLabel>
               <FieldContent>
-                <Select
-                  value={field.value}
-                  onValueChange={(value) => {
-                    if (isPqcAlgorithm(value) && !subscription.pkiPqc) {
-                      openUpgradeGate({
-                        intent: PostQuantumCertificatesUpgradeIntent,
-                        paywallKey: "cert-manager.ca-key-algorithm"
-                      });
-                      return;
-                    }
-                    field.onChange(value);
-                  }}
-                >
+                <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    {options.map(({ label, value }) => {
-                      const pqcLocked = isPqcAlgorithm(value) && !subscription?.pkiPqc;
-                      return (
-                        <SelectItem key={value} value={value}>
-                          <div className="flex items-center gap-2">
-                            {label}
-                            {pqcLocked && <Badge variant="info">Enterprise</Badge>}
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
+                    {options.map(({ label, value }) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FieldDescription>Algorithm of the CA key pair.</FieldDescription>
@@ -373,7 +348,6 @@ export const KeyValidityStep = ({
           />
         </>
       )}
-      {upgradeGate}
       <CreateHsmConnectorWizard
         isOpen={isCreateHsmConnectorOpen}
         onOpenChange={setIsCreateHsmConnectorOpen}

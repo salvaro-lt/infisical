@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import { faArrowUpRightFromSquare, faBookOpen, faBugs } from "@fortawesome/free-solid-svg-icons";
+import { faBugs } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { motion } from "motion/react";
 
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -154,19 +152,6 @@ export const ChecklyConfigurePage = () => {
           <CardDescription>
             Choose which environment in Infisical you want to sync to Checkly environment variables.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                href="https://infisical.com/docs/integrations/cloud/checkly"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <Tabs defaultValue={TabSections.Connection}>
@@ -313,18 +298,7 @@ export const ChecklyConfigurePage = () => {
       ) : (
         <div className="flex h-max max-w-md flex-col rounded-md border border-border-control bg-surface-raised p-6 text-center text-foreground-secondary">
           <FontAwesomeIcon icon={faBugs} className="inlineli my-2 text-6xl" />
-          <p>
-            Something went wrong. Please contact{" "}
-            <a
-              className="inline cursor-pointer text-foreground underline decoration-project underline-offset-4 opacity-80 duration-200 hover:opacity-100"
-              target="_blank"
-              rel="noopener noreferrer"
-              href="mailto:support@infisical.com"
-            >
-              support@infisical.com
-            </a>{" "}
-            if the issue persists.
-          </p>
+          <p>Something went wrong.</p>
         </div>
       )}
     </div>

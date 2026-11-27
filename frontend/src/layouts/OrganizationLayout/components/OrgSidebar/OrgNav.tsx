@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { Blocks, CreditCard, FileText, Settings, Shield } from "lucide-react";
+import { Blocks, FileText, Settings, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { OrgIcon, SidebarCollapsibleGroup, SubOrgIcon } from "@app/components/v3";
-import { useOrganization } from "@app/context";
+import { useOrganization, useSubscription } from "@app/context";
 
 import { OrgNavList } from "./OrgNavLink";
 import { OrgSettingsSubmenuView } from "./OrgSubmenuView";
@@ -14,6 +14,7 @@ import type { OrgNavGroup } from "./types";
 
 export const OrgNav = () => {
   const { currentOrg, isRootOrganization } = useOrganization();
+  const { subscription } = useSubscription();
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
@@ -68,12 +69,11 @@ export const OrgNav = () => {
           activeMatch: /organizations\/[^/]+\/(members|identities|groups|roles)/
         },
         {
-          label: "Usage & Billing",
-          icon: CreditCard,
-          pathSuffix: "billing",
-          hidden: !isRootOrganization
+          label: "Audit Logs",
+          icon: FileText,
+          pathSuffix: "audit-logs",
+          hidden: !subscription?.auditLogs
         },
-        { label: "Audit Logs", icon: FileText, pathSuffix: "audit-logs" },
         { label: "Settings", icon: Settings, pathSuffix: "settings", opensSubmenu: true }
       ]
     }

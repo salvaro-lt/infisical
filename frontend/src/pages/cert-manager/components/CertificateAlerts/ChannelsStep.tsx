@@ -2,10 +2,6 @@ import { FieldArrayWithId, UseFormReturn, useWatch } from "react-hook-form";
 import { BellIcon } from "lucide-react";
 
 import {
-  CertificateEnterpriseAlertingUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
-import {
   Combobox,
   Empty,
   EmptyDescription,
@@ -46,26 +42,17 @@ export const CertificateAlertAddChannelMenu = ({
   onAdd: (channelType: AlertChannelType) => void;
 }) => {
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const isEnterpriseAllowed = Boolean(subscription?.pkiEnterpriseAlerting);
 
+  // Locked channel types must not be offered off-plan; AddChannelMenu is expected to omit them.
   return (
-    <>
-      <AddChannelMenu
-        onAdd={onAdd}
-        isDisabled={channelCount >= MAX_CHANNELS}
-        lockedChannelTypes={isEnterpriseAllowed ? [] : ENTERPRISE_CHANNEL_TYPES}
-        onLockedSelect={() =>
-          openUpgradeGate({
-            intent: CertificateEnterpriseAlertingUpgradeIntent,
-            paywallKey: "cert-manager.application-alert-channels"
-          })
-        }
-        label="Add Channel"
-        contentClassName="min-w-56"
-      />
-      {upgradeGate}
-    </>
+    <AddChannelMenu
+      onAdd={onAdd}
+      isDisabled={channelCount >= MAX_CHANNELS}
+      lockedChannelTypes={isEnterpriseAllowed ? [] : ENTERPRISE_CHANNEL_TYPES}
+      label="Add Channel"
+      contentClassName="min-w-56"
+    />
   );
 };
 

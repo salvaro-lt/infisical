@@ -1,4 +1,3 @@
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import {
   ProjectPermissionActions,
   ProjectPermissionSub,
@@ -15,26 +14,16 @@ export const useCreateProjectRole = () => {
   const { currentProject } = useProject();
   const { permission } = useProjectPermission();
   const { subscription } = useSubscription();
-  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["role", "upgradePlan"] as const);
+  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["role"] as const);
 
   const canCreateRole =
     currentProject?.type !== ProjectType.CertificateManager &&
-    permission.can(ProjectPermissionActions.Create, ProjectPermissionSub.Role);
+    permission.can(ProjectPermissionActions.Create, ProjectPermissionSub.Role) &&
+    Boolean(subscription?.rbac);
 
-  const openCreateRole = () =>
-    handlePopUpOpen(subscription && !subscription.rbac ? "upgradePlan" : "role");
+  const openCreateRole = () => handlePopUpOpen("role");
 
-  const createRoleDialogs = (
-    <>
-      <RoleModal popUp={popUp} handlePopUpToggle={handlePopUpToggle} />
-      <UpgradeGate
-        paywallKey="project.role"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(open) => handlePopUpToggle("upgradePlan", open)}
-        intent={{ ...CustomRolesUpgradeIntent, isEnterpriseFeature: false }}
-      />
-    </>
-  );
+  const createRoleDialogs = <RoleModal popUp={popUp} handlePopUpToggle={handlePopUpToggle} />;
 
   return { canCreateRole, openCreateRole, createRoleDialogs };
 };

@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { ChevronDownIcon, DatabaseIcon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
-import { SecretScanningUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
   CreateSecretScanningDataSourceSheet,
@@ -99,7 +98,6 @@ const sortDataSources = (
 export const SecretScanningDataSourcesSection = () => {
   const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
     "addDataSource",
-    "upgradePlan",
     "deleteDataSource",
     "editDataSource"
   ] as const);
@@ -218,9 +216,11 @@ export const SecretScanningDataSourcesSection = () => {
             <DatabaseIcon />
           </EmptyMedia>
           <EmptyTitle>No data sources yet</EmptyTitle>
-          <EmptyDescription>
-            Add a data source to start scanning it for leaked secrets.
-          </EmptyDescription>
+          {subscription.secretScanning && (
+            <EmptyDescription>
+              Add a data source to start scanning it for leaked secrets.
+            </EmptyDescription>
+          )}
         </EmptyHeader>
       </Empty>
     );
@@ -237,30 +237,25 @@ export const SecretScanningDataSourcesSection = () => {
           <CardDescription>
             Connect third-party services to scan them for leaked secrets.
           </CardDescription>
-          <CardAction>
-            <ProjectPermissionCan
-              I={ProjectPermissionSecretScanningDataSourceActions.Create}
-              a={ProjectPermissionSub.SecretScanningDataSources}
-            >
-              {(isAllowed) => (
-                <Button
-                  variant="ss"
-                  isDisabled={!isAllowed}
-                  onClick={() => {
-                    if (!subscription.secretScanning) {
-                      handlePopUpOpen("upgradePlan", { isEnterpriseFeature: true });
-                      return;
-                    }
-
-                    handlePopUpOpen("addDataSource");
-                  }}
-                >
-                  <PlusIcon />
-                  Add Data Source
-                </Button>
-              )}
-            </ProjectPermissionCan>
-          </CardAction>
+          {subscription.secretScanning && (
+            <CardAction>
+              <ProjectPermissionCan
+                I={ProjectPermissionSecretScanningDataSourceActions.Create}
+                a={ProjectPermissionSub.SecretScanningDataSources}
+              >
+                {(isAllowed) => (
+                  <Button
+                    variant="ss"
+                    isDisabled={!isAllowed}
+                    onClick={() => handlePopUpOpen("addDataSource")}
+                  >
+                    <PlusIcon />
+                    Add Data Source
+                  </Button>
+                )}
+              </ProjectPermissionCan>
+            </CardAction>
+          )}
           <div className="col-span-full flex gap-2">
             <InputGroup className="flex-1">
               <InputGroupAddon align="inline-start">
@@ -375,12 +370,6 @@ export const SecretScanningDataSourcesSection = () => {
         onOpenChange={(isOpen) => handlePopUpToggle("editDataSource", isOpen)}
         isOpen={popUp.editDataSource.isOpen}
         dataSource={popUp.editDataSource.data}
-      />
-      <UpgradeGate
-        paywallKey="secret-scanning.secret-scanning-data-sources"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={SecretScanningUpgradeIntent}
       />
     </>
   );

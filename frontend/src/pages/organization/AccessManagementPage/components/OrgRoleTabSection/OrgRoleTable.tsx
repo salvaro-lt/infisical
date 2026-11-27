@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -86,8 +85,7 @@ export const OrgRoleTable = () => {
   const { popUp, handlePopUpOpen, handlePopUpClose, handlePopUpToggle } = usePopUp([
     "role",
     "deleteRole",
-    "duplicateRole",
-    "upgradePlan"
+    "duplicateRole"
   ] as const);
 
   const { data: roles, isPending: isRolesLoading } = useGetOrgRoles(orgId);
@@ -106,16 +104,6 @@ export const OrgRoleTable = () => {
   };
 
   const handleSetRoleAsDefault = async (defaultMembershipRoleSlug: string) => {
-    const isCustomRole = isCustomOrgRole(defaultMembershipRoleSlug);
-
-    if (isCustomRole && subscription && !subscription?.rbac) {
-      handlePopUpOpen("upgradePlan", {
-        text: "Set a custom role as the default for new organization members.",
-        isEnterpriseFeature: true
-      });
-      return;
-    }
-
     await updateOrg({
       orgId,
       defaultMembershipRoleSlug
@@ -206,22 +194,24 @@ export const OrgRoleTable = () => {
           <CardDescription>
             Create and manage {isSubOrganization ? "sub-" : ""}organization roles
           </CardDescription>
-          <CardAction>
-            <OrgPermissionCan I={OrgPermissionActions.Create} a={OrgPermissionSubjects.Role}>
-              {(isAllowed) => (
-                <Button
-                  variant={isSubOrganization ? "sub-org" : "org"}
-                  onClick={() => {
-                    handlePopUpOpen("role");
-                  }}
-                  isDisabled={!isAllowed}
-                >
-                  <PlusIcon />
-                  Create
-                </Button>
-              )}
-            </OrgPermissionCan>
-          </CardAction>
+          {subscription?.rbac && (
+            <CardAction>
+              <OrgPermissionCan I={OrgPermissionActions.Create} a={OrgPermissionSubjects.Role}>
+                {(isAllowed) => (
+                  <Button
+                    variant={isSubOrganization ? "sub-org" : "org"}
+                    onClick={() => {
+                      handlePopUpOpen("role");
+                    }}
+                    isDisabled={!isAllowed}
+                  >
+                    <PlusIcon />
+                    Create
+                  </Button>
+                )}
+              </OrgPermissionCan>
+            </CardAction>
+          )}
         </CardHeader>
         <CardContent>
           <div>
@@ -390,53 +380,57 @@ export const OrgRoleTable = () => {
                                     </DropdownMenuItem>
                                   )}
                                 </OrgPermissionCan>
-                                <OrgPermissionCan
-                                  I={OrgPermissionActions.Create}
-                                  a={OrgPermissionSubjects.Role}
-                                >
-                                  {(isAllowed) => (
-                                    <DropdownMenuItem
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handlePopUpOpen("duplicateRole", role);
-                                      }}
-                                      isDisabled={!isAllowed}
-                                    >
-                                      <CopyIcon />
-                                      Duplicate Role
-                                    </DropdownMenuItem>
-                                  )}
-                                </OrgPermissionCan>
-                                {!isDefaultOrgRole && (
+                                {subscription?.rbac && (
                                   <OrgPermissionCan
-                                    I={OrgPermissionActions.Edit}
-                                    a={OrgPermissionSubjects.Settings}
+                                    I={OrgPermissionActions.Create}
+                                    a={OrgPermissionSubjects.Role}
                                   >
                                     {(isAllowed) => (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div>
-                                            <DropdownMenuItem
-                                              isDisabled={!isAllowed || isSubOrganization}
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleSetRoleAsDefault(slug);
-                                              }}
-                                            >
-                                              <IdCardIcon />
-                                              Set as Default Role
-                                            </DropdownMenuItem>
-                                          </div>
-                                        </TooltipTrigger>
-                                        {isSubOrganization && (
-                                          <TooltipContent side="left">
-                                            This action cannot be performed from sub-organizations.
-                                          </TooltipContent>
-                                        )}
-                                      </Tooltip>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handlePopUpOpen("duplicateRole", role);
+                                        }}
+                                        isDisabled={!isAllowed}
+                                      >
+                                        <CopyIcon />
+                                        Duplicate Role
+                                      </DropdownMenuItem>
                                     )}
                                   </OrgPermissionCan>
                                 )}
+                                {!isDefaultOrgRole &&
+                                  (subscription?.rbac || !isCustomOrgRole(slug)) && (
+                                    <OrgPermissionCan
+                                      I={OrgPermissionActions.Edit}
+                                      a={OrgPermissionSubjects.Settings}
+                                    >
+                                      {(isAllowed) => (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <div>
+                                              <DropdownMenuItem
+                                                isDisabled={!isAllowed || isSubOrganization}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleSetRoleAsDefault(slug);
+                                                }}
+                                              >
+                                                <IdCardIcon />
+                                                Set as Default Role
+                                              </DropdownMenuItem>
+                                            </div>
+                                          </TooltipTrigger>
+                                          {isSubOrganization && (
+                                            <TooltipContent side="left">
+                                              This action cannot be performed from
+                                              sub-organizations.
+                                            </TooltipContent>
+                                          )}
+                                        </Tooltip>
+                                      )}
+                                    </OrgPermissionCan>
+                                  )}
                                 {!isNonMutatable && (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -501,14 +495,6 @@ export const OrgRoleTable = () => {
         onOpenChange={(isOpen) => handlePopUpToggle("deleteRole", isOpen)}
         confirmKey={(popUp?.deleteRole?.data as TOrgRole)?.slug || ""}
         onConfirm={handleRoleDelete}
-      />
-      <UpgradeGate
-        intent={{
-          ...CustomRolesUpgradeIntent
-        }}
-        paywallKey="organization.org-role"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
       />
       <DuplicateOrgRoleModal
         isOpen={popUp.duplicateRole.isOpen}

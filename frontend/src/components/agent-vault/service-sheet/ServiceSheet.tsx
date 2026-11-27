@@ -40,7 +40,8 @@ import {
   ProjectPermissionAgentVaultHookActions,
   ProjectPermissionSub,
   useProject,
-  useProjectPermission
+  useProjectPermission,
+  useSubscription
 } from "@app/context";
 import { hostError } from "@app/helpers/agentVaultHostPattern";
 import {
@@ -400,10 +401,14 @@ export const ServiceSheet = ({
   const updateService = useUpdateAgentVaultService(projectId);
 
   const { permission } = useProjectPermission();
-  const canReadHooks = permission.can(
-    ProjectPermissionAgentVaultHookActions.Read,
-    ProjectPermissionSub.AgentVaultHooks
-  );
+  const { subscription } = useSubscription();
+  // Off-plan, the hook step only shows for a service that already has a hook, so it can be removed.
+  const showHookStep =
+    permission.can(
+      ProjectPermissionAgentVaultHookActions.Read,
+      ProjectPermissionSub.AgentVaultHooks
+    ) &&
+    (Boolean(subscription.agentVaultHooks) || Boolean(service?.hook));
 
   const storedKeys = useMemo(() => storedVariableKeys(service), [service]);
   // One dialog for every field. The request settles once the dialog has closed, not when the variable is
@@ -515,9 +520,9 @@ export const ServiceSheet = ({
     return all.filter(
       (meta) =>
         (hasTemplateStep || meta.step !== ServiceStep.Template) &&
-        (canReadHooks || meta.step !== ServiceStep.Hook)
+        (showHookStep || meta.step !== ServiceStep.Hook)
     );
-  }, [hasTemplateStep, isMcp, nativeType, canReadHooks]);
+  }, [hasTemplateStep, isMcp, nativeType, showHookStep]);
   const stepKeys = useMemo(() => steps.map((meta) => meta.step), [steps]);
 
   const panelRef = useRef<HTMLDivElement>(null);
@@ -1184,7 +1189,7 @@ export const ServiceSheet = ({
                   {current.step === ServiceStep.Hook && <HookField />}
                   {current.step === ServiceStep.Review && (
                     <ReviewFields
-                      showHooks={canReadHooks}
+                      showHooks={showHookStep}
                       isUpdate={isUpdate}
                       service={service}
                       storedType={service?.credential.type}

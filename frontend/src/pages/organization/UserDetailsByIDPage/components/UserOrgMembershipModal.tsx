@@ -40,11 +40,10 @@ export type FormData = z.infer<typeof schema>;
 
 type Props = {
   popUp: UsePopUpState<["orgMembership"]>;
-  handlePopUpOpen: (popUpName: keyof UsePopUpState<["upgradePlan"]>, data?: object) => void;
   handlePopUpToggle: (popUpName: keyof UsePopUpState<["orgMembership"]>, state?: boolean) => void;
 };
 
-export const UserOrgMembershipModal = ({ popUp, handlePopUpOpen, handlePopUpToggle }: Props) => {
+export const UserOrgMembershipModal = ({ popUp, handlePopUpToggle }: Props) => {
   const { subscription } = useSubscription();
   const { currentOrg, isSubOrganization } = useOrganization();
   const roleInputId = useId();
@@ -93,14 +92,6 @@ export const UserOrgMembershipModal = ({ popUp, handlePopUpOpen, handlePopUpTogg
   const onFormSubmit = async ({ role, metadata }: FormData) => {
     if (!orgId) return;
 
-    if (isCustomOrgRole(role.slug) && subscription && !subscription?.rbac) {
-      handlePopUpOpen("upgradePlan", {
-        text: "Your current plan does not include access to assigning custom roles to members. To unlock this feature, please upgrade to Infisical Enterprise plan.",
-        isEnterpriseFeature: true
-      });
-      return;
-    }
-
     await updateOrgMembership({
       organizationId: orgId,
       membershipId: popUpData.membershipId,
@@ -140,20 +131,13 @@ export const UserOrgMembershipModal = ({ popUp, handlePopUpOpen, handlePopUpTogg
                 <Combobox
                   id={roleInputId}
                   placeholder="Select role..."
-                  options={roles}
+                  options={roles.filter(
+                    ({ slug }) =>
+                      subscription?.rbac || !isCustomOrgRole(slug) || slug === value?.slug
+                  )}
                   isClearable={false}
                   isError={Boolean(error)}
                   onValueChange={(role) => {
-                    const isCustomRole = isCustomOrgRole(role.slug);
-
-                    if (isCustomRole && subscription && !subscription?.rbac) {
-                      handlePopUpOpen("upgradePlan", {
-                        text: "Your current plan does not include access to assigning custom roles to members. To unlock this feature, please upgrade to Infisical Enterprise plan.",
-                        isEnterpriseFeature: true
-                      });
-                      return;
-                    }
-
                     onChange(role);
                   }}
                   value={value ?? null}

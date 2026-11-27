@@ -1,14 +1,6 @@
 import { ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Controller, ControllerRenderProps, useFormContext } from "react-hook-form";
-import {
-  ChevronDownIcon,
-  ExternalLinkIcon,
-  EyeIcon,
-  EyeOffIcon,
-  InfoIcon,
-  LockIcon,
-  XIcon
-} from "lucide-react";
+import { ChevronDownIcon, EyeIcon, EyeOffIcon, InfoIcon, LockIcon, XIcon } from "lucide-react";
 
 import {
   Alert,
@@ -45,7 +37,6 @@ import {
   TAgentVaultMemberProvidedField
 } from "@app/hooks/api/agentVault";
 import { TAgentVaultService } from "@app/hooks/api/agentVault/types";
-import { AgentVaultDocsUrls } from "@app/pages/agent-vault/agent-vault-docs-urls";
 
 import { OAuthVariableField } from "./OAuthVariableField";
 import { ReferenceHighlights } from "./ReferenceHighlights";
@@ -294,8 +285,7 @@ export const MemberProvidedToggle = ({
   isOn,
   onChange,
   isDisabled,
-  about,
-  docsUrl = AgentVaultDocsUrls.memberProvidedValues
+  about
 }: {
   label: string;
   isOn: boolean;
@@ -303,7 +293,6 @@ export const MemberProvidedToggle = ({
   isDisabled?: boolean;
   /** Replaces the hover card's explanation, for a credential a member doesn't type. */
   about?: ReactNode;
-  docsUrl?: string;
 }) => {
   const id = useId();
   return (
@@ -329,15 +318,6 @@ export const MemberProvidedToggle = ({
               </ul>
             </>
           )}
-          <a
-            href={docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1 underline underline-offset-2 hover:text-foreground"
-          >
-            Learn more
-            <ExternalLinkIcon className="size-3" />
-          </a>
         </HoverCardContent>
       </HoverCard>
       <FieldLabel htmlFor={id}>Member provided</FieldLabel>

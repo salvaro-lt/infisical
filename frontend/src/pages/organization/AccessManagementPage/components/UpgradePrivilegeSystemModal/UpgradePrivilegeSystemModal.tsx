@@ -106,51 +106,8 @@ export const UpgradePrivilegeSystemModal = ({ isOpen, onOpenChange }: Props) => 
                     <strong>New system:</strong> Users need explicit permission to modify specific
                     access levels, providing targeted control. After upgrading, you&apos;ll need to
                     grant the new &apos;Grant Privileges&apos; permission. At the organization
-                    level, this is available for the{" "}
-                    <a
-                      href="https://infisical.com/docs/internals/permissions/organization-permissions#subject%3A-groups"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline hover:text-foreground-soft hover:decoration-project"
-                    >
-                      Group
-                    </a>{" "}
-                    and{" "}
-                    <a
-                      href="https://infisical.com/docs/internals/permissions/organization-permissions#subject%3A-identity"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline hover:text-foreground-soft hover:decoration-project"
-                    >
-                      Identity
-                    </a>{" "}
-                    subjects while at the project level, this is available for the{" "}
-                    <a
-                      href="https://infisical.com/docs/internals/permissions/project-permissions#subject%3A-member"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline hover:text-foreground-soft hover:decoration-project"
-                    >
-                      Member,
-                    </a>{" "}
-                    <a
-                      href="https://infisical.com/docs/internals/permissions/project-permissions#subject%3A-groups"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline hover:text-foreground-soft hover:decoration-project"
-                    >
-                      Group,
-                    </a>{" "}
-                    and{" "}
-                    <a
-                      href="https://infisical.com/docs/internals/permissions/project-permissions#subject%3A-identity"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline hover:text-foreground-soft hover:decoration-project"
-                    >
-                      Identity
-                    </a>{" "}
-                    subjects.
+                    level, this is available for the Group and Identity subjects while at the
+                    project level, this is available for the Member, Group, and Identity subjects.
                   </p>
                 </div>
               </div>

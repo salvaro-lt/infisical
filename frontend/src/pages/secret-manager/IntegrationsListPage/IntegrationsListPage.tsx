@@ -27,13 +27,7 @@ import { useGetWorkspaceIntegrations } from "@app/hooks/api";
 import { ProjectType } from "@app/hooks/api/projects/types";
 import { IntegrationsListPageTabs } from "@app/types/integrations";
 
-import {
-  AppConnectionsTab,
-  FrameworkIntegrationTab,
-  InfrastructureIntegrationTab,
-  NativeIntegrationsTab,
-  SecretSyncsTab
-} from "./components";
+import { AppConnectionsTab, NativeIntegrationsTab, SecretSyncsTab } from "./components";
 
 export const IntegrationsListPage = () => {
   const { t } = useTranslation();
@@ -82,12 +76,6 @@ export const IntegrationsListPage = () => {
                 App Connections
               </TabsTrigger>
               <TabsTrigger value={IntegrationsListPageTabs.SecretSyncs}>Secret Syncs</TabsTrigger>
-              <TabsTrigger value={IntegrationsListPageTabs.FrameworkIntegrations}>
-                Framework Integrations
-              </TabsTrigger>
-              <TabsTrigger value={IntegrationsListPageTabs.InfrastructureIntegrations}>
-                Infrastructure Integrations
-              </TabsTrigger>
               {showNativeIntegrations && (
                 <TabsTrigger value={IntegrationsListPageTabs.NativeIntegrations}>
                   Native Integrations
@@ -107,12 +95,6 @@ export const IntegrationsListPage = () => {
             </TabsList>
             <TabsContent value={IntegrationsListPageTabs.AppConnections}>
               <AppConnectionsTab />
-            </TabsContent>
-            <TabsContent value={IntegrationsListPageTabs.FrameworkIntegrations}>
-              <FrameworkIntegrationTab />
-            </TabsContent>
-            <TabsContent value={IntegrationsListPageTabs.InfrastructureIntegrations}>
-              <InfrastructureIntegrationTab />
             </TabsContent>
             {showNativeIntegrations && (
               <TabsContent value={IntegrationsListPageTabs.NativeIntegrations}>

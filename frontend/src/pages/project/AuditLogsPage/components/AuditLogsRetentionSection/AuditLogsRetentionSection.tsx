@@ -63,21 +63,11 @@ export const AuditLogsRetentionSection = () => {
   const isPlanRetentionUnlimited = subscription?.auditLogsRetentionDays === null;
 
   const handleAuditLogsRetentionSubmit = async ({ auditLogsRetentionDays }: TForm) => {
-    if (!subscription?.auditLogs) {
-      handlePopUpOpen("upgradePlan", {
-        text: "Configuring audit logs retention can be unlocked if you upgrade to Infisical Pro plan."
-      });
-
-      return;
-    }
-
     if (
       subscription?.auditLogsRetentionDays != null &&
       auditLogsRetentionDays > subscription.auditLogsRetentionDays
     ) {
-      handlePopUpOpen("upgradePlan", {
-        text: "Updating audit logs retention period to a higher value can be unlocked if you upgrade to Infisical Pro plan."
-      });
+      handlePopUpOpen("upgradePlan");
 
       return;
     }
@@ -94,7 +84,7 @@ export const AuditLogsRetentionSection = () => {
   };
 
   // Retention is only configurable on dedicated and self-hosted instances.
-  if (isInfisicalCloud()) return null;
+  if (isInfisicalCloud() || !subscription?.auditLogs) return null;
 
   const canEdit = permission.can(
     ProjectPermissionAuditLogsActions.Edit,

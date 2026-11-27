@@ -2,7 +2,6 @@ import crypto from "crypto";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
-import { faArrowUpRightFromSquare, faBookOpen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
@@ -10,10 +9,8 @@ import { z } from "zod";
 
 import { PageTitle } from "@app/components/PageTitle";
 import {
-  Badge,
   Button,
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -63,7 +60,7 @@ export const GcpSecretManagerAuthorizePage = () => {
     localStorageService.setIntegrationProjectId(currentProject.id);
 
     if (!integrationOption.clientId) {
-      createIntegrationMissingEnvVarsNotification(integrationOption.slug);
+      createIntegrationMissingEnvVarsNotification();
       return;
     }
 
@@ -115,19 +112,6 @@ export const GcpSecretManagerAuthorizePage = () => {
           <CardDescription>
             Connect Infisical to GCP Secret Manager to sync secrets.
           </CardDescription>
-          <CardAction>
-            <Badge variant="info" asChild>
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://infisical.com/docs/integrations/cloud/gcp-secret-manager"
-              >
-                <FontAwesomeIcon icon={faBookOpen} />
-                Docs
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-              </a>
-            </Badge>
-          </CardAction>
         </CardHeader>
         <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col gap-5">
           <CardContent className="flex flex-col gap-5">

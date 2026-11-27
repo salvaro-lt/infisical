@@ -5,7 +5,6 @@ import { CheckIcon, ClockAlertIcon, ClockIcon, EditIcon } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { z } from "zod";
 
-import { CustomRolesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import {
   Badge,
@@ -234,13 +233,13 @@ const GroupRolesForm = ({ projectRoles, roles, groupId, onClose }: FormProps) =>
   const scopeVariant = useScopeVariant();
   const { currentProject } = useProject();
   const { subscription } = useSubscription();
-  const {
-    popUp: upgradePlanPopUp,
-    handlePopUpOpen: handleUpgradePlanPopUpOpen,
-    handlePopUpToggle: handleUpgradePlanPopUpToggle
-  } = usePopUp(["upgradePlan"] as const);
 
   const userRolesGroupBySlug = groupBy(roles, ({ customRoleSlug, role }) => customRoleSlug || role);
+  // without custom roles on the plan, only list custom roles the group already holds
+  const visibleProjectRoles = (projectRoles ?? []).filter(
+    ({ slug }) =>
+      subscription?.rbac || !isCustomProjectRole(slug) || Boolean(userRolesGroupBySlug[slug])
+  );
 
   const updateGroupWorkspaceRole = useUpdateGroupWorkspaceRole();
 
@@ -254,15 +253,6 @@ const GroupRolesForm = ({ projectRoles, roles, groupId, onClose }: FormProps) =>
   });
 
   const handleRoleUpdate = async (data: TForm) => {
-    const hasCustomRole = Object.keys(data)
-      .filter((el) => Boolean(data[el].isChecked))
-      .some((slug) => isCustomProjectRole(slug));
-
-    if (hasCustomRole && subscription && !subscription?.rbac) {
-      handleUpgradePlanPopUpOpen("upgradePlan");
-      return;
-    }
-
     const selectedRoles = Object.keys(data)
       .filter((el) => Boolean(data[el].isChecked))
       .map((el) => {
@@ -302,7 +292,7 @@ const GroupRolesForm = ({ projectRoles, roles, groupId, onClose }: FormProps) =>
         <CommandList>
           <CommandEmpty>No roles found</CommandEmpty>
           <CommandGroup>
-            {(projectRoles ?? []).map(({ id, name, slug }) => {
+            {visibleProjectRoles.map(({ id, name, slug }) => {
               const userProjectRoleDetails = userRolesGroupBySlug?.[slug]?.[0];
 
               return (
@@ -385,15 +375,6 @@ const GroupRolesForm = ({ projectRoles, roles, groupId, onClose }: FormProps) =>
           Save
         </Button>
       </div>
-      <UpgradeGate
-        paywallKey="project.group-roles"
-        isOpen={upgradePlanPopUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handleUpgradePlanPopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...CustomRolesUpgradeIntent,
-          isEnterpriseFeature: true
-        }}
-      />
     </form>
   );
 };

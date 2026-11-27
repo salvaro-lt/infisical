@@ -53,15 +53,7 @@ export const CertManagerSelectInstanceModal = ({
           <DialogTitle>Select a Certificate Manager project</DialogTitle>
           <DialogDescription>
             Your organization has multiple Certificate Manager projects. Select one to continue.
-            Once you&apos;ve consolidated to a single project, this prompt won&apos;t appear again.{" "}
-            <a
-              href="https://infisical.com/docs/documentation/platform/pki/migration"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-project hover:underline"
-            >
-              View the migration guide.
-            </a>
+            Once you&apos;ve consolidated to a single project, this prompt won&apos;t appear again.
           </DialogDescription>
         </DialogHeader>
 

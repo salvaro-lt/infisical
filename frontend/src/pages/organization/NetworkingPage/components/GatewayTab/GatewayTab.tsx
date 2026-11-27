@@ -13,7 +13,6 @@ import {
   TrashIcon
 } from "lucide-react";
 
-import { GatewayPoolsUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -96,7 +95,7 @@ export const GatewayTab = withPermission(
     const navigate = useNavigate();
     const { currentOrg } = useOrganization();
     const orgId = currentOrg?.id || "";
-    const activeSubTab =
+    const gatewayView =
       useSearch({
         from: ROUTE_PATHS.Organization.NetworkingPage.id,
         select: (el) => el.gatewayView
@@ -110,6 +109,8 @@ export const GatewayTab = withPermission(
       });
     const { subscription } = useSubscription();
     const showPoolsTab = subscription?.gatewayPool;
+    // Gateway pools are a paid feature; without them only the gateway list is shown.
+    const activeSubTab = showPoolsTab ? gatewayView : "all-gateways";
     const [search, setSearch] = useState("");
     const [poolSearch, setPoolSearch] = useState("");
     const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
@@ -136,8 +137,7 @@ export const GatewayTab = withPermission(
       "deployGateway",
       "deleteGateway",
       "renameGateway",
-      "createPool",
-      "upgradePlan"
+      "createPool"
     ] as const);
 
     const deleteGatewayV2ById = useDeleteGatewayV2ById();
@@ -172,7 +172,7 @@ export const GatewayTab = withPermission(
 
     return (
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="min-w-0 lg:col-span-2">
+        <Card className={showPoolsTab ? "min-w-0 lg:col-span-2" : "min-w-0 lg:col-span-3"}>
           <CardHeader>
             <CardTitle>
               Gateways
@@ -216,10 +216,6 @@ export const GatewayTab = withPermission(
                     <Button
                       variant={scopeVariant}
                       onClick={() => {
-                        if (!subscription?.gatewayPool) {
-                          handlePopUpOpen("upgradePlan");
-                          return;
-                        }
                         handlePopUpOpen("createPool");
                       }}
                       isDisabled={!isAllowed}
@@ -234,17 +230,19 @@ export const GatewayTab = withPermission(
           </CardHeader>
           <CardContent>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <Tabs
-                value={activeSubTab}
-                onValueChange={(value) =>
-                  setActiveSubTab(value as "all-gateways" | "gateway-pools")
-                }
-              >
-                <TabsList variant="filled">
-                  <TabsTrigger value="all-gateways">All Gateways</TabsTrigger>
-                  <TabsTrigger value="gateway-pools">Gateway Pools</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              {showPoolsTab && (
+                <Tabs
+                  value={activeSubTab}
+                  onValueChange={(value) =>
+                    setActiveSubTab(value as "all-gateways" | "gateway-pools")
+                  }
+                >
+                  <TabsList variant="filled">
+                    <TabsTrigger value="all-gateways">All Gateways</TabsTrigger>
+                    <TabsTrigger value="gateway-pools">Gateway Pools</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
               {activeSubTab === "all-gateways" ? (
                 <InputGroup className="w-1/2 min-w-64">
                   <InputGroupAddon align="inline-start">
@@ -520,19 +518,12 @@ export const GatewayTab = withPermission(
             isOpen={popUp.createPool.isOpen}
             onToggle={(isOpen) => handlePopUpToggle("createPool", isOpen)}
           />
-          <UpgradeGate
-            paywallKey="organization.gateway"
-            isOpen={popUp.upgradePlan.isOpen}
-            onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-            intent={{
-              ...GatewayPoolsUpgradeIntent,
-              isEnterpriseFeature: true
-            }}
-          />
         </Card>
-        <div className="flex flex-col gap-4">
-          <GatewayPoliciesSection />
-        </div>
+        {showPoolsTab && (
+          <div className="flex flex-col gap-4">
+            <GatewayPoliciesSection />
+          </div>
+        )}
       </div>
     );
   },

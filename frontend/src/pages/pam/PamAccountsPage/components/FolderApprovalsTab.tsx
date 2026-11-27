@@ -620,8 +620,9 @@ export const FolderApprovalsTab = ({ folderId, onDirtyChange }: Props) => {
         <CardHeader>
           <CardTitle>Alerts</CardTitle>
           <CardDescription>
-            Notify email, Slack, webhook, or PagerDuty channels about access request activity for
-            accounts in this folder.
+            {subscription?.pamEnterpriseAlerting
+              ? "Notify email, Slack, webhook, or PagerDuty channels about access request activity for accounts in this folder."
+              : "Notify email channels about access request activity for accounts in this folder."}
           </CardDescription>
           <CardAction>
             <AlertAction

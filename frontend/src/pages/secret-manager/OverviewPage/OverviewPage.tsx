@@ -50,16 +50,9 @@ import {
   RevokeHoneyTokenModal
 } from "@app/components/honey-tokens";
 import {
-  DynamicSecretsUpgradeIntent,
-  EnterpriseSecretSyncsUpgradeIntent,
   EnvironmentLimitUpgradeIntent,
-  FolderAccessControlsUpgradeIntent,
   hasEnvironmentCapacity,
   HoneyTokensUpgradeIntent,
-  PointInTimeRecoveryUpgradeIntent,
-  SecretAccessInsightsUpgradeIntent,
-  SecretImportReplicationUpgradeIntent,
-  SecretRotationsUpgradeIntent,
   UpgradeIntent,
   useUpgradeGate
 } from "@app/components/license/UpgradeGate";
@@ -1774,12 +1767,7 @@ const OverviewPageContent = () => {
       setCommitHistoryEnv({ slug: envSlug, name: env?.name ?? envSlug });
     };
 
-    if (!subscription?.pitRecovery) {
-      openUpgradeGate({
-        intent: PointInTimeRecoveryUpgradeIntent
-      });
-      return;
-    }
+    if (!subscription?.pitRecovery) return;
 
     openCommitHistory();
   };
@@ -1799,12 +1787,7 @@ const OverviewPageContent = () => {
         });
       };
 
-      if (!subscription?.secretsFolderRbac) {
-        openUpgradeGate({
-          intent: FolderAccessControlsUpgradeIntent
-        });
-        return;
-      }
+      if (!subscription?.secretsFolderRbac) return;
 
       openFolderAccess();
     },
@@ -1814,8 +1797,7 @@ const OverviewPageContent = () => {
       childFolderPath,
       orgId,
       projectId,
-      subscription?.secretsFolderRbac,
-      openUpgradeGate
+      subscription?.secretsFolderRbac
     ]
   );
 
@@ -1840,22 +1822,10 @@ const OverviewPageContent = () => {
       });
     };
 
-    if (!subscription?.secretsFolderRbac) {
-      openUpgradeGate({
-        intent: FolderAccessControlsUpgradeIntent
-      });
-      return;
-    }
+    if (!subscription?.secretsFolderRbac) return;
 
     openCurrentFolderAccess();
-  }, [
-    openUpgradeGate,
-    orgId,
-    projectId,
-    secretPath,
-    singleEnvSlug,
-    subscription?.secretsFolderRbac
-  ]);
+  }, [orgId, projectId, secretPath, singleEnvSlug, subscription?.secretsFolderRbac]);
 
   const handleAddSecretImport = () => {
     handlePopUpOpen("addSecretImport");
@@ -4054,11 +4024,6 @@ const OverviewPageContent = () => {
       onPendingSave={handlePendingSecretSave}
       isSelectionDisabled={hasPendingBatchChanges}
       onCopySecret={handleCopySecret}
-      onAccessInsightsUpgrade={() =>
-        openUpgradeGate({
-          intent: SecretAccessInsightsUpgradeIntent
-        })
-      }
       activityId={getTableRowActivityId("secret", getSecretRowKey(key, rowKey))}
       onActivityChange={handleTableRowActivityChange}
       timestampSortField={isTimestampSort ? orderBy : undefined}
@@ -4145,12 +4110,7 @@ const OverviewPageContent = () => {
     | undefined;
 
   async function handleAddHoneyToken(): Promise<void> {
-    if (!subscription?.honeyTokens) {
-      openUpgradeGate({
-        intent: HoneyTokensUpgradeIntent
-      });
-      return;
-    }
+    if (!subscription?.honeyTokens) return;
 
     try {
       const { data } = await apiRequest.get<{ used: number; limit: number }>(
@@ -4201,22 +4161,10 @@ const OverviewPageContent = () => {
     onAddFolder: () => handlePopUpOpen("addFolder"),
     onImportSecrets: () => handlePopUpOpen("importSecrets"),
     onAddDyanamicSecret: () => {
-      if (subscription?.dynamicSecret) {
-        handlePopUpOpen("addDynamicSecret");
-        return;
-      }
-      openUpgradeGate({
-        intent: DynamicSecretsUpgradeIntent
-      });
+      if (subscription?.dynamicSecret) handlePopUpOpen("addDynamicSecret");
     },
     onAddSecretRotation: () => {
-      if (subscription?.secretRotation) {
-        handlePopUpOpen("addSecretRotation");
-        return;
-      }
-      openUpgradeGate({
-        intent: SecretRotationsUpgradeIntent
-      });
+      if (subscription?.secretRotation) handlePopUpOpen("addSecretRotation");
     },
     onAddHoneyToken: handleAddHoneyToken,
     onAddProxiedService: () => handlePopUpOpen("addProxiedService"),
@@ -4487,7 +4435,7 @@ const OverviewPageContent = () => {
                 </Tooltip>
               </>
             )}
-            {isSingleEnvView && (
+            {isSingleEnvView && subscription?.secretsFolderRbac && (
               <Tooltip open={canManageCurrentFolderAccess ? false : undefined}>
                 <TooltipTrigger asChild>
                   <span
@@ -4748,10 +4696,12 @@ const OverviewPageContent = () => {
                                     <DownloadIcon />
                                     Download as .env
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleViewCommitHistory(slug)}>
-                                    <GitCommitIcon />
-                                    View Commit History
-                                  </DropdownMenuItem>
+                                  {subscription?.pitRecovery && (
+                                    <DropdownMenuItem onClick={() => handleViewCommitHistory(slug)}>
+                                      <GitCommitIcon />
+                                      View Commit History
+                                    </DropdownMenuItem>
+                                  )}
                                   <ProjectPermissionCan
                                     I={ProjectPermissionActions.Delete}
                                     a={ProjectPermissionSub.Environments}
@@ -4832,28 +4782,27 @@ const OverviewPageContent = () => {
                                   </TooltipContent>
                                 </Tooltip>
                               )}
-                              <Badge
-                                asChild
-                                className="float-right cursor-pointer"
-                                variant="neutral"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (singleVisibleEnv) {
-                                      handleViewCommitHistory(singleVisibleEnv.slug);
-                                    }
-                                  }}
+                              {subscription?.pitRecovery && (
+                                <Badge
+                                  asChild
+                                  className="float-right cursor-pointer"
+                                  variant="neutral"
                                 >
-                                  <GitCommitIcon />
-                                  {/* eslint-disable-next-line no-nested-ternary */}
-                                  {subscription.pitRecovery
-                                    ? isSingleEnvChangesCountLoading
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (singleVisibleEnv) {
+                                        handleViewCommitHistory(singleVisibleEnv.slug);
+                                      }
+                                    }}
+                                  >
+                                    <GitCommitIcon />
+                                    {isSingleEnvChangesCountLoading
                                       ? "Loading..."
-                                      : `${singleEnvChangesCount} Commit${singleEnvChangesCount === 1 ? "" : "s"}`
-                                    : "Commit History"}
-                                </button>
-                              </Badge>
+                                      : `${singleEnvChangesCount} Commit${singleEnvChangesCount === 1 ? "" : "s"}`}
+                                  </button>
+                                </Badge>
+                              )}
                               <SecretSyncStatusBadgeOverview
                                 environmentSlugs={visibleEnvs.map((e) => e.slug)}
                               />
@@ -5090,7 +5039,9 @@ const OverviewPageContent = () => {
                                 handlePopUpOpen("deleteFolder", { name })
                               }
                               onToggleFolderAccess={
-                                isSingleEnvView ? handleFolderAccessOpen : undefined
+                                isSingleEnvView && subscription?.secretsFolderRbac
+                                  ? handleFolderAccessOpen
+                                  : undefined
                               }
                               canManageFolderAccess={canManageFolderAccessInRow(folderName)}
                               canEditFolder={canEditFolders}
@@ -5575,11 +5526,6 @@ const OverviewPageContent = () => {
             handlePopUpClose("addSecretImport");
           }
         }}
-        onUpgradePlan={() =>
-          openUpgradeGate({
-            intent: SecretImportReplicationUpgradeIntent
-          })
-        }
       />
       <CreateSecretSyncModal
         isOpen={popUp.addSecretSync.isOpen}
@@ -5591,11 +5537,6 @@ const OverviewPageContent = () => {
         initialFormDataIsDirty={false}
         startOnDestination={false}
         onOpenChange={(isOpen) => handlePopUpToggle("addSecretSync", isOpen)}
-        onEnterpriseUpgrade={() =>
-          openUpgradeGate({
-            intent: EnterpriseSecretSyncsUpgradeIntent
-          })
-        }
       />
       {upgradeGate}
       <AddEnvironmentModal
@@ -5783,7 +5724,7 @@ const OverviewPageContent = () => {
             <AlertDialogDescription>
               {subscription?.pitRecovery
                 ? "This folder and all its contents will be removed. You can reverse this action by rolling back to a previous commit."
-                : "This folder and all its contents will be removed. Rolling back to a previous commit isn't available on your current plan. Upgrade to enable this feature."}
+                : "This folder and all its contents will be removed."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

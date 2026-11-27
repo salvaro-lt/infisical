@@ -4,9 +4,10 @@ import {
   ProjectPermissionIdentityActions,
   ProjectPermissionSub,
   useProject,
-  useProjectPermission
+  useProjectPermission,
+  useSubscription
 } from "@app/context";
-import { formatProjectRoleName } from "@app/helpers/roles";
+import { formatProjectRoleName, isCustomProjectRole } from "@app/helpers/roles";
 import { useGetProjectRoles } from "@app/hooks/api";
 import { IdentityProjectMembershipV1 } from "@app/hooks/api/identities/types";
 import {
@@ -22,6 +23,7 @@ export const useIdentityRoleGrant = (identityProjectMembership: IdentityProjectM
     currentProject?.type
   );
   const { permission } = useProjectPermission();
+  const { subscription } = useSubscription();
 
   const assignRoleConditions = useMemo(
     () => getIdentityAssignRoleConditions(permission),
@@ -41,12 +43,17 @@ export const useIdentityRoleGrant = (identityProjectMembership: IdentityProjectM
 
   const filteredRoles = useMemo(
     () =>
-      filterByGrantConditions(projectRoles ?? [], {
-        getKey: (role) => role.slug,
-        allowed: assignRoleConditions?.roles,
-        forbidden: assignRoleConditions?.forbiddenRoles
-      }),
-    [projectRoles, assignRoleConditions]
+      filterByGrantConditions(
+        (projectRoles ?? []).filter(
+          (role) => subscription?.rbac || !isCustomProjectRole(role.slug)
+        ),
+        {
+          getKey: (role) => role.slug,
+          allowed: assignRoleConditions?.roles,
+          forbidden: assignRoleConditions?.forbiddenRoles
+        }
+      ),
+    [projectRoles, assignRoleConditions, subscription?.rbac]
   );
 
   const assignableRoleSlugs = useMemo(

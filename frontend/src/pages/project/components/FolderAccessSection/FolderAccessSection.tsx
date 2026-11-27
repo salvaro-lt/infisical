@@ -13,10 +13,6 @@ import {
   UsersIcon
 } from "lucide-react";
 
-import {
-  FolderAccessControlsUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import {
   Alert,
@@ -90,7 +86,6 @@ export const FolderAccessSection = ({ actor, hideActions = false }: Props) => {
   const { permission } = useProjectPermission();
   const { subscription } = useSubscription();
   const hasFolderRbacPlan = Boolean(subscription?.secretsFolderRbac);
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
   const [isGrantOpen, setIsGrantOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TFolderAccess | null>(null);
@@ -136,13 +131,6 @@ export const FolderAccessSection = ({ actor, hideActions = false }: Props) => {
   const actorNoun = actor.type === "user" ? "user" : "machine identity";
 
   const openGrantSheet = (source: FolderAccessAddSheetSource) => {
-    if (!hasFolderRbacPlan) {
-      openUpgradeGate({
-        intent: FolderAccessControlsUpgradeIntent,
-        paywallKey: "project.folder-access-section"
-      });
-      return;
-    }
     setIsGrantOpen(true);
     analytics.captureForOrganization(AnalyticsEvent.FolderAccessAddSheetOpened, currentOrg.id, {
       source,
@@ -194,6 +182,8 @@ export const FolderAccessSection = ({ actor, hideActions = false }: Props) => {
       };
     });
   }, [folderAccess]);
+
+  if (!hasFolderRbacPlan) return null;
 
   return (
     <>
@@ -364,22 +354,13 @@ export const FolderAccessSection = ({ actor, hideActions = false }: Props) => {
               </Table>
             ) : (
               <Empty className="border">
-                {hasFolderRbacPlan ? (
-                  <EmptyHeader>
-                    <EmptyTitle>This {actorNoun} has no folder access</EmptyTitle>
-                    <EmptyDescription>
-                      Grant access to a folder to override {actor.type === "user" ? "their" : "its"}{" "}
-                      project roles within it
-                    </EmptyDescription>
-                  </EmptyHeader>
-                ) : (
-                  <EmptyHeader>
-                    <EmptyTitle>Folder access controls aren&apos;t on your plan</EmptyTitle>
-                    <EmptyDescription>
-                      Upgrade to grant this {actorNoun} access to specific folders
-                    </EmptyDescription>
-                  </EmptyHeader>
-                )}
+                <EmptyHeader>
+                  <EmptyTitle>This {actorNoun} has no folder access</EmptyTitle>
+                  <EmptyDescription>
+                    Grant access to a folder to override {actor.type === "user" ? "their" : "its"}{" "}
+                    project roles within it
+                  </EmptyDescription>
+                </EmptyHeader>
                 {!hideActions && (
                   <EmptyContent>
                     <Button
@@ -421,7 +402,6 @@ export const FolderAccessSection = ({ actor, hideActions = false }: Props) => {
         folderPath={deleteTarget?.secretPath ?? ""}
         environmentName={deleteTarget ? environmentNameOf(deleteTarget.environment) : ""}
       />
-      {upgradeGate}
     </>
   );
 };

@@ -16,7 +16,12 @@ import {
 } from "@app/components/v3";
 import { PageHeader } from "@app/components/v3/platform";
 import { ROUTE_PATHS } from "@app/const/routes";
-import { OrgPermissionActions, OrgPermissionSubjects, useOrganization } from "@app/context";
+import {
+  OrgPermissionActions,
+  OrgPermissionSubjects,
+  useOrganization,
+  useSubscription
+} from "@app/context";
 import { useDeleteOrgRole, useGetOrgRole } from "@app/hooks/api";
 import { usePopUp } from "@app/hooks/usePopUp";
 import { DuplicateOrgRoleModal } from "@app/pages/organization/RoleByIDPage/components/DuplicateOrgRoleModal";
@@ -31,6 +36,7 @@ export const Page = () => {
   });
   const roleId = params.roleId as string;
   const { currentOrg, isSubOrganization } = useOrganization();
+  const { subscription } = useSubscription();
   const orgId = currentOrg?.id || "";
   const { data } = useGetOrgRole(orgId, roleId);
   const { mutateAsync: deleteOrgRole } = useDeleteOrgRole();
@@ -125,40 +131,47 @@ export const Page = () => {
                     <CopyIcon />
                     Copy Slug
                   </DropdownMenuItem>
-                  <OrgPermissionCan I={OrgPermissionActions.Edit} a={OrgPermissionSubjects.Role}>
-                    {(isAllowed) => (
-                      <DropdownMenuItem
-                        className={twMerge(
-                          !isAllowed && "pointer-events-none cursor-not-allowed opacity-50"
-                        )}
-                        onClick={() => {
-                          handlePopUpOpen("role", {
-                            roleId
-                          });
-                        }}
-                        isDisabled={!isAllowed}
-                      >
-                        <PencilIcon />
-                        Edit Role
-                      </DropdownMenuItem>
-                    )}
-                  </OrgPermissionCan>
-                  <OrgPermissionCan I={OrgPermissionActions.Create} a={OrgPermissionSubjects.Role}>
-                    {(isAllowed) => (
-                      <DropdownMenuItem
-                        className={twMerge(
-                          !isAllowed && "pointer-events-none cursor-not-allowed opacity-50"
-                        )}
-                        onClick={() => {
-                          handlePopUpOpen("duplicateRole");
-                        }}
-                        isDisabled={!isAllowed}
-                      >
-                        <CopyIcon />
-                        Duplicate Role
-                      </DropdownMenuItem>
-                    )}
-                  </OrgPermissionCan>
+                  {subscription?.rbac && (
+                    <OrgPermissionCan I={OrgPermissionActions.Edit} a={OrgPermissionSubjects.Role}>
+                      {(isAllowed) => (
+                        <DropdownMenuItem
+                          className={twMerge(
+                            !isAllowed && "pointer-events-none cursor-not-allowed opacity-50"
+                          )}
+                          onClick={() => {
+                            handlePopUpOpen("role", {
+                              roleId
+                            });
+                          }}
+                          isDisabled={!isAllowed}
+                        >
+                          <PencilIcon />
+                          Edit Role
+                        </DropdownMenuItem>
+                      )}
+                    </OrgPermissionCan>
+                  )}
+                  {subscription?.rbac && (
+                    <OrgPermissionCan
+                      I={OrgPermissionActions.Create}
+                      a={OrgPermissionSubjects.Role}
+                    >
+                      {(isAllowed) => (
+                        <DropdownMenuItem
+                          className={twMerge(
+                            !isAllowed && "pointer-events-none cursor-not-allowed opacity-50"
+                          )}
+                          onClick={() => {
+                            handlePopUpOpen("duplicateRole");
+                          }}
+                          isDisabled={!isAllowed}
+                        >
+                          <CopyIcon />
+                          Duplicate Role
+                        </DropdownMenuItem>
+                      )}
+                    </OrgPermissionCan>
+                  )}
                   <OrgPermissionCan I={OrgPermissionActions.Delete} a={OrgPermissionSubjects.Role}>
                     {(isAllowed) => (
                       <DropdownMenuItem

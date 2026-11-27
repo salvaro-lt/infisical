@@ -108,25 +108,7 @@ export const ErrorPageFrame = ({
             <h1 className="text-3xl font-normal text-foreground">{heading}</h1>
             <p className="max-w-md text-sm leading-relaxed text-accent">{description}</p>
             <div className="flex flex-wrap items-center gap-2.5">{actions}</div>
-            <p className="text-xs text-muted">
-              Still stuck? Email{" "}
-              <a
-                className="underline underline-offset-4 hover:text-foreground"
-                href="mailto:support@infisical.com"
-              >
-                support@infisical.com
-              </a>{" "}
-              or{" "}
-              <a
-                className="underline underline-offset-4 hover:text-foreground"
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://community.infisical.com"
-              >
-                join the community forum
-              </a>
-              .
-            </p>
+            <p className="text-xs text-muted">Still stuck? Contact your instance administrator.</p>
           </div>
         </div>
         <div className="flex flex-col border-t border-border bg-page/50 lg:border-t-0 lg:border-l">

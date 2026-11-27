@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { CircleAlertIcon, TriangleAlertIcon } from "lucide-react";
 
-import { AgentVaultSessionLogUpgradeModal } from "@app/components/agent-vault/AgentVaultSessionLogUpgradeModal";
-import { Alert, AlertAction, AlertDescription, Button } from "@app/components/v3";
+import { Alert, AlertDescription } from "@app/components/v3";
 import { useSubscription, useProject } from "@app/context";
 import { isAgentVaultSessionLogBlockedByPlan } from "@app/helpers/agentVaultSessionLogs";
 import {
@@ -18,7 +16,6 @@ export const SessionLogAlerts = () => {
   const { data: state } = useGetAgentVaultSessionLogSettings(projectId);
   const { data: health } = useGetAgentVaultSessionLogHealth(projectId);
   const { subscription } = useSubscription();
-  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
   const settings = state?.settings ?? null;
   const storageType = settings?.storage.type;
@@ -29,10 +26,10 @@ export const SessionLogAlerts = () => {
   // Default storage can be on without anyone choosing it, so its message can't say the plan "no longer" includes it.
   if (isBlockedByPlan && isDefaultStorage) {
     planMessage =
-      "Your plan doesn't include default storage, so session logs aren't being recorded. Upgrade to record and view them.";
+      "Your plan doesn't include default storage, so session logs aren't being recorded.";
   } else if (isBlockedByPlan) {
     planMessage =
-      "Your plan no longer includes external storage. Upgrade to see recorded logs and keep recording. Recorded logs stay in your bucket.";
+      "Your plan no longer includes external storage, so session logs aren't being recorded or shown. Recorded logs stay in your bucket.";
   }
 
   return (
@@ -47,25 +44,12 @@ export const SessionLogAlerts = () => {
       {planMessage && (
         <Alert variant="warning">
           <TriangleAlertIcon />
-          <AlertDescription>
-            <p>{planMessage}</p>
-            <AlertAction>
-              <Button variant="outline" size="sm" onClick={() => setIsUpgradeOpen(true)}>
-                Upgrade
-              </Button>
-            </AlertAction>
-          </AlertDescription>
+          <AlertDescription>{planMessage}</AlertDescription>
         </Alert>
       )}
 
       {/* While the storage is broken, fixing it comes first, so its error shows alone. */}
       {!health?.connectionError && <SessionLogReadAccessAlert />}
-
-      <AgentVaultSessionLogUpgradeModal
-        isOpen={isUpgradeOpen}
-        onOpenChange={setIsUpgradeOpen}
-        storageType={storageType}
-      />
     </>
   );
 };

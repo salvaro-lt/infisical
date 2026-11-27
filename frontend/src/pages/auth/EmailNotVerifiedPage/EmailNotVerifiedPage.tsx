@@ -14,7 +14,7 @@ export const EmailNotVerifiedPage = () => {
         <CardHeader className="mb-6 gap-2 text-center">
           <CardTitle>Your email was not verified</CardTitle>
           <CardDescription>
-            Please try again. If the problem continues, contact support@infisical.com.
+            Please try again. If the problem continues, contact your instance administrator.
           </CardDescription>
         </CardHeader>
         <CardContent>

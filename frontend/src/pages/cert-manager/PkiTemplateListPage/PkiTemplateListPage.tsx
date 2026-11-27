@@ -10,10 +10,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { format } from "date-fns";
 
-import {
-  CertificateEnrollmentUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { PageTitle } from "@app/components/PageTitle";
 import { ProjectPermissionCan } from "@app/components/permissions";
@@ -80,11 +76,9 @@ export const PkiTemplateListPage = () => {
     "certificateTemplate",
     "deleteTemplate",
     "enrollmentOptions",
-    "estUpgradePlan",
     "certificateFromTemplate",
     "creationBlocked"
   ] as const);
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
   const { subscription } = useSubscription();
   const { currentProject } = useProject();
@@ -225,32 +219,27 @@ export const PkiTemplateListPage = () => {
                                           </DropdownMenuItem>
                                         )}
                                       </ProjectPermissionCan>
-                                      <ProjectPermissionCan
-                                        I={ProjectPermissionPkiTemplateActions.Edit}
-                                        a={ProjectPermissionSub.CertificateTemplates}
-                                      >
-                                        {(isAllowed) => (
-                                          <DropdownMenuItem
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              if (!subscription.pkiEst) {
-                                                openUpgradeGate({
-                                                  intent: CertificateEnrollmentUpgradeIntent,
-                                                  paywallKey: "cert-manager.pki-template-list"
+                                      {subscription?.pkiEst && (
+                                        <ProjectPermissionCan
+                                          I={ProjectPermissionPkiTemplateActions.Edit}
+                                          a={ProjectPermissionSub.CertificateTemplates}
+                                        >
+                                          {(isAllowed) => (
+                                            <DropdownMenuItem
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePopUpOpen("enrollmentOptions", {
+                                                  id: template.id
                                                 });
-                                                return;
-                                              }
-                                              handlePopUpOpen("enrollmentOptions", {
-                                                id: template.id
-                                              });
-                                            }}
-                                            isDisabled={!isAllowed}
-                                          >
-                                            <FontAwesomeIcon icon={faCog} />
-                                            Manage Enrollment
-                                          </DropdownMenuItem>
-                                        )}
-                                      </ProjectPermissionCan>
+                                              }}
+                                              isDisabled={!isAllowed}
+                                            >
+                                              <FontAwesomeIcon icon={faCog} />
+                                              Manage Enrollment
+                                            </DropdownMenuItem>
+                                          )}
+                                        </ProjectPermissionCan>
+                                      )}
                                       <ProjectPermissionCan
                                         I={ProjectPermissionPkiTemplateActions.Delete}
                                         a={ProjectPermissionSub.CertificateTemplates}
@@ -358,7 +347,6 @@ export const PkiTemplateListPage = () => {
           preselectedTemplate={popUp.certificateFromTemplate.data}
         />
       </div>
-      {upgradeGate}
     </>
   );
 };

@@ -40,10 +40,6 @@ const buildSchema = (maxAccessTokenTTL: number) =>
 export type FormData = z.infer<ReturnType<typeof buildSchema>>;
 
 type Props = {
-  handlePopUpOpen: (
-    popUpName: keyof UsePopUpState<["upgradePlan"]>,
-    data?: { featureName?: string }
-  ) => void;
   handlePopUpToggle: (
     popUpName: keyof UsePopUpState<["identityAuthMethod"]>,
     state?: boolean
@@ -55,7 +51,6 @@ type Props = {
 };
 
 export const IdentityTokenAuthForm = ({
-  handlePopUpOpen,
   handlePopUpToggle,
   identityId,
   isUpdate,
@@ -168,7 +163,9 @@ export const IdentityTokenAuthForm = ({
       <Tabs value={tabValue} onValueChange={(value) => setTabValue(value as IdentityFormTab)}>
         <TabsList variant={scopeVariant}>
           <TabsTrigger value={IdentityFormTab.Configuration}>Configuration</TabsTrigger>
-          <TabsTrigger value={IdentityFormTab.Advanced}>Advanced</TabsTrigger>
+          {subscription?.ipAllowlisting && (
+            <TabsTrigger value={IdentityFormTab.Advanced}>Advanced</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value={IdentityFormTab.Configuration}>
           <FieldGroup>
@@ -176,19 +173,17 @@ export const IdentityTokenAuthForm = ({
             <AccessTokenNumUsesLimitField control={control} />
           </FieldGroup>
         </TabsContent>
-        <TabsContent value={IdentityFormTab.Advanced}>
-          <FieldGroup>
-            <TrustedIpsField
-              control={control}
-              name="accessTokenTrustedIps"
-              label="Access Token Trusted IPs"
-              isAllowed={Boolean(subscription?.ipAllowlisting)}
-              onUpgradeRequired={() =>
-                handlePopUpOpen("upgradePlan", { featureName: "IP allowlisting" })
-              }
-            />
-          </FieldGroup>
-        </TabsContent>
+        {subscription?.ipAllowlisting && (
+          <TabsContent value={IdentityFormTab.Advanced}>
+            <FieldGroup>
+              <TrustedIpsField
+                control={control}
+                name="accessTokenTrustedIps"
+                label="Access Token Trusted IPs"
+              />
+            </FieldGroup>
+          </TabsContent>
+        )}
       </Tabs>
     </form>
   );

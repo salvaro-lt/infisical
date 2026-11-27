@@ -1,7 +1,6 @@
 import { type LinkOptions, useNavigate } from "@tanstack/react-router";
 import { LayoutTemplate, PlusIcon } from "lucide-react";
 
-import { ProjectTemplatesUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
   Button,
@@ -29,10 +28,9 @@ export const ProjectTemplatesSection = ({ projectType, getTemplateLink }: Props)
   const navigate = useNavigate();
   const { subscription } = useSubscription();
 
-  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp([
-    "upgradePlan",
-    "addTemplate"
-  ] as const);
+  const { popUp, handlePopUpOpen, handlePopUpToggle } = usePopUp(["addTemplate"] as const);
+
+  if (!subscription?.projectTemplates) return null;
 
   return (
     <>
@@ -57,13 +55,6 @@ export const ProjectTemplatesSection = ({ projectType, getTemplateLink }: Props)
                   variant="project"
                   isDisabled={!isAllowed}
                   onClick={() => {
-                    if (!subscription?.projectTemplates) {
-                      handlePopUpOpen("upgradePlan", {
-                        isEnterpriseFeature: true
-                      });
-                      return;
-                    }
-
                     handlePopUpOpen("addTemplate");
                   }}
                 >
@@ -83,15 +74,6 @@ export const ProjectTemplatesSection = ({ projectType, getTemplateLink }: Props)
         onComplete={(template) => navigate(getTemplateLink(template))}
         isOpen={popUp.addTemplate.isOpen}
         onOpenChange={(isOpen) => handlePopUpToggle("addTemplate", isOpen)}
-      />
-      <UpgradeGate
-        paywallKey="organization.project-templates"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-        intent={{
-          ...ProjectTemplatesUpgradeIntent,
-          isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-        }}
       />
     </>
   );

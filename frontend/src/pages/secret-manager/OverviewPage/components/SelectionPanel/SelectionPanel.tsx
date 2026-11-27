@@ -180,7 +180,7 @@ export const SelectionPanel = ({
       if (subscription?.pitRecovery) {
         return "All selected folders and their contents will be removed. You can reverse this action by rolling back to a previous commit.";
       }
-      return "All selected folders and their contents will be removed. Rolling back to a previous commit isn't available on your current plan. Upgrade to enable this feature.";
+      return "All selected folders and their contents will be removed.";
     }
     return undefined;
   };

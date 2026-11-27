@@ -60,10 +60,6 @@ const buildSchema = (maxAccessTokenTTL: number) =>
 export type FormData = z.infer<ReturnType<typeof buildSchema>>;
 
 type Props = {
-  handlePopUpOpen: (
-    popUpName: keyof UsePopUpState<["upgradePlan"]>,
-    data?: { featureName?: string }
-  ) => void;
   handlePopUpToggle: (
     popUpName: keyof UsePopUpState<["identityAuthMethod"]>,
     state?: boolean
@@ -75,7 +71,6 @@ type Props = {
 };
 
 export const IdentityTlsCertAuthForm = ({
-  handlePopUpOpen,
   handlePopUpToggle,
   identityId,
   isUpdate,
@@ -378,16 +373,14 @@ export const IdentityTlsCertAuthForm = ({
                 </Field>
               )}
             />
-            <TrustedIpsField
-              control={control}
-              name="accessTokenTrustedIps"
-              label="Access Token Trusted IPs"
-              isAllowed={Boolean(subscription?.ipAllowlisting)}
-              onUpgradeRequired={() =>
-                handlePopUpOpen("upgradePlan", { featureName: "IP allowlisting" })
-              }
-              tooltip="The IPs or CIDR ranges that access tokens can be used from. By default, each token is given the 0.0.0.0/0, allowing usage from any network address."
-            />
+            {subscription?.ipAllowlisting && (
+              <TrustedIpsField
+                control={control}
+                name="accessTokenTrustedIps"
+                label="Access Token Trusted IPs"
+                tooltip="The IPs or CIDR ranges that access tokens can be used from. By default, each token is given the 0.0.0.0/0, allowing usage from any network address."
+              />
+            )}
           </FieldGroup>
         </TabsContent>
       </Tabs>

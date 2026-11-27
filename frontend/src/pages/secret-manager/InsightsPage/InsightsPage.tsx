@@ -1,4 +1,4 @@
-import { Fragment, ReactNode, useCallback } from "react";
+import { Fragment, ReactNode } from "react";
 import {
   FingerprintIcon,
   FolderIcon,
@@ -8,10 +8,6 @@ import {
   RefreshCwIcon
 } from "lucide-react";
 
-import {
-  SecretAccessInsightsUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { PageTitle } from "@app/components/PageTitle";
 import { PageHeader } from "@app/components/v3/platform";
 import {
@@ -25,7 +21,6 @@ import { ProjectPermissionHoneyTokenActions } from "@app/context/ProjectPermissi
 import { withProjectPermission } from "@app/hoc";
 import { ProjectType } from "@app/hooks/api/projects/types";
 import { useGetInsightsCounts } from "@app/hooks/api/secretInsights/queries";
-import { InsightsUpgradePreview } from "@app/pages/organization/SecretInsightsPage/components";
 
 import {
   AuditReportsCard,
@@ -42,18 +37,10 @@ const InsightsPageContent = withProjectPermission(
     const { subscription } = useSubscription();
     const { currentProject, projectId } = useProject();
     const { permission } = useProjectPermission();
-    const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
     const hasInsightsPlan = Boolean(subscription?.secretAccessInsights);
 
     const { data: counts } = useGetInsightsCounts({ projectId }, { enabled: hasInsightsPlan });
-
-    const handleUpgrade = useCallback(() => {
-      openUpgradeGate({
-        intent: SecretAccessInsightsUpgradeIntent,
-        paywallKey: "secret-manager.insights"
-      });
-    }, [openUpgradeGate]);
 
     const canReadHoneyTokens = permission.can(
       ProjectPermissionHoneyTokenActions.Read,
@@ -127,7 +114,7 @@ const InsightsPageContent = withProjectPermission(
           {headerStats.length > 0 && renderStatStrip("hidden justify-end dashboard:flex")}
         </PageHeader>
         {headerStats.length > 0 && renderStatStrip("mb-6 flex justify-start dashboard:hidden")}
-        {hasInsightsPlan ? (
+        {hasInsightsPlan && (
           <>
             <InsightsSummaryCards />
             <div className="mt-6">
@@ -147,10 +134,7 @@ const InsightsPageContent = withProjectPermission(
               </div>
             </div>
           </>
-        ) : (
-          <InsightsUpgradePreview onUpgrade={handleUpgrade} />
         )}
-        {upgradeGate}
       </>
     );
   },

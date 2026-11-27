@@ -1,6 +1,5 @@
 import { KeyRound, Plus } from "lucide-react";
 
-import { ExternalKmsUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -24,12 +23,7 @@ import {
   TableHeader,
   TableRow
 } from "@app/components/v3";
-import {
-  OrgPermissionActions,
-  OrgPermissionSubjects,
-  useOrganization,
-  useSubscription
-} from "@app/context";
+import { OrgPermissionActions, OrgPermissionSubjects, useOrganization } from "@app/context";
 import { withPermission } from "@app/hoc";
 import { usePopUp } from "@app/hooks";
 import { useGetExternalKmsList, useRemoveExternalKms } from "@app/hooks/api";
@@ -49,10 +43,8 @@ type RemoveExternalKmsData = {
 export const OrgEncryptionTab = withPermission(
   () => {
     const { currentOrg, isSubOrganization } = useOrganization();
-    const { subscription } = useSubscription();
     const orgId = currentOrg?.id || "";
     const { popUp, handlePopUpClose, handlePopUpOpen, handlePopUpToggle } = usePopUp([
-      "upgradePlan",
       "addExternalKms",
       "editExternalKmsDetails",
       "editExternalKmsCredentials",
@@ -106,12 +98,6 @@ export const OrgEncryptionTab = withPermission(
                   variant={isSubOrganization ? "sub-org" : "org"}
                   size="sm"
                   onClick={() => {
-                    if (subscription && !subscription.externalKms) {
-                      handlePopUpOpen("upgradePlan", {
-                        isEnterpriseFeature: true
-                      });
-                      return;
-                    }
                     handlePopUpOpen("addExternalKms");
                   }}
                   isDisabled={!isAllowed}
@@ -155,26 +141,12 @@ export const OrgEncryptionTab = withPermission(
                   ))}
                 {!isExternalKmsListLoading &&
                   externalKmsList?.map((kms) => (
-                    <ExternalKmsItem
-                      key={kms.id}
-                      kms={kms}
-                      handlePopUpOpen={handlePopUpOpen}
-                      subscription={subscription}
-                    />
+                    <ExternalKmsItem key={kms.id} kms={kms} handlePopUpOpen={handlePopUpOpen} />
                   ))}
               </TableBody>
             </Table>
           )}
         </CardContent>
-        <UpgradeGate
-          paywallKey="organization.org-encryption"
-          isOpen={popUp.upgradePlan.isOpen}
-          onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
-          intent={{
-            ...ExternalKmsUpgradeIntent,
-            isEnterpriseFeature: Boolean(popUp.upgradePlan.data?.isEnterpriseFeature)
-          }}
-        />
         <AddExternalKmsForm
           isOpen={popUp.addExternalKms.isOpen}
           onToggle={(state) => handlePopUpToggle("addExternalKms", state)}

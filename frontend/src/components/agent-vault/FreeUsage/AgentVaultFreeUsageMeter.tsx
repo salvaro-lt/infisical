@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { twMerge } from "tailwind-merge";
 
-import { Button } from "@app/components/v3";
 import { AnalyticsEvent } from "@app/lib/analytics";
 
 import { formatFreeUsageSummary } from "./free-usage-format";
@@ -9,14 +8,9 @@ import { useAgentVaultFreeUsage } from "./useAgentVaultFreeUsage";
 
 export const AgentVaultFreeUsageMeter = () => {
   const hasTrackedView = useRef(false);
-  const {
-    freeUsage,
-    isLimitReached,
-    warn,
-    canAddPaymentMethod,
-    openAddPaymentMethod,
-    trackPaywall
-  } = useAgentVaultFreeUsage("agent-vault.free-usage-meter");
+  const { freeUsage, isLimitReached, warn, trackPaywall } = useAgentVaultFreeUsage(
+    "agent-vault.free-usage-meter"
+  );
 
   const summary = freeUsage ? formatFreeUsageSummary(freeUsage) : "";
 
@@ -43,11 +37,6 @@ export const AgentVaultFreeUsageMeter = () => {
       <div className="mx-2 mb-1 rounded-md border border-border bg-container p-3 group-data-[collapsible=icon]:hidden">
         <div className="flex items-center gap-2">
           <span className="flex-1 text-sm font-medium">Free</span>
-          {canAddPaymentMethod && (
-            <Button variant="outline" size="xs" onClick={() => openAddPaymentMethod(summary)}>
-              Add Payment Method
-            </Button>
-          )}
         </div>
         <div
           role="progressbar"

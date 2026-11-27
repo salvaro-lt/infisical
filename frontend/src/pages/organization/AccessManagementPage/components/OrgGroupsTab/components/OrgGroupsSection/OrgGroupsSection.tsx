@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { PlusIcon } from "lucide-react";
 
-import { GroupsUpgradeIntent, UpgradeGate } from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { OrgPermissionCan } from "@app/components/permissions";
 import {
@@ -15,12 +14,7 @@ import {
   ConfirmationAlertDialog,
   DocumentationLinkBadge
 } from "@app/components/v3";
-import {
-  OrgPermissionGroupActions,
-  OrgPermissionSubjects,
-  useOrganization,
-  useSubscription
-} from "@app/context";
+import { OrgPermissionGroupActions, OrgPermissionSubjects, useOrganization } from "@app/context";
 import { useDeleteGroup } from "@app/hooks/api";
 import { usePopUp } from "@app/hooks/usePopUp";
 
@@ -31,7 +25,6 @@ import { OrgGroupsTable } from "./OrgGroupsTable";
 export { GroupWizardSteps };
 
 export const OrgGroupsSection = () => {
-  const { subscription } = useSubscription();
   const { currentOrg, isSubOrganization } = useOrganization();
   const { mutateAsync: deleteMutateAsync } = useDeleteGroup();
   const [wizardStep, setWizardStep] = useState<GroupWizardSteps>(GroupWizardSteps.CreateGroup);
@@ -39,19 +32,14 @@ export const OrgGroupsSection = () => {
   const { popUp, handlePopUpOpen, handlePopUpClose, handlePopUpToggle } = usePopUp([
     "group",
     "groupMembers",
-    "deleteGroup",
-    "upgradePlan"
+    "deleteGroup"
   ] as const);
 
   const handleAddGroupModal = () => {
-    if (!subscription?.groups) {
-      handlePopUpOpen("upgradePlan");
-    } else {
-      if (!isSubOrganization) {
-        setWizardStep(GroupWizardSteps.CreateGroup);
-      }
-      handlePopUpOpen("group");
+    if (!isSubOrganization) {
+      setWizardStep(GroupWizardSteps.CreateGroup);
     }
+    handlePopUpOpen("group");
   };
 
   const onDeleteGroupSubmit = async ({
@@ -134,12 +122,6 @@ export const OrgGroupsSection = () => {
             popUp?.deleteGroup?.data as { name: string; groupId: string; isLinkedGroup?: boolean }
           )
         }
-      />
-      <UpgradeGate
-        intent={GroupsUpgradeIntent}
-        paywallKey="organization.org-groups"
-        isOpen={popUp.upgradePlan.isOpen}
-        onOpenChange={(isOpen) => handlePopUpToggle("upgradePlan", isOpen)}
       />
     </>
   );

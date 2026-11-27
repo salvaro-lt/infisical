@@ -17,10 +17,6 @@ import {
 import { z } from "zod";
 
 import { useConnectionCreation } from "@app/components/app-connections/useConnectionCreation";
-import {
-  CertificateEnrollmentUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import {
   Alert,
@@ -34,7 +30,6 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
   AlertTitle,
-  Badge,
   Button,
   Card,
   CardAction,
@@ -131,8 +126,6 @@ import {
   TMicrosoftAutoenrollmentOtherProfile,
   TPkiApplicationProfile
 } from "@app/hooks/api/pkiApplications/types";
-
-import { PkiDocsUrls } from "../../pki-docs-urls";
 
 const COPY_RESET_MS = 1000;
 
@@ -402,15 +395,7 @@ const ApiPanel = ({
                 POST to this endpoint with <code className="font-mono">applicationId</code>,{" "}
                 <code className="font-mono">profileId</code>, and an{" "}
                 <code className="font-mono">attributes</code> object (commonName, ttl, etc.) in the
-                body to issue a certificate.{" "}
-                <a
-                  href="https://infisical.com/docs/api-reference/endpoints/certificates/create-certificate"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-project"
-                >
-                  View API reference
-                </a>
+                body to issue a certificate.
               </>
             }
           />
@@ -1256,16 +1241,7 @@ const ScepPanel = ({
                     <FieldDescription>
                       Selecting the connection is all that is required. The transaction and
                       certificate request arrive in the device request, and the expected subject and
-                      SAN are validated by Intune. See the{" "}
-                      <a
-                        href={PkiDocsUrls.appConnections.microsoftIntune}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-project hover:text-project"
-                      >
-                        setup guide
-                      </a>{" "}
-                      for what to configure on the Intune side.
+                      SAN are validated by Intune.
                     </FieldDescription>
                     {!isIntuneConnectionsLoading &&
                     !intuneConnections?.length &&
@@ -1596,7 +1572,6 @@ const MicrosoftAutoenrollmentPanel = ({
   enabled,
   initial,
   otherProfiles,
-  onUpgradeRequired,
   onCancelPending,
   onDirtyChange,
   onPendingChange
@@ -1606,7 +1581,6 @@ const MicrosoftAutoenrollmentPanel = ({
   enabled: boolean;
   initial: TMicrosoftAutoenrollmentEnrollment | null;
   otherProfiles: TMicrosoftAutoenrollmentOtherProfile[];
-  onUpgradeRequired?: () => void;
   onCancelPending: () => void;
   onDirtyChange: (method: EnrollmentMethod, isDirty: boolean) => void;
   onPendingChange: (method: EnrollmentMethod, isPending: boolean) => void;
@@ -1738,10 +1712,6 @@ const MicrosoftAutoenrollmentPanel = ({
 
   const onSave = handleSubmit(async (values) => {
     if (setMutation.isPending || clearMutation.isPending) return;
-    if (onUpgradeRequired) {
-      onUpgradeRequired();
-      return;
-    }
     await setMutation.mutateAsync({
       applicationId,
       profileId,
@@ -2020,7 +1990,7 @@ const MicrosoftAutoenrollmentPanel = ({
               <AlertDescription>
                 <p>
                   {isCloud
-                    ? "Infisical can't check TLS channel bindings right now, so requests are refused. Contact Infisical support."
+                    ? "Infisical can't check TLS channel bindings right now, so requests are refused. Contact your instance administrator."
                     : `${initial?.channelBinding.reason} Requests are refused. If this can't be fixed, turn on Skip the channel binding check below.`}
                 </p>
               </AlertDescription>
@@ -2109,10 +2079,6 @@ const MicrosoftAutoenrollmentPanel = ({
                   isPending={isPending}
                   isDisabled={isDirty}
                   onConfirmed={async () => {
-                    if (onUpgradeRequired) {
-                      onUpgradeRequired();
-                      return;
-                    }
                     await reenrollMutation.mutateAsync({ applicationId, profileId });
                     createNotification({
                       type: "success",
@@ -2152,25 +2118,8 @@ const MicrosoftAutoenrollmentPanel = ({
 
 export type EnrollmentMethod = "api" | "est" | "acme" | "scep" | "microsoft-autoenrollment";
 
-const METHOD_DOCS: Record<EnrollmentMethod, string> = {
-  api: PkiDocsUrls.applications.enrollment.api,
-  est: PkiDocsUrls.applications.enrollment.est,
-  acme: PkiDocsUrls.applications.enrollment.acme,
-  scep: PkiDocsUrls.applications.enrollment.scep,
-  "microsoft-autoenrollment": PkiDocsUrls.applications.enrollment.microsoftAutoenrollment
-};
-
 const MethodDescription = ({ method }: { method: EnrollmentMethod }) => {
-  const docLink = (
-    <a
-      href={METHOD_DOCS[method]}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="underline hover:text-foreground"
-    >
-      {enrollmentTypeToNameMap[method]}
-    </a>
-  );
+  const docLink = enrollmentTypeToNameMap[method];
 
   switch (method) {
     case "api":
@@ -2219,14 +2168,10 @@ export const ConfigureEnrollmentModal = ({
   const isPending = Object.values(pendingByMethod).some(Boolean);
 
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
   const ALL_ORDER: EnrollmentMethod[] = ["api", "est", "acme", "scep", "microsoft-autoenrollment"];
   const visibleMethods = ALL_ORDER.filter(
     (m) => configuredMethods.includes(m) || pendingMethods.includes(m)
-  );
-  const addableMethods = ALL_ORDER.filter(
-    (m) => !configuredMethods.includes(m) && !pendingMethods.includes(m)
   );
   // API and ACME are available on every plan.
   const lockedMethods: Partial<Record<EnrollmentMethod, boolean>> = {
@@ -2234,6 +2179,9 @@ export const ConfigureEnrollmentModal = ({
     scep: !subscription.pkiScep,
     "microsoft-autoenrollment": !subscription.pkiMicrosoftAutoenrollment
   };
+  const addableMethods = ALL_ORDER.filter(
+    (m) => !configuredMethods.includes(m) && !pendingMethods.includes(m) && !lockedMethods[m]
+  );
 
   useEffect(() => {
     if (!isOpen) {
@@ -2265,20 +2213,9 @@ export const ConfigureEnrollmentModal = ({
     setActiveTab(method);
   };
 
-  const openEnrollmentUpgradeGate = (method: EnrollmentMethod) =>
-    openUpgradeGate({
-      intent: CertificateEnrollmentUpgradeIntent,
-      paywallKey: `cert-manager.application-enrollment.${method}`
-    });
-
   const handleAddMethod = (method: EnrollmentMethod) => {
     if (isPending) return;
-    if (!lockedMethods[method]) {
-      handleAdd(method);
-      return;
-    }
-
-    openEnrollmentUpgradeGate(method);
+    handleAdd(method);
   };
 
   const handleDirtyChange = useCallback(
@@ -2336,15 +2273,7 @@ export const ConfigureEnrollmentModal = ({
         <SheetHeader>
           <SheetTitle>Configure Enrollment Methods for {profile?.profileSlug}</SheetTitle>
           <SheetDescription>
-            Enable an enrollment method to allow clients to request certificates using this profile.{" "}
-            <a
-              href={PkiDocsUrls.applications.enrollment.overview}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground"
-            >
-              Learn more
-            </a>
+            Enable an enrollment method to allow clients to request certificates using this profile.
           </SheetDescription>
         </SheetHeader>
 
@@ -2387,7 +2316,6 @@ export const ConfigureEnrollmentModal = ({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {addableMethods.map((m) => {
-                      const isLocked = lockedMethods[m] ?? false;
                       const unsupportedReason =
                         m === "microsoft-autoenrollment"
                           ? (data?.microsoftAutoenrollmentUnsupportedReason ?? null)
@@ -2403,7 +2331,6 @@ export const ConfigureEnrollmentModal = ({
                           <div className="flex flex-col">
                             <span className="flex items-center gap-2 font-medium">
                               {enrollmentTypeToNameMap[m]}
-                              {isLocked && <Badge variant="info">Enterprise</Badge>}
                             </span>
                             <span className="text-xs text-accent">
                               <MethodDescription method={m} />
@@ -2533,11 +2460,6 @@ export const ConfigureEnrollmentModal = ({
                       enabled={Boolean(data?.microsoftAutoenrollmentConfigured)}
                       initial={data?.microsoftAutoenrollment ?? null}
                       otherProfiles={data?.microsoftAutoenrollmentOtherProfiles ?? []}
-                      onUpgradeRequired={
-                        lockedMethods["microsoft-autoenrollment"]
-                          ? () => openEnrollmentUpgradeGate("microsoft-autoenrollment")
-                          : undefined
-                      }
                       onCancelPending={
                         data?.microsoftAutoenrollmentConfigured
                           ? handleDismiss
@@ -2571,7 +2493,6 @@ export const ConfigureEnrollmentModal = ({
           }
         />
       </SheetContent>
-      {upgradeGate}
     </Sheet>
   );
 };

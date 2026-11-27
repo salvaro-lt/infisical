@@ -2,10 +2,6 @@ import { useState } from "react";
 import { subject } from "@casl/ability";
 import { RefreshCwIcon } from "lucide-react";
 
-import {
-  CertificateRevocationListsUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
 import { createNotification } from "@app/components/notifications";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
@@ -44,7 +40,6 @@ type Props = {
 export const CaCrlsSection = ({ caId }: Props) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const { data } = useGetCa({ caId, type: CaType.INTERNAL });
   const ca = data as TInternalCertificateAuthority | undefined;
   const { data: caCrls } = useGetCaCrls(caId);
@@ -59,23 +54,6 @@ export const CaCrlsSection = ({ caId }: Props) => {
   } else if (caNotAfter && new Date(caNotAfter) <= new Date()) {
     regenerateBlockedReason = "Renew this expired CA to regenerate the CRL";
   }
-
-  const handleRegenerateClick = () => {
-    if (!subscription.caCrl) {
-      openUpgradeGate({
-        intent: {
-          ...CertificateRevocationListsUpgradeIntent,
-          upgradeLabel: "Unlock CRL Regeneration",
-          title: "Regenerate CRL",
-          description:
-            "Regenerating a CRL on demand is included with the Enterprise plan. Review the plan to continue."
-        },
-        paywallKey: "cert-manager.ca-crl-regenerate"
-      });
-      return;
-    }
-    setIsConfirmOpen(true);
-  };
 
   const handleConfirm = () =>
     regenerateCaCrl.mutate(
@@ -94,7 +72,7 @@ export const CaCrlsSection = ({ caId }: Props) => {
         <CardHeader className="border-b">
           <CardTitle>CA Certificate Revocation Lists (CRLs)</CardTitle>
           <CardDescription>Each CRL is regenerated automatically before it expires</CardDescription>
-          {Boolean(caCrls?.length) && (
+          {Boolean(caCrls?.length) && subscription?.caCrl && (
             <CardAction>
               <ProjectPermissionCan
                 I={ProjectPermissionCertificateAuthorityActions.Edit}
@@ -109,7 +87,7 @@ export const CaCrlsSection = ({ caId }: Props) => {
                           variant="outline"
                           size="xs"
                           isDisabled={!isAllowed || Boolean(regenerateBlockedReason)}
-                          onClick={handleRegenerateClick}
+                          onClick={() => setIsConfirmOpen(true)}
                         >
                           <RefreshCwIcon />
                           Regenerate CRL
@@ -161,8 +139,6 @@ export const CaCrlsSection = ({ caId }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {upgradeGate}
     </>
   );
 };

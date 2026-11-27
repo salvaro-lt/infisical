@@ -20,10 +20,6 @@ type Props = {
   name: string;
   /** Label rendered above the first row. */
   label: string;
-  /** Whether the IP allowlisting feature is available on the current plan. */
-  isAllowed: boolean;
-  /** Invoked when a gated action is attempted without the feature (opens the upgrade prompt). */
-  onUpgradeRequired: () => void;
   /** Optional info tooltip shown next to the label. */
   tooltip?: ReactNode;
 };
@@ -33,27 +29,11 @@ type Props = {
  * method supports `accessTokenTrustedIps`; Universal Auth additionally renders
  * `clientSecretTrustedIps` by using a second instance of this component.
  */
-export const TrustedIpsField = ({
-  control,
-  name,
-  label,
-  isAllowed,
-  onUpgradeRequired,
-  tooltip
-}: Props) => {
+export const TrustedIpsField = ({ control, name, label, tooltip }: Props) => {
   const { fields, append, remove } = useFieldArray({ control, name });
 
   // At least one trusted IP is required, so the last remaining row can't be removed.
   const isLast = fields.length <= 1;
-
-  // IP allowlisting is a paid feature, so every mutation is gated behind the upgrade prompt.
-  const guard = (action: () => void) => {
-    if (isAllowed) {
-      action();
-      return;
-    }
-    onUpgradeRequired();
-  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -84,7 +64,7 @@ export const TrustedIpsField = ({
                 <Input
                   id={`${name}-${index}`}
                   value={field.value}
-                  onChange={(e) => guard(() => field.onChange(e))}
+                  onChange={(e) => field.onChange(e)}
                   placeholder="123.456.789.0"
                   isError={Boolean(error)}
                 />
@@ -102,7 +82,7 @@ export const TrustedIpsField = ({
                   size="sm"
                   aria-label="Remove trusted IP"
                   isDisabled={isLast}
-                  onClick={() => guard(() => remove(index))}
+                  onClick={() => remove(index)}
                 >
                   <XIcon />
                 </IconButton>
@@ -119,7 +99,7 @@ export const TrustedIpsField = ({
         variant="outline"
         size="xs"
         className="w-fit"
-        onClick={() => guard(() => append({ ipAddress: "0.0.0.0/0" }))}
+        onClick={() => append({ ipAddress: "0.0.0.0/0" })}
       >
         <PlusIcon />
         Add IP Address

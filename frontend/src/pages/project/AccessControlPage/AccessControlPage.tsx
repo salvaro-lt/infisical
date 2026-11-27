@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger
 } from "@app/components/v3";
-import { useOrganization, useProject } from "@app/context";
+import { useOrganization, useProject, useSubscription } from "@app/context";
 import { getProjectBaseURL, hidesProjects } from "@app/helpers/project";
 import { useScopeVariant } from "@app/hooks";
 import { ProjectType } from "@app/hooks/api/projects/types";
@@ -29,6 +29,7 @@ const Page = () => {
   const navigate = useNavigate();
   const { currentOrg } = useOrganization();
   const { currentProject } = useProject();
+  const { subscription } = useSubscription();
   const selectedTab = useSearch({
     strict: false,
     select: (el) => el.selectedTab
@@ -87,7 +88,9 @@ const Page = () => {
               <TabsTrigger value={ProjectAccessControlTabs.Identities}>
                 Machine Identities
               </TabsTrigger>
-              <TabsTrigger value={ProjectAccessControlTabs.Groups}>Groups</TabsTrigger>
+              {subscription?.groups && (
+                <TabsTrigger value={ProjectAccessControlTabs.Groups}>Groups</TabsTrigger>
+              )}
               {isSecretManager && (
                 <TabsTrigger value={ProjectAccessControlTabs.ServiceTokens}>
                   Service Tokens

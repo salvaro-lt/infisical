@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { ResourceIcon, SidebarCollapsibleGroup } from "@app/components/v3";
-import { useProject, useProjectPermission } from "@app/context";
+import { useProject, useProjectPermission, useSubscription } from "@app/context";
 import { useListWorkspacePkiAlerts } from "@app/hooks/api";
 import {
   approvalPolicyQuery,
@@ -42,6 +42,7 @@ export const CertManagerNav = ({
 }) => {
   const { hasProjectRole } = useProjectPermission();
   const { currentProject } = useProject();
+  const { subscription } = useSubscription();
   const { search: locationSearch } = useLocation();
   const hasSignerContext = Boolean((locationSearch as { signerId?: string })?.signerId);
   const isCertManagerAdmin = hasProjectRole("admin");
@@ -129,13 +130,16 @@ export const CertManagerNav = ({
       label: "Discovery",
       icon: Search,
       pathSuffix: "discovery",
-      activeMatch: /\/discovery/
+      activeMatch: /\/discovery/,
+      hidden: !subscription?.pkiDiscovery
     },
     {
       label: "Approval Requests",
       icon: Inbox,
       pathSuffix: "requests",
-      badgeCount: pendingRequestsCount || undefined
+      badgeCount: pendingRequestsCount || undefined,
+      // Requests come from certificate approval policies and code signing, both paid.
+      hidden: !subscription?.pkiApprovals && !subscription?.pkiCodeSigning
     }
   ];
 
@@ -232,7 +236,12 @@ export const CertManagerNav = ({
       pathSuffix: "access-management",
       activeMatch: /\/access-management|\/groups\/|\/identities\/|\/members\/|\/roles\//
     },
-    { label: "Audit Logs", icon: FileText, pathSuffix: "audit-logs" },
+    {
+      label: "Audit Logs",
+      icon: FileText,
+      pathSuffix: "audit-logs",
+      hidden: !subscription?.auditLogs
+    },
     { label: "Settings", icon: Settings, pathSuffix: "settings" }
   ];
 
@@ -248,9 +257,11 @@ export const CertManagerNav = ({
           <ProjectNavList items={applicationItems} onSubmenuOpen={onSubmenuOpen} />
         </SidebarCollapsibleGroup>
       )}
-      <SidebarCollapsibleGroup label="Code Signing">
-        <ProjectNavList items={codeSigningItems} onSubmenuOpen={onSubmenuOpen} />
-      </SidebarCollapsibleGroup>
+      {subscription?.pkiCodeSigning ? (
+        <SidebarCollapsibleGroup label="Code Signing">
+          <ProjectNavList items={codeSigningItems} onSubmenuOpen={onSubmenuOpen} />
+        </SidebarCollapsibleGroup>
+      ) : null}
       {isCertManagerAdmin ? (
         <SidebarCollapsibleGroup label="Certificate Resources">
           <ProjectNavList items={certificateResourcesItems} onSubmenuOpen={onSubmenuOpen} />

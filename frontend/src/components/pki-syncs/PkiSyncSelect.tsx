@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Loader2Icon, Search } from "lucide-react";
 
-import { CertificateSyncsUpgradeIntent, useUpgradeGate } from "@app/components/license/UpgradeGate";
 import {
   Empty,
   EmptyDescription,
@@ -13,7 +12,6 @@ import {
   InputGroupInput
 } from "@app/components/v3";
 import { ProviderIcon } from "@app/components/v3/platform/ProviderIcon";
-import { useSubscription } from "@app/context";
 import { PKI_SYNC_MAP } from "@app/helpers/pkiSyncs";
 import { PkiSync, usePkiSyncOptions } from "@app/hooks/api/pkiSyncs";
 
@@ -47,21 +45,8 @@ const SyncCard = ({ destination, onClick }: { destination: PkiSync; onClick: () 
 };
 
 export const PkiSyncSelect = ({ onSelect }: Props) => {
-  const { subscription } = useSubscription();
   const { isPending, data: pkiSyncOptions } = usePkiSyncOptions();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
   const [search, setSearch] = useState("");
-
-  const handleSelect = (destination: PkiSync) => {
-    if (!subscription.pkiSyncs) {
-      openUpgradeGate({
-        intent: CertificateSyncsUpgradeIntent,
-        paywallKey: "pki.sync-provider"
-      });
-      return;
-    }
-    onSelect(destination);
-  };
 
   const filteredOptions = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -105,7 +90,7 @@ export const PkiSyncSelect = ({ onSelect }: Props) => {
             <SyncCard
               key={destination}
               destination={destination}
-              onClick={() => handleSelect(destination)}
+              onClick={() => onSelect(destination)}
             />
           ))}
         </div>
@@ -120,30 +105,6 @@ export const PkiSyncSelect = ({ onSelect }: Props) => {
           </EmptyHeader>
         </Empty>
       )}
-
-      <p className="text-xs text-muted">
-        Don&apos;t see the third-party service you&apos;re looking for?{" "}
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://community.infisical.com"
-          className="underline underline-offset-2 hover:text-foreground"
-        >
-          Let us know in the community forum
-        </a>{" "}
-        or{" "}
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://github.com/Infisical/infisical/discussions"
-          className="underline underline-offset-2 hover:text-foreground"
-        >
-          request it on GitHub
-        </a>
-        .
-      </p>
-
-      {upgradeGate}
     </div>
   );
 };

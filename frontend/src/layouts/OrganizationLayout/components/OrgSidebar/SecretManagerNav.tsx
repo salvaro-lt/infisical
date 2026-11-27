@@ -1,6 +1,7 @@
 import { ActivityIcon, Blocks, BookCheck, FileText, Settings, Shield } from "lucide-react";
 
 import { ProjectIcon, SidebarCollapsibleGroup } from "@app/components/v3";
+import { useSubscription } from "@app/context";
 
 import { ProjectNavList } from "./ProjectNavLink";
 import { SM_SETTINGS_SUBMENU } from "./submenus";
@@ -13,6 +14,7 @@ export const SecretManagerNav = ({
   onSubmenuOpen: (submenu: Submenu) => void;
 }) => {
   const { pendingRequestsCount } = useApprovalSubmenu();
+  const { subscription } = useSubscription();
 
   const generalItems: NavItem[] = [
     {
@@ -37,18 +39,25 @@ export const SecretManagerNav = ({
     {
       label: "Insights",
       icon: ActivityIcon,
-      pathSuffix: "insights"
+      pathSuffix: "insights",
+      hidden: !subscription?.secretAccessInsights
     },
     {
       label: "Approvals",
       icon: BookCheck,
       pathSuffix: "approval",
-      badgeCount: pendingRequestsCount || undefined
+      badgeCount: pendingRequestsCount || undefined,
+      hidden: !subscription?.secretApproval
     }
   ];
 
   const administrationItems: NavItem[] = [
-    { label: "Audit Logs", icon: FileText, pathSuffix: "audit-logs" },
+    {
+      label: "Audit Logs",
+      icon: FileText,
+      pathSuffix: "audit-logs",
+      hidden: !subscription?.auditLogs
+    },
     { label: "Settings", icon: Settings, pathSuffix: "settings", submenu: SM_SETTINGS_SUBMENU }
   ];
 

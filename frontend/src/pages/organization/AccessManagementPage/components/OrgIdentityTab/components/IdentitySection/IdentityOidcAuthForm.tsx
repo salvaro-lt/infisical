@@ -143,10 +143,6 @@ type ConfigurationOption = {
 };
 
 type Props = {
-  handlePopUpOpen: (
-    popUpName: keyof UsePopUpState<["upgradePlan"]>,
-    data?: { featureName?: string }
-  ) => void;
   handlePopUpToggle: (
     popUpName: keyof UsePopUpState<["identityAuthMethod"]>,
     state?: boolean
@@ -158,7 +154,6 @@ type Props = {
 };
 
 export const IdentityOidcAuthForm = ({
-  handlePopUpOpen,
   handlePopUpToggle,
   identityId,
   isUpdate,
@@ -400,7 +395,7 @@ export const IdentityOidcAuthForm = ({
         </TabsList>
         <TabsContent value={IdentityFormTab.Configuration}>
           <FieldGroup>
-            {canAttachTemplates && (
+            {canAttachTemplates && subscription?.machineIdentityAuthTemplates && (
               <Controller
                 control={control}
                 name="scope"
@@ -785,15 +780,13 @@ export const IdentityOidcAuthForm = ({
               </Button>
             </div>
 
-            <TrustedIpsField
-              control={control}
-              name="accessTokenTrustedIps"
-              label="Access Token Trusted IPs"
-              isAllowed={Boolean(subscription?.ipAllowlisting)}
-              onUpgradeRequired={() =>
-                handlePopUpOpen("upgradePlan", { featureName: "IP allowlisting" })
-              }
-            />
+            {subscription?.ipAllowlisting && (
+              <TrustedIpsField
+                control={control}
+                name="accessTokenTrustedIps"
+                label="Access Token Trusted IPs"
+              />
+            )}
           </FieldGroup>
         </TabsContent>
       </Tabs>

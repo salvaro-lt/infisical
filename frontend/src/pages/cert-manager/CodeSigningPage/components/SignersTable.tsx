@@ -2,7 +2,6 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { AlertTriangleIcon, PlusIcon, SearchIcon } from "lucide-react";
 
-import { CodeSigningUpgradeIntent, useUpgradeGate } from "@app/components/license/UpgradeGate";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
   Badge,
@@ -61,18 +60,6 @@ type Props = {
 export const SignersTable = ({ projectId, onCreateSigner }: Props) => {
   const { currentProject } = useProject();
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
-
-  const handleCreateSigner = () => {
-    if (!subscription.pkiCodeSigning) {
-      openUpgradeGate({
-        intent: CodeSigningUpgradeIntent,
-        paywallKey: "cert-manager.signers"
-      });
-      return;
-    }
-    onCreateSigner();
-  };
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(SIGNER_TABLE_PAGE_SIZE);
   const [search, setSearch] = useState("");
@@ -96,19 +83,21 @@ export const SignersTable = ({ projectId, onCreateSigner }: Props) => {
           <DocumentationLinkBadge href={PkiDocsUrls.codeSigning.signers.overview} />
         </CardTitle>
         <CardDescription>Manage signers and control who can sign artifacts.</CardDescription>
-        <CardAction>
-          <ProjectPermissionCan
-            I={ProjectPermissionCodeSigningActions.Create}
-            a={ProjectPermissionSub.CodeSigners}
-          >
-            {(isAllowed) => (
-              <Button variant="project" isDisabled={!isAllowed} onClick={handleCreateSigner}>
-                <PlusIcon />
-                Create Signer
-              </Button>
-            )}
-          </ProjectPermissionCan>
-        </CardAction>
+        {subscription?.pkiCodeSigning && (
+          <CardAction>
+            <ProjectPermissionCan
+              I={ProjectPermissionCodeSigningActions.Create}
+              a={ProjectPermissionSub.CodeSigners}
+            >
+              {(isAllowed) => (
+                <Button variant="project" isDisabled={!isAllowed} onClick={onCreateSigner}>
+                  <PlusIcon />
+                  Create Signer
+                </Button>
+              )}
+            </ProjectPermissionCan>
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent>
         <div className="mb-4 flex gap-2">
@@ -215,11 +204,13 @@ export const SignersTable = ({ projectId, onCreateSigner }: Props) => {
               <EmptyTitle>
                 {debouncedSearch ? "No signers match search" : "No signers yet"}
               </EmptyTitle>
-              <EmptyDescription>
-                {debouncedSearch
-                  ? "Try adjusting your search"
-                  : "Create a signer to start signing artifacts"}
-              </EmptyDescription>
+              {(debouncedSearch || subscription?.pkiCodeSigning) && (
+                <EmptyDescription>
+                  {debouncedSearch
+                    ? "Try adjusting your search"
+                    : "Create a signer to start signing artifacts"}
+                </EmptyDescription>
+              )}
             </EmptyHeader>
           </Empty>
         )}
@@ -233,7 +224,6 @@ export const SignersTable = ({ projectId, onCreateSigner }: Props) => {
           />
         )}
       </CardContent>
-      {upgradeGate}
     </Card>
   );
 };

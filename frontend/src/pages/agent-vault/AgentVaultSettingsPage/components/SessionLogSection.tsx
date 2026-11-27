@@ -38,7 +38,10 @@ import {
   useSubscription
 } from "@app/context";
 import { ProjectPermissionAppConnectionActions } from "@app/context/ProjectPermissionContext/types";
-import { isAgentVaultSessionLogStorageOnPlan } from "@app/helpers/agentVaultSessionLogs";
+import {
+  canTurnOnAgentVaultSessionLogs,
+  isAgentVaultSessionLogStorageOnPlan
+} from "@app/helpers/agentVaultSessionLogs";
 import { APP_CONNECTION_MAP } from "@app/helpers/appConnections";
 import {
   agentVaultKeys,
@@ -136,6 +139,13 @@ export const SessionLogSection = () => {
     ProjectPermissionActions.Edit,
     ProjectPermissionSub.Settings
   );
+
+  // Without any storage on the plan session logs can't be turned on, so the section only shows while they're on.
+  const canTurnOn = canTurnOnAgentVaultSessionLogs(
+    Boolean(state?.defaultStorage.configured),
+    subscription
+  );
+  if (!isPending && !canTurnOn && !settings?.enabled) return null;
 
   return (
     <>

@@ -3,7 +3,6 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CloudIcon, TriangleAlertIcon } from "lucide-react";
 
-import { AgentVaultSessionLogUpgradeModal } from "@app/components/agent-vault/AgentVaultSessionLogUpgradeModal";
 import { AppConnectionOptionContent } from "@app/components/app-connections";
 import { createNotification } from "@app/components/notifications";
 import { AwsRegionSelect } from "@app/components/secret-syncs/forms/SecretSyncDestinationFields/shared";
@@ -19,7 +18,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  Badge,
   Button,
   Combobox,
   Dialog,
@@ -112,7 +110,6 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
     "addConnection",
     "awsSetup"
   ] as const);
-  const [upgradeFor, setUpgradeFor] = useState<AgentVaultSessionLogStorageType | null>(null);
   const [isConfirmOffOpen, setIsConfirmOffOpen] = useState(false);
 
   const retentionDays = getAgentVaultSessionLogRetentionDays(subscription);
@@ -223,14 +220,16 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
     }
 
     if (needsSessionLogUpgrade(values, settings, isOnPlan)) {
-      setUpgradeFor(values.storageType);
+      createNotification({
+        type: "error",
+        text: "Your plan doesn't include this storage. Choose another storage or turn session logs off."
+      });
       return;
     }
     await saveSettings({ enabled: true, storage: toStorage(values) });
   };
 
-  // Both are always listed so they can be found. Default storage the instance hasn't set up can't be picked; one the
-  // plan leaves out opens the upgrade instead.
+  // Default storage the instance hasn't set up can't be picked; one the plan leaves out isn't listed unless it's in use.
   const storageOptions = [
     {
       type: AgentVaultSessionLogStorageType.Default,
@@ -254,7 +253,10 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
       isUnavailable: false,
       description: "Your own S3 bucket. You keep logs as long as you like."
     }
-  ];
+  ].filter(
+    (option) =>
+      isOnPlan(option.type) || (settings?.enabled && settings.storage.type === option.type)
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? onOpenChange(true) : requestDiscard())}>
@@ -275,21 +277,11 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
                 <AlertDescription>
                   <p>
                     Your plan doesn&apos;t include default storage, so session logs aren&apos;t
-                    being recorded. Upgrade to record and view them. You can turn session logs off
+                    being recorded. You can turn session logs off
                     {isOnPlan(AgentVaultSessionLogStorageType.External)
                       ? ", or switch to external storage."
                       : "."}
                   </p>
-                  <AlertAction>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={() => setUpgradeFor(AgentVaultSessionLogStorageType.Default)}
-                    >
-                      Upgrade
-                    </Button>
-                  </AlertAction>
                 </AlertDescription>
               </Alert>
             )}
@@ -298,20 +290,11 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
               <TriangleAlertIcon />
               <AlertDescription>
                 <p>
-                  Your plan no longer includes external storage. Upgrade to see recorded logs and
-                  keep recording. Recorded logs stay in your bucket. You can turn session logs off
+                  Your plan no longer includes external storage, so session logs aren&apos;t being
+                  recorded or shown. Recorded logs stay in your bucket. You can turn session logs
+                  off
                   {isDefaultUsable ? ", or switch to default storage." : "."}
                 </p>
-                <AlertAction>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    onClick={() => setUpgradeFor(AgentVaultSessionLogStorageType.External)}
-                  >
-                    Upgrade
-                  </Button>
-                </AlertAction>
               </AlertDescription>
             </Alert>
           )}
@@ -331,17 +314,8 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
                       id="agent-vault-session-log-enabled"
                       variant="av"
                       checked={field.value ?? false}
-                      onCheckedChange={(checked) => {
-                        if (checked && !canTurnOn) {
-                          setUpgradeFor(
-                            isDefaultStorageConfigured
-                              ? AgentVaultSessionLogStorageType.Default
-                              : AgentVaultSessionLogStorageType.External
-                          );
-                          return;
-                        }
-                        field.onChange(checked);
-                      }}
+                      onCheckedChange={field.onChange}
+                      disabled={!canTurnOn && !field.value}
                     />
                   </Field>
                 )}
@@ -363,14 +337,9 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
                             ? field.value
                             : ""
                         }
-                        onValueChange={(value) => {
-                          const type = value as AgentVaultSessionLogStorageType;
-                          if (!isOnPlan(type)) {
-                            setUpgradeFor(type);
-                            return;
-                          }
-                          field.onChange(type);
-                        }}
+                        onValueChange={(value) =>
+                          field.onChange(value as AgentVaultSessionLogStorageType)
+                        }
                       >
                         <SelectTrigger id="agent-vault-session-log-storage" className="w-full">
                           <SelectValue placeholder="Choose where to store session logs" />
@@ -386,9 +355,6 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
                               <span className="flex items-center gap-2">
                                 {option.icon}
                                 {option.title}
-                                {!option.isUnavailable && !isOnPlan(option.type) && (
-                                  <Badge variant="av">Upgrade</Badge>
-                                )}
                               </span>
                             </SelectItem>
                           ))}
@@ -625,12 +591,6 @@ export const SessionLogModal = ({ isOpen, onOpenChange, onSaved, onEditCredentia
         bucket={bucket.trim()}
         keyPrefix={keyPrefix.trim()}
         isUnsaved
-      />
-
-      <AgentVaultSessionLogUpgradeModal
-        isOpen={upgradeFor !== null}
-        onOpenChange={(open) => !open && setUpgradeFor(null)}
-        storageType={upgradeFor ?? undefined}
       />
 
       <AlertDialog

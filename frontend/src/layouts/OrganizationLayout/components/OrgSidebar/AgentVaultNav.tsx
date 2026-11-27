@@ -100,10 +100,12 @@ export const AgentVaultNav = ({ onSubmenuOpen }: { onSubmenuOpen: (submenu: Subm
       label: "Hooks",
       icon: Webhook,
       pathSuffix: "hooks",
-      hidden: !permission.can(
-        ProjectPermissionAgentVaultHookActions.Read,
-        ProjectPermissionSub.AgentVaultHooks
-      )
+      hidden:
+        !subscription?.agentVaultHooks ||
+        !permission.can(
+          ProjectPermissionAgentVaultHookActions.Read,
+          ProjectPermissionSub.AgentVaultHooks
+        )
     }
   ];
 
@@ -127,7 +129,12 @@ export const AgentVaultNav = ({ onSubmenuOpen }: { onSubmenuOpen: (submenu: Subm
       activeMatch: /\/access-management|\/groups\/|\/identities\/|\/members\/|\/roles\//,
       hidden: !canReadMembers
     },
-    { label: "Audit Logs", icon: FileText, pathSuffix: "audit-logs", hidden: !canReadAuditLogs },
+    {
+      label: "Audit Logs",
+      icon: FileText,
+      pathSuffix: "audit-logs",
+      hidden: !canReadAuditLogs || !subscription?.auditLogs
+    },
     {
       label: "Settings",
       icon: Settings,

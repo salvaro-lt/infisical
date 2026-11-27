@@ -2,14 +2,7 @@ import { ReactNode, useMemo, useState } from "react";
 import { SiGo, SiPython, SiTypescript } from "react-icons/si";
 import { Link } from "@tanstack/react-router";
 import axios from "axios";
-import {
-  BoxIcon,
-  ExternalLinkIcon,
-  PackageIcon,
-  TerminalIcon,
-  TriangleAlertIcon,
-  UserIcon
-} from "lucide-react";
+import { BoxIcon, PackageIcon, TerminalIcon, TriangleAlertIcon, UserIcon } from "lucide-react";
 
 import { createNotification } from "@app/components/notifications";
 import {
@@ -586,17 +579,7 @@ export const CreateSessionDialog = ({ isOpen, onOpenChange }: Props) => {
                 Back
               </Button>
             )}
-            {platformDetails && prompt && (
-              <>
-                <Button variant="outline" asChild>
-                  <a href={platformDetails.guideUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLinkIcon />
-                    View Guide
-                  </a>
-                </Button>
-                <CopyPromptButton prompt={prompt} />
-              </>
-            )}
+            {platformDetails && prompt && <CopyPromptButton prompt={prompt} />}
             {isCreateNow && !createdSession && (
               <Button
                 type="submit"

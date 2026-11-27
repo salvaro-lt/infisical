@@ -82,17 +82,8 @@ export const HostStep = ({ form }: Props) => {
                 isError={Boolean(error)}
               />
               <FieldDescription>
-                A{" "}
-                <a
-                  href="https://infisical.com/docs/documentation/platform/gateways/overview"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline"
-                >
-                  Gateway
-                </a>{" "}
-                is a lightweight agent that performs HSM operations on Infisical&apos;s behalf. It
-                runs inside your network and handles the communication with your HSM.
+                A Gateway is a lightweight agent that performs HSM operations on Infisical&apos;s
+                behalf. It runs inside your network and handles the communication with your HSM.
               </FieldDescription>
               <FieldError errors={[error]} />
             </FieldContent>
@@ -128,16 +119,7 @@ export const HostStep = ({ form }: Props) => {
                 </p>
                 <p className="text-muted">
                   A Gateway with PKCS#11 support must be running on a machine that can reach your
-                  HSM. This is set up by someone with network and infrastructure access.{" "}
-                  <a
-                    href="https://infisical.com/docs/documentation/platform/pki/settings/hsm-connectors"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-project hover:underline"
-                  >
-                    Read the HSM Connectors setup guide
-                  </a>
-                  .
+                  HSM. This is set up by someone with network and infrastructure access.
                 </p>
               </div>
             )}

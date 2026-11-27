@@ -81,19 +81,7 @@ export const MicrosoftTeamsIntegrationForm = ({ adminIntegrationsConfig }: Props
           <AccordionContent className="p-6">
             <div className="flex w-full flex-col gap-4">
               <div className="max-w-lg text-sm text-label">
-                Step 1: Create and configure Microsoft Teams bot and Azure Resources. Please refer
-                to the documentation below for more information.
-              </div>
-              <div>
-                <Button variant="neutral" asChild>
-                  <a
-                    href="https://infisical.com/docs/documentation/platform/workflow-integrations/microsoft-teams-integration"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Documentation
-                  </a>
-                </Button>
+                Step 1: Create and configure Microsoft Teams bot and Azure Resources.
               </div>
               <div className="max-w-lg text-sm text-label">
                 Step 2: Configure your instance-wide settings to enable integration with Microsoft

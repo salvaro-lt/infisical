@@ -122,10 +122,6 @@ type ConfigurationOption = {
 };
 
 type Props = {
-  handlePopUpOpen: (
-    popUpName: keyof UsePopUpState<["upgradePlan"]>,
-    data?: { featureName?: string }
-  ) => void;
   handlePopUpToggle: (
     popUpName: keyof UsePopUpState<["identityAuthMethod"]>,
     state?: boolean
@@ -137,7 +133,6 @@ type Props = {
 };
 
 export const IdentityKubernetesAuthForm = ({
-  handlePopUpOpen,
   handlePopUpToggle,
   identityId,
   isUpdate,
@@ -542,7 +537,7 @@ export const IdentityKubernetesAuthForm = ({
                 </AlertDescription>
               </Alert>
             )}
-            {canAttachTemplates && (
+            {canAttachTemplates && subscription?.machineIdentityAuthTemplates && (
               <Controller
                 control={control}
                 name="scope"
@@ -1066,16 +1061,14 @@ export const IdentityKubernetesAuthForm = ({
                 />
               </>
             )}
-            <TrustedIpsField
-              control={control}
-              name="accessTokenTrustedIps"
-              label="Access Token Trusted IPs"
-              isAllowed={Boolean(subscription?.ipAllowlisting)}
-              onUpgradeRequired={() =>
-                handlePopUpOpen("upgradePlan", { featureName: "IP allowlisting" })
-              }
-              tooltip="The IPs or CIDR ranges that access tokens can be used from. By default, each token is given the 0.0.0.0/0, allowing usage from any network address."
-            />
+            {subscription?.ipAllowlisting && (
+              <TrustedIpsField
+                control={control}
+                name="accessTokenTrustedIps"
+                label="Access Token Trusted IPs"
+                tooltip="The IPs or CIDR ranges that access tokens can be used from. By default, each token is given the 0.0.0.0/0, allowing usage from any network address."
+              />
+            )}
           </FieldGroup>
         </TabsContent>
       </Tabs>

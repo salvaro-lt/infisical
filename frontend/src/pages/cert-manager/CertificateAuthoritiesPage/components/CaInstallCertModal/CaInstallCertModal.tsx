@@ -2,11 +2,6 @@ import { useState } from "react";
 import { ArrowRightIcon, FileTextIcon, LinkIcon, ShieldCheckIcon } from "lucide-react";
 
 import {
-  ExternalCertificateAuthoritiesUpgradeIntent,
-  useUpgradeGate
-} from "@app/components/license/UpgradeGate";
-import {
-  Badge,
   Button,
   Dialog,
   DialogBody,
@@ -114,10 +109,9 @@ type RadioCardProps = {
   icon?: React.ReactNode;
   name: string;
   description: string;
-  isLocked?: boolean;
 };
 
-const RadioCard = ({ value, icon, name, description, isLocked }: RadioCardProps) => {
+const RadioCard = ({ value, icon, name, description }: RadioCardProps) => {
   const id = `ca-install-option-${value}`;
 
   return (
@@ -125,10 +119,7 @@ const RadioCard = ({ value, icon, name, description, isLocked }: RadioCardProps)
       <Field orientation="horizontal">
         {icon}
         <FieldContent>
-          <FieldTitle>
-            {name}
-            {isLocked && <Badge variant="info">Enterprise</Badge>}
-          </FieldTitle>
+          <FieldTitle>{name}</FieldTitle>
           <FieldDescription>{description}</FieldDescription>
         </FieldContent>
         <RadioGroupItem id={id} value={value} />
@@ -142,7 +133,6 @@ export const CaInstallCertModal = ({ popUp, handlePopUpToggle }: Props) => {
   const caId = popupData?.caId ?? "";
 
   const { subscription } = useSubscription();
-  const { openUpgradeGate, upgradeGate } = useUpgradeGate();
 
   // Signing an intermediate outside Infisical: Manual is the CSR/import flow, Automated connects a
   // third-party provider. Infisical CA stays available on every plan.
@@ -178,15 +168,7 @@ export const CaInstallCertModal = ({ popUp, handlePopUpToggle }: Props) => {
   };
 
   const handleSelectMethod = (method: SigningMethod) => {
-    if (!lockedMethods[method]) {
-      setSelectedMethod(method);
-      return;
-    }
-
-    openUpgradeGate({
-      intent: ExternalCertificateAuthoritiesUpgradeIntent,
-      paywallKey: "cert-manager.intermediate-ca-signing"
-    });
+    setSelectedMethod(method);
   };
 
   const handleIntegrationContinue = () => {
@@ -224,11 +206,10 @@ export const CaInstallCertModal = ({ popUp, handlePopUpToggle }: Props) => {
           value={selectedMethod ?? ""}
           onValueChange={(value) => handleSelectMethod(value as SigningMethod)}
         >
-          {SIGNING_METHOD_OPTIONS.map((option) => (
+          {SIGNING_METHOD_OPTIONS.filter((option) => !lockedMethods[option.value]).map((option) => (
             <RadioCard
               key={option.value}
               value={option.value}
-              isLocked={lockedMethods[option.value]}
               icon={
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-surface-active">
                   <option.icon className="h-5 w-5 text-label" />
@@ -358,25 +339,22 @@ export const CaInstallCertModal = ({ popUp, handlePopUpToggle }: Props) => {
   const subTitle = getSubTitle();
 
   return (
-    <>
-      <Dialog
-        open={popUp?.installCaCert?.isOpen}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) resetState();
-          handlePopUpToggle("installCaCert", isOpen);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            {subTitle && <DialogDescription>{subTitle}</DialogDescription>}
-          </DialogHeader>
-          {step === Step.ChooseMethod && renderMethodSelection()}
-          {step === Step.ChooseIntegration && renderIntegrationSelection()}
-          {step === Step.Form && renderFormStep()}
-        </DialogContent>
-      </Dialog>
-      {upgradeGate}
-    </>
+    <Dialog
+      open={popUp?.installCaCert?.isOpen}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) resetState();
+        handlePopUpToggle("installCaCert", isOpen);
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {subTitle && <DialogDescription>{subTitle}</DialogDescription>}
+        </DialogHeader>
+        {step === Step.ChooseMethod && renderMethodSelection()}
+        {step === Step.ChooseIntegration && renderIntegrationSelection()}
+        {step === Step.Form && renderFormStep()}
+      </DialogContent>
+    </Dialog>
   );
 };

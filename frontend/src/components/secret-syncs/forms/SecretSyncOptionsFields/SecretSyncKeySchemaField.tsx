@@ -123,14 +123,6 @@ export const SecretSyncKeySchemaField = () => {
                   <code className="rounded bg-surface-raised/80 px-1 py-0.5 font-mono text-[11px] text-foreground/80">
                     {"{{environment}}"}
                   </code>
-                  .{" "}
-                  <a
-                    href="https://infisical.com/docs/integrations/secret-syncs/overview#key-schemas"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Learn more
-                  </a>
                   .
                 </FieldDescription>
               )}

@@ -25,6 +25,7 @@ type Props = {
   isCaActive: boolean;
   canGenerateCsr: boolean;
   canManageCrossSignedCert: boolean;
+  canReplace: boolean;
   onOpen: (popUp: TCrossSignedCertPopUp) => void;
 };
 
@@ -34,6 +35,7 @@ export const CaCrossSignedCertActionsMenu = ({
   isCaActive,
   canGenerateCsr,
   canManageCrossSignedCert,
+  canReplace,
   onOpen
 }: Props) => {
   const getDisabledReason = (isAllowed: boolean, deniedText: string, needsActiveCa: boolean) => {
@@ -94,22 +96,24 @@ export const CaCrossSignedCertActionsMenu = ({
           <DownloadIcon />
           Download Certificate Chain
         </DropdownMenuItem>
-        {actions.map((action) => (
-          <Tooltip key={action.popUp} open={action.disabledReason ? undefined : false}>
-            <TooltipTrigger asChild>
-              <DropdownMenuItem
-                variant={"variant" in action ? action.variant : undefined}
-                isDisabled={Boolean(action.disabledReason)}
-                isDisabledFocusable={Boolean(action.disabledReason)}
-                onClick={() => onOpen(action.popUp)}
-              >
-                <action.Icon />
-                {action.label}
-              </DropdownMenuItem>
-            </TooltipTrigger>
-            <TooltipContent side="left">{action.disabledReason}</TooltipContent>
-          </Tooltip>
-        ))}
+        {actions
+          .filter((action) => canReplace || action.popUp !== "importCrossSignedCert")
+          .map((action) => (
+            <Tooltip key={action.popUp} open={action.disabledReason ? undefined : false}>
+              <TooltipTrigger asChild>
+                <DropdownMenuItem
+                  variant={"variant" in action ? action.variant : undefined}
+                  isDisabled={Boolean(action.disabledReason)}
+                  isDisabledFocusable={Boolean(action.disabledReason)}
+                  onClick={() => onOpen(action.popUp)}
+                >
+                  <action.Icon />
+                  {action.label}
+                </DropdownMenuItem>
+              </TooltipTrigger>
+              <TooltipContent side="left">{action.disabledReason}</TooltipContent>
+            </Tooltip>
+          ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -5,9 +5,10 @@ import {
   ProjectPermissionMemberActions,
   ProjectPermissionSub,
   useProject,
-  useProjectPermission
+  useProjectPermission,
+  useSubscription
 } from "@app/context";
-import { formatProjectRoleName } from "@app/helpers/roles";
+import { formatProjectRoleName, isCustomProjectRole } from "@app/helpers/roles";
 import { useGetProjectRoles } from "@app/hooks/api";
 import { TWorkspaceUser } from "@app/hooks/api/types";
 import {
@@ -28,6 +29,7 @@ export const useMemberRoleGrant = (projectMember: TWorkspaceUser) => {
     refetch: refetchRoles
   } = useGetProjectRoles(projectId, currentProject?.type);
   const { permission } = useProjectPermission();
+  const { subscription } = useSubscription();
 
   const isMemberEditDisabled = permission.cannot(
     ProjectPermissionMemberActions.Edit,
@@ -53,12 +55,17 @@ export const useMemberRoleGrant = (projectMember: TWorkspaceUser) => {
 
   const filteredRoles = useMemo(
     () =>
-      filterByGrantConditions(projectRoles ?? [], {
-        getKey: (role) => role.slug,
-        allowed: assignRoleConditions?.roles,
-        forbidden: assignRoleConditions?.forbiddenRoles
-      }),
-    [projectRoles, assignRoleConditions]
+      filterByGrantConditions(
+        (projectRoles ?? []).filter(
+          (role) => subscription?.rbac || !isCustomProjectRole(role.slug)
+        ),
+        {
+          getKey: (role) => role.slug,
+          allowed: assignRoleConditions?.roles,
+          forbidden: assignRoleConditions?.forbiddenRoles
+        }
+      ),
+    [projectRoles, assignRoleConditions, subscription?.rbac]
   );
 
   const assignableRoleSlugs = useMemo(

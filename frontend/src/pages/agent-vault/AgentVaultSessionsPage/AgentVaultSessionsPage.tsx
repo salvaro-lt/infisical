@@ -18,7 +18,6 @@ import {
   TriangleAlertIcon
 } from "lucide-react";
 
-import { AgentVaultSessionLogUpgradeModal } from "@app/components/agent-vault/AgentVaultSessionLogUpgradeModal";
 import { PageTitle } from "@app/components/PageTitle";
 import {
   Alert,
@@ -83,7 +82,10 @@ import {
   canActOnAgentVaultSession,
   canManageAgentVaultServices
 } from "@app/helpers/agentVaultPermissions";
-import { isAgentVaultSessionLogBlockedByPlan } from "@app/helpers/agentVaultSessionLogs";
+import {
+  canTurnOnAgentVaultSessionLogs,
+  isAgentVaultSessionLogBlockedByPlan
+} from "@app/helpers/agentVaultSessionLogs";
 import {
   getUserTablePreference,
   PreferenceKey,
@@ -263,11 +265,14 @@ export const AgentVaultSessionsPage = () => {
     canReadSessionLogSettings
   );
   const { subscription } = useSubscription();
-  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const sessionLogSettings = sessionLogState?.settings ?? null;
   // Covers a saved choice the plan dropped and the unsaved default the plan never included.
   const isSessionLogBlockedByPlan = isAgentVaultSessionLogBlockedByPlan(
     sessionLogSettings,
+    subscription
+  );
+  const canTurnOnSessionLogs = canTurnOnAgentVaultSessionLogs(
+    Boolean(sessionLogState?.defaultStorage.configured),
     subscription
   );
 
@@ -367,21 +372,14 @@ export const AgentVaultSessionsPage = () => {
           <Alert variant="warning">
             <TriangleAlertIcon />
             <AlertDescription>
-              <p>
-                {sessionLogSettings?.storage.type === AgentVaultSessionLogStorageType.External
-                  ? "Your plan no longer includes external storage. Upgrade to see recorded logs and keep recording. Recorded logs stay in your bucket."
-                  : "Your plan doesn't include default storage, so session logs aren't being recorded. Upgrade to record and view them."}
-              </p>
-              <AlertAction>
-                <Button variant="outline" size="sm" onClick={() => setIsUpgradeOpen(true)}>
-                  Upgrade
-                </Button>
-              </AlertAction>
+              {sessionLogSettings?.storage.type === AgentVaultSessionLogStorageType.External
+                ? "Your plan no longer includes external storage, so session logs aren't being recorded or shown. Recorded logs stay in your bucket."
+                : "Your plan doesn't include default storage, so session logs aren't being recorded."}
             </AlertDescription>
           </Alert>
         )}
 
-        {sessionLogSettings && !sessionLogSettings.enabled && (
+        {sessionLogSettings && !sessionLogSettings.enabled && canTurnOnSessionLogs && (
           <Alert variant="warning">
             <TriangleAlertIcon />
             <AlertDescription>
@@ -736,12 +734,6 @@ export const AgentVaultSessionsPage = () => {
         onOpenChange={(isOpen) => {
           if (!isOpen) setSessionToEdit(null);
         }}
-      />
-
-      <AgentVaultSessionLogUpgradeModal
-        isOpen={isUpgradeOpen}
-        onOpenChange={setIsUpgradeOpen}
-        storageType={sessionLogSettings?.storage.type}
       />
     </div>
   );

@@ -3,13 +3,14 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { PageTitle } from "@app/components/PageTitle";
 import { PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from "@app/components/v3";
 import { ROUTE_PATHS } from "@app/const/routes";
-import { useOrganization } from "@app/context";
+import { useOrganization, useSubscription } from "@app/context";
 import { OrgProvisioningTab } from "@app/pages/organization/SettingsPage/components/OrgProvisioningTab";
 import { OrgSsoTab } from "@app/pages/organization/SettingsPage/components/OrgSsoTab";
 
 export const SsoPage = () => {
   const navigate = useNavigate();
   const { currentOrg, isSubOrganization } = useOrganization();
+  const { subscription } = useSubscription();
   const selectedTab = useSearch({
     from: ROUTE_PATHS.Organization.SsoPage.id,
     select: (el) => el.selectedTab,
@@ -18,7 +19,10 @@ export const SsoPage = () => {
 
   const tabs = [
     { key: "sso", label: "SSO", component: OrgSsoTab },
-    { key: "provisioning", label: "Provisioning", component: OrgProvisioningTab }
+    // Provisioning only holds paid features (GitHub org sync and SCIM).
+    ...(subscription?.githubOrgSync || subscription?.scim
+      ? [{ key: "provisioning", label: "Provisioning", component: OrgProvisioningTab }]
+      : [])
   ];
 
   const activeTab = tabs.some((tab) => tab.key === selectedTab) ? selectedTab : "sso";

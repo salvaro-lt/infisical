@@ -133,21 +133,9 @@ export const SecretScanningDataSourceConnectionField = ({
                 )}
               />
               <FieldDescription id="secret-scanning-data-source-connection-help">
-                {isUpdate ? (
-                  "Cannot be updated"
-                ) : (
-                  <>
-                    Check out{" "}
-                    <a
-                      href={`https://infisical.com/docs/integrations/app-connections/${app}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      our docs
-                    </a>{" "}
-                    to ensure your connection has the required permissions for secret scanning.
-                  </>
-                )}
+                {isUpdate
+                  ? "Cannot be updated"
+                  : "Ensure your connection has the required permissions for secret scanning."}
               </FieldDescription>
               <FieldError id="secret-scanning-data-source-connection-error" errors={[error]} />
             </FieldContent>

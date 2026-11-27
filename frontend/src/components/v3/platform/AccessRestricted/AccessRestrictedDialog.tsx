@@ -7,9 +7,6 @@ import { Button } from "../../generic/Button";
 import { CodeBlock } from "../../generic/CodeBlock";
 import { cn } from "../../utils";
 
-const RBAC_DOCS_URL =
-  "https://infisical.com/docs/documentation/platform/access-controls/role-based-access-controls";
-
 // Fixed widths, not randomized ones, so the backdrop reads as a uniform redaction pattern
 // rather than implying a specific number or shape of records the viewer is missing.
 const REDACTED_ROW_WIDTHS = ["w-48", "w-64", "w-40", "w-56", "w-44", "w-60", "w-52", "w-36"];
@@ -88,7 +85,7 @@ export const AccessRestrictedDialog = ({
   subtitle = "An admin can grant it.",
   description = "Your role doesn't include the permission this page requires.",
   requirement,
-  docsUrl = RBAC_DOCS_URL,
+  docsUrl = null,
   badgeIcon = <LockIcon />,
   badgeLabel = "Access Restricted",
   action,

@@ -228,15 +228,17 @@ export const SignerKeyStep = ({
                   <SelectItem value={CertKeySource.Infisical} disabled={requiresHsm}>
                     Infisical
                   </SelectItem>
-                  <SelectItem value={CertKeySource.Hsm} disabled={!isHsmLicensed || !canAttachHsm}>
-                    <div className="flex items-center gap-2">
-                      HSM
-                      {!isHsmLicensed && <Badge variant="info">Enterprise</Badge>}
-                      {isHsmLicensed && !canAttachHsm && (
-                        <Badge variant="warning">Permission required</Badge>
-                      )}
-                    </div>
-                  </SelectItem>
+                  {(isHsmLicensed || requiresHsm) && (
+                    <SelectItem
+                      value={CertKeySource.Hsm}
+                      disabled={!isHsmLicensed || !canAttachHsm}
+                    >
+                      <div className="flex items-center gap-2">
+                        HSM
+                        {!canAttachHsm && <Badge variant="warning">Permission required</Badge>}
+                      </div>
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <FieldDescription>{keySourceHint}</FieldDescription>

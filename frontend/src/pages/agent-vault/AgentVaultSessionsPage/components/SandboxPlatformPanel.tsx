@@ -6,7 +6,6 @@ import { CheckIcon, CopyIcon } from "lucide-react";
 import { Button, CodeBlock, Tabs, TabsList, TabsTrigger } from "@app/components/v3";
 import { useTimedReset } from "@app/hooks";
 
-import { AgentVaultDocsUrls } from "../../agent-vault-docs-urls";
 import { codeLanguageForFile, highlight } from "./highlightCode";
 import {
   hasScriptLanguages,
@@ -23,49 +22,42 @@ type TPlatformDetails = {
   name: string;
   logo: string;
   description: string;
-  guideUrl: string;
 };
 
 export const PLATFORMS: Record<SandboxPlatform, TPlatformDetails> = {
   [SandboxPlatform.Modal]: {
     name: "Modal",
     logo: "/images/integrations/Modal.svg",
-    description: "The proxy runs in a sidecar next to each sandbox, so nothing else can reach it.",
-    guideUrl: AgentVaultDocsUrls.modalGuide
+    description: "The proxy runs in a sidecar next to each sandbox, so nothing else can reach it."
   },
   [SandboxPlatform.Daytona]: {
     name: "Daytona",
     logo: "/images/integrations/Daytona.png",
     description:
-      "The proxy runs in its own sandbox, and only the agent's linked sandbox can reach it.",
-    guideUrl: AgentVaultDocsUrls.daytonaGuide
+      "The proxy runs in its own sandbox, and only the agent's linked sandbox can reach it."
   },
   [SandboxPlatform.E2B]: {
     name: "E2B",
     logo: "/images/integrations/E2B.svg",
-    description: "Each sandbox sends its traffic to one proxy you run, over SOCKS5.",
-    guideUrl: AgentVaultDocsUrls.e2bGuide
+    description: "Each sandbox sends its traffic to one proxy you run, over SOCKS5."
   },
   [SandboxPlatform.Docker]: {
     name: "Docker",
     logo: "/images/integrations/Docker.png",
     description:
-      "The proxy runs in a container beside each agent's container, on a network with no internet access.",
-    guideUrl: AgentVaultDocsUrls.dockerGuide
+      "The proxy runs in a container beside each agent's container, on a network with no internet access."
   },
   [SandboxPlatform.Kubernetes]: {
     name: "Kubernetes",
     logo: "/images/integrations/Kubernetes.png",
     description:
-      "The proxy runs in your cluster, and an orchestrator starts each agent's pod with its own session.",
-    guideUrl: AgentVaultDocsUrls.kubernetesSetupGuide
+      "The proxy runs in your cluster, and an orchestrator starts each agent's pod with its own session."
   },
   [SandboxPlatform.Cursor]: {
     name: "Cursor Cloud Agents",
     logo: "/images/integrations/Cursor.svg",
     description:
-      "Self-hosted workers in your Kubernetes cluster, where a spawn hook gives each run its own session.",
-    guideUrl: AgentVaultDocsUrls.cursorGuide
+      "Self-hosted workers in your Kubernetes cluster, where a spawn hook gives each run its own session."
   }
 };
 
@@ -91,7 +83,7 @@ type TPromptValues = {
 
 export const setupPrompt = (platform: TPlatformDetails, values: TPromptValues) =>
   [
-    `Set up my code to run an AI agent in ${platform.name} with Infisical Agent Vault, following this guide: ${platform.guideUrl}`,
+    `Set up my code to run an AI agent in ${platform.name} with Infisical Agent Vault.`,
     "",
     `- Infisical URL: ${values.siteUrl}`,
     `- Project ID: ${values.projectId}`,
@@ -99,7 +91,7 @@ export const setupPrompt = (platform: TPlatformDetails, values: TPromptValues) =
     ...(values.clientId ? [`- Machine identity client ID: ${values.clientId}`] : []),
     `- Language: ${values.language ? LANGUAGE_NAMES[values.language] : "the language my codebase already uses"}`,
     "",
-    "Read the guide first, then adapt its code to my codebase. My code creates each session as a machine identity, with the client ID and client secret in INFISICAL_UNIVERSAL_AUTH_CLIENT_ID and INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET. Never put those credentials or the proxy token where the agent can read them."
+    "Adapt the setup to my codebase. My code creates each session as a machine identity, with the client ID and client secret in INFISICAL_UNIVERSAL_AUTH_CLIENT_ID and INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET. Never put those credentials or the proxy token where the agent can read them."
   ].join("\n");
 
 const ScriptPreview = ({ script }: { script: TSandboxScript }) => {
