@@ -1616,7 +1616,8 @@ export const registerRoutes = async (
     kmsDataKeyService,
     tokenService,
     smtpService,
-    loginService
+    loginService,
+    auditLogService
   });
 
   const samlService = samlConfigServiceFactory({

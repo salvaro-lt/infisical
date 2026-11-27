@@ -6,6 +6,8 @@ import { BadRequestError } from "@app/lib/errors";
 import { authRateLimit, readLimit, writeLimit } from "@app/server/config/rateLimiter";
 import { verifyAuth } from "@app/server/plugins/auth/verify-auth";
 import { AuthMode } from "@app/services/auth/auth-type";
+import { createOidcSsoAuditLog, OidcSsoAuditEventType } from "@app/services/oidc-sso/oidc-sso-audit";
+import { buildOidcSsoRedirectUri } from "@app/services/oidc-sso/oidc-sso-fns";
 import {
   OidcSsoConfigurationType,
   OidcSsoSigningAlgorithm,
@@ -37,7 +39,10 @@ const ConfigInputSchema = z.object({
     .string()
     .trim()
     .max(4096)
-    .regex(/^[a-zA-Z0-9.,@\s-]*$/, "Allowed email domains must be a comma-separated list of domains")
+    .regex(
+      /^[a-zA-Z0-9.,@*\s-]*$/,
+      "Allowed email domains must be a comma-separated list of domains, such as 'example.com, *.example.com'"
+    )
     .optional(),
   isActive: z.boolean(),
   jwtSignatureAlgorithm: z.nativeEnum(OidcSsoSigningAlgorithm).default(OidcSsoSigningAlgorithm.RS256),
@@ -66,13 +71,23 @@ const ConfigResponseSchema = z.object({
   mfaClaimName: z.string(),
   mfaAmrValues: z.string().array().nullable(),
   manageGroupMemberships: z.boolean(),
-  lastUsed: z.date().nullable()
+  lastUsed: z.date().nullable(),
+  redirectUri: z.string()
+});
+
+const toConfigAuditMetadata = (config: z.infer<typeof ConfigResponseSchema>) => ({
+  oidcConfigId: config.id,
+  isActive: config.isActive,
+  configurationType: config.configurationType,
+  discoveryURL: config.discoveryURL,
+  issuer: config.issuer,
+  allowedEmailDomains: config.allowedEmailDomains,
+  jwtSignatureAlgorithm: config.jwtSignatureAlgorithm
 });
 
 export const registerOidcSsoRouter = async (server: FastifyZodProvider, opts: TRegisterOidcSsoRouterOptions) => {
   const appCfg = getConfig();
-  // Fixed rather than derived from the Host header: it must match the redirect URI registered at the IdP.
-  const redirectUri = `${appCfg.SITE_URL}/api/v1/sso${OIDC_SSO_ROUTE_PREFIX}/callback`;
+  const redirectUri = buildOidcSsoRedirectUri(appCfg.SITE_URL);
 
   server.route({
     method: "GET",
@@ -190,14 +205,21 @@ export const registerOidcSsoRouter = async (server: FastifyZodProvider, opts: TR
       body: ConfigInputSchema.extend({ organizationId: z.string().trim().uuid() }),
       response: { 200: ConfigResponseSchema }
     },
-    handler: async (req) =>
-      server.services.oidcSso.createConfig({
+    handler: async (req) => {
+      const config = await server.services.oidcSso.createConfig({
         ...req.body,
         actor: req.permission.type,
         actorId: req.permission.id,
         actorAuthMethod: req.permission.authMethod,
         actorOrgId: req.permission.orgId
-      })
+      });
+      await createOidcSsoAuditLog(server.services.auditLog, {
+        ...req.auditLogInfo,
+        orgId: config.orgId,
+        event: { type: OidcSsoAuditEventType.CreateConfig, metadata: toConfigAuditMetadata(config) }
+      });
+      return config;
+    }
   });
 
   server.route({
@@ -210,14 +232,25 @@ export const registerOidcSsoRouter = async (server: FastifyZodProvider, opts: TR
       body: ConfigInputSchema.partial().extend({ organizationId: z.string().trim().uuid() }),
       response: { 200: ConfigResponseSchema }
     },
-    handler: async (req) =>
-      server.services.oidcSso.updateConfig({
-        ...req.body,
-        actor: req.permission.type,
-        actorId: req.permission.id,
-        actorAuthMethod: req.permission.authMethod,
-        actorOrgId: req.permission.orgId
-      })
+    handler: async (req) => {
+      const { config, changedFields, isClientIdChanged, isClientSecretChanged } =
+        await server.services.oidcSso.updateConfig({
+          ...req.body,
+          actor: req.permission.type,
+          actorId: req.permission.id,
+          actorAuthMethod: req.permission.authMethod,
+          actorOrgId: req.permission.orgId
+        });
+      await createOidcSsoAuditLog(server.services.auditLog, {
+        ...req.auditLogInfo,
+        orgId: config.orgId,
+        event: {
+          type: OidcSsoAuditEventType.UpdateConfig,
+          metadata: { ...toConfigAuditMetadata(config), changedFields, isClientIdChanged, isClientSecretChanged }
+        }
+      });
+      return config;
+    }
   });
 
   server.route({

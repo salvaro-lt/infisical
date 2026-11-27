@@ -4,6 +4,12 @@ import { TOidcIdentityClaims } from "./oidc-sso-types";
 
 const WELL_KNOWN_SUFFIX = "/.well-known/openid-configuration";
 
+export const OIDC_SSO_CALLBACK_PATH = "/api/v1/sso/community-oidc/callback";
+
+// Fixed rather than derived from the Host header: it must match the redirect URI registered at the IdP.
+export const buildOidcSsoRedirectUri = (siteUrl?: string) =>
+  `${(siteUrl ?? "").replace(/\/+$/, "")}${OIDC_SSO_CALLBACK_PATH}`;
+
 export const toDiscoveryDocumentUrl = (discoveryUrl: string) => {
   const trimmed = discoveryUrl.trim().replace(/\/+$/, "");
   return trimmed.endsWith(WELL_KNOWN_SUFFIX) ? trimmed : `${trimmed}${WELL_KNOWN_SUFFIX}`;
@@ -20,7 +26,9 @@ export const isEmailDomainAllowed = (email: string, allowedEmailDomains?: string
   if (!allowed.length) return true;
   const atIndex = email.lastIndexOf("@");
   if (atIndex < 0) return false;
-  return allowed.includes(email.slice(atIndex + 1).toLowerCase());
+  const domain = email.slice(atIndex + 1).toLowerCase();
+  // "*.example.com" admits subdomains only; list "example.com" as well to admit the apex.
+  return allowed.some((entry) => (entry.startsWith("*.") ? domain.endsWith(entry.slice(1)) : domain === entry));
 };
 
 const toBase64Url = (buf: Buffer) => buf.toString("base64url");

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   buildAuthorizationUrl,
+  buildOidcSsoRedirectUri,
   createOidcLoginSecrets,
   extractIdentityClaims,
   isEmailDomainAllowed,
@@ -32,6 +33,14 @@ describe("isEmailDomainAllowed", () => {
   test("matches the exact domain, case-insensitively, ignoring spaces and @", () => {
     expect(isEmailDomainAllowed("jane@Acme.com", " acme.com, @corp.io ")).toBe(true);
     expect(isEmailDomainAllowed("jane@corp.io", "acme.com,@corp.io")).toBe(true);
+  });
+
+  test("a *. entry admits subdomains at any depth but not the apex or lookalikes", () => {
+    expect(isEmailDomainAllowed("jane@eu.acme.com", "*.acme.com")).toBe(true);
+    expect(isEmailDomainAllowed("jane@a.b.acme.com", "*.acme.com")).toBe(true);
+    expect(isEmailDomainAllowed("jane@acme.com", "*.acme.com")).toBe(false);
+    expect(isEmailDomainAllowed("jane@evilacme.com", "*.acme.com")).toBe(false);
+    expect(isEmailDomainAllowed("jane@acme.com", "acme.com, *.acme.com")).toBe(true);
   });
 
   test("rejects subdomains and lookalikes", () => {
@@ -65,6 +74,14 @@ describe("createOidcLoginSecrets / buildAuthorizationUrl", () => {
     expect(url.searchParams.get("scope")).toBe("openid email profile");
     expect(url.searchParams.get("code_challenge_method")).toBe("S256");
     expect(url.searchParams.get("redirect_uri")).toBe("https://app.example.com/api/v1/sso/community-oidc/callback");
+  });
+});
+
+describe("buildOidcSsoRedirectUri", () => {
+  test("joins SITE_URL and the callback path without a doubled slash", () => {
+    expect(buildOidcSsoRedirectUri("https://app.example.com/")).toBe(
+      "https://app.example.com/api/v1/sso/community-oidc/callback"
+    );
   });
 });
 

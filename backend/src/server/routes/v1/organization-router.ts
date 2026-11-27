@@ -25,6 +25,7 @@ import { GenericResourceNameSchema, slugSchema } from "@app/server/lib/schemas";
 import { getTelemetryDistinctId } from "@app/server/lib/telemetry";
 import { verifyAuth } from "@app/server/plugins/auth/verify-auth";
 import { ActorType, AuthMode, MfaMethod, SsoMfaTrust } from "@app/services/auth/auth-type";
+import { OidcSsoAuditEventType } from "@app/services/oidc-sso/oidc-sso-audit";
 import { OrgWithSubOrgsSchema, sanitizedOrganizationSchema } from "@app/services/org/org-schema";
 import { PostHogEventTypes } from "@app/services/telemetry/telemetry-types";
 
@@ -260,7 +261,7 @@ export const registerOrgRouter = async (server: FastifyZodProvider) => {
             .transform((val) => (!val ? val : removeTrailingSlash(val)))
             .describe(AUDIT_LOGS.EXPORT.secretPath),
           secretKey: z.string().optional().describe(AUDIT_LOGS.EXPORT.secretKey),
-          eventType: commaSeparatedEnumList(EventType),
+          eventType: commaSeparatedEnumList({ ...EventType, ...OidcSsoAuditEventType }),
           eventClass: commaSeparatedEnumList(AuditLogEventClass).describe(AUDIT_LOGS.EXPORT.eventClass),
           userAgentType: z.nativeEnum(UserAgentType).optional().describe(AUDIT_LOGS.EXPORT.userAgentType),
           eventMetadata: z
@@ -350,7 +351,7 @@ export const registerOrgRouter = async (server: FastifyZodProvider) => {
           startDate: req.query.startDate || getLastMidnightDateISO(),
           auditLogActorId: req.query.actor,
           actorType: req.query.actorType,
-          eventType: req.query.eventType,
+          eventType: req.query.eventType as EventType[] | undefined,
           eventClass: req.query.eventClass
         },
         actorId: req.permission.id,

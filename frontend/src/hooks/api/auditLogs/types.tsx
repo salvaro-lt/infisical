@@ -918,6 +918,51 @@ interface OrgAdminBypassSSOEvent {
   metadata: Record<string, string>; // no metadata yet
 }
 
+type OidcSsoConfigAuditMetadata = {
+  oidcConfigId: string;
+  isActive: boolean;
+  configurationType: string;
+  discoveryURL: string;
+  issuer: string;
+  allowedEmailDomains: string;
+  jwtSignatureAlgorithm: string;
+};
+
+interface CreateOidcSsoConfigEvent {
+  type: EventType.CREATE_OIDC_SSO_CONFIG;
+  metadata: OidcSsoConfigAuditMetadata;
+}
+
+interface UpdateOidcSsoConfigEvent {
+  type: EventType.UPDATE_OIDC_SSO_CONFIG;
+  metadata: OidcSsoConfigAuditMetadata & {
+    changedFields: string[];
+    isClientIdChanged: boolean;
+    isClientSecretChanged: boolean;
+  };
+}
+
+interface OidcSsoLoginFailedEvent {
+  type: EventType.OIDC_SSO_LOGIN_FAILED;
+  metadata: { organizationId: string; reason: string; email?: string; idpSubject?: string };
+}
+
+interface OidcSsoMemberProvisionedEvent {
+  type: EventType.OIDC_SSO_MEMBER_PROVISIONED;
+  metadata: {
+    organizationId: string;
+    userId: string;
+    email: string;
+    role: string;
+    isNewAccount: boolean;
+  };
+}
+
+interface OidcSsoAccountLinkPendingEvent {
+  type: EventType.OIDC_SSO_ACCOUNT_LINK_PENDING;
+  metadata: { organizationId: string; userId: string; email: string; userAliasId: string };
+}
+
 interface CreateCertificateTemplate {
   type: EventType.CREATE_CERTIFICATE_TEMPLATE;
   metadata: {
@@ -1200,6 +1245,11 @@ export type Event =
   | DeletePkiCollectionItem
   | OrgAdminAccessProjectEvent
   | OrgAdminBypassSSOEvent
+  | CreateOidcSsoConfigEvent
+  | UpdateOidcSsoConfigEvent
+  | OidcSsoLoginFailedEvent
+  | OidcSsoMemberProvisionedEvent
+  | OidcSsoAccountLinkPendingEvent
   | CreateCertificateTemplate
   | UpdateCertificateTemplate
   | GetCertificateTemplate

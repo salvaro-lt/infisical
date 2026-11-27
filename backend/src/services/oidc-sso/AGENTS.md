@@ -28,6 +28,11 @@ frontend calls only these routes.
 - **Org membership is created `Invited`**; `processProviderCallback` accepts it only when it issues
   a session. A deactivated membership fails the login. No membership is created for a stale alias
   (`isStaleSsoAlias`).
+- **Audit events are declared in `oidc-sso-audit.ts` (`OidcSsoAuditEventType`), not in the ee
+  `EventType` enum**, so `ee/` stays unmodified. Unknown types are classed as Management and always
+  recorded. The org audit-log filter (`organization-router.ts`) and the frontend `EventType` enum list
+  them too; add a new type in all three places. Emit sign-in events with
+  `createOidcSsoAuditLogSafely`, which never fails a login, and never put the client secret or ID in
+  metadata (`isClientSecretChanged` / `isClientIdChanged` only).
 - **Not implemented:** group membership sync (`manageGroupMemberships` is always false and
-  `true` is rejected), sign-in by verified email domain (the login takes `orgSlug` only), and
-  audit-log events for config changes (the event types live in `ee/`).
+  `true` is rejected) and sign-in by verified email domain (the login takes `orgSlug` only).

@@ -3,17 +3,20 @@ import { createLocalJWKSet, errors as joseErrors, JWTPayload, jwtVerify } from "
 
 import { AccessScope, OrganizationActionScope, OrgMembershipStatus, TOidcConfigs, TUsers } from "@app/db/schemas";
 import { KmsDataKey, TKmsDataKeyService } from "@app/domains/platform/kms-core/ce/module";
+import { TAuditLogServiceFactory } from "@app/ee/services/audit-log/audit-log-types";
 import { OrgPermissionSsoActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { getConfig as getAppConfig } from "@app/lib/config/env";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { logger, sanitizeUrlForLog } from "@app/lib/logger";
 import { isDisposableEmail, safeRequest, sanitizeEmail, validateEmail } from "@app/lib/validator";
+import { getUserAgentType } from "@app/server/plugins/audit-log";
 
 import { TAuthTokenServiceFactory } from "../auth-token/auth-token-service";
 import { TokenType } from "../auth-token/auth-token-types";
 import { TAuthLoginFactory } from "../auth/auth-login-service";
-import { AuthMethod } from "../auth/auth-type";
+import { ActorType as AuditActorType, AuthMethod } from "../auth/auth-type";
 import { matchIdpMfaSignal } from "../auth/idp-mfa-signal";
 import { TMembershipUserDALFactory } from "../membership-user/membership-user-dal";
 import { TMembershipRoleDALFactory } from "../membership/membership-role-dal";
@@ -24,9 +27,11 @@ import { TUserAliasDALFactory } from "../user-alias/user-alias-dal";
 import { ensureSsoAccountVerified, isStaleSsoAlias } from "../user-alias/user-alias-fns";
 import { UserAliasType } from "../user-alias/user-alias-types";
 import { TUserDALFactory } from "../user/user-dal";
+import { createOidcSsoAuditLogSafely, OidcSsoAuditEventType } from "./oidc-sso-audit";
 import { TOidcSsoDALFactory } from "./oidc-sso-dal";
 import {
   buildAuthorizationUrl,
+  buildOidcSsoRedirectUri,
   createOidcLoginSecrets,
   extractIdentityClaims,
   isEmailDomainAllowed,
@@ -60,6 +65,7 @@ type TOidcSsoServiceFactoryDep = {
   tokenService: Pick<TAuthTokenServiceFactory, "createTokenForUser">;
   smtpService: Pick<TSmtpService, "sendMail">;
   loginService: Pick<TAuthLoginFactory, "processProviderCallback">;
+  auditLogService: Pick<TAuditLogServiceFactory, "createAuditLog">;
 };
 
 export type TOidcSsoServiceFactory = ReturnType<typeof oidcSsoServiceFactory>;
@@ -90,7 +96,8 @@ export const oidcSsoServiceFactory = ({
   kmsDataKeyService,
   tokenService,
   smtpService,
-  loginService
+  loginService,
+  auditLogService
 }: TOidcSsoServiceFactoryDep) => {
   const assertCan = async (dto: TGetOidcSsoConfigDTO, action: OrgPermissionSsoActions) => {
     const { permission } = await permissionService.getOrgPermission({
@@ -136,7 +143,8 @@ export const oidcSsoServiceFactory = ({
     mfaClaimName: config.mfaClaimName,
     mfaAmrValues: config.mfaAmrValues ?? null,
     manageGroupMemberships: false,
-    lastUsed: config.lastUsed ?? null
+    lastUsed: config.lastUsed ?? null,
+    redirectUri: buildOidcSsoRedirectUri(getAppConfig().SITE_URL)
   });
 
   const assertRootOrg = async (orgId: string) => {
@@ -284,7 +292,17 @@ export const oidcSsoServiceFactory = ({
       encryptedOidcClientSecret: encryptor({ plainText: Buffer.from(mergedClientSecret) }).cipherTextBlob
     });
 
-    return toResponse(await decryptConfig(updated));
+    const normalize = (value: unknown) => (Array.isArray(value) ? JSON.stringify(value) : (value ?? ""));
+    const changedFields = (Object.keys(columns) as (keyof typeof columns)[]).filter(
+      (field) => normalize(columns[field]) !== normalize(existing[field])
+    );
+
+    return {
+      config: toResponse(await decryptConfig(updated)),
+      changedFields,
+      isClientIdChanged: mergedClientId !== existing.clientId,
+      isClientSecretChanged: mergedClientSecret !== existing.clientSecret
+    };
   };
 
   const resolveProviderMetadata = async (config: TResolvedConfig): Promise<TOidcProviderMetadata> => {
@@ -461,6 +479,28 @@ export const oidcSsoServiceFactory = ({
     }
   };
 
+  const toAuditBase = (
+    { ipAddress, userAgent }: { ipAddress: string; userAgent: string },
+    orgId: string,
+    user?: Pick<TUsers, "id" | "email" | "username">
+  ) => ({
+    orgId,
+    ipAddress,
+    userAgent,
+    userAgentType: getUserAgentType(userAgent),
+    actor: user
+      ? {
+          type: AuditActorType.USER as const,
+          metadata: {
+            userId: user.id,
+            email: user.email,
+            username: user.username ?? user.email ?? "",
+            authMethod: AuthMethod.OIDC
+          }
+        }
+      : { type: AuditActorType.UNKNOWN_USER as const, metadata: {} }
+  });
+
   const provisionUser = async ({
     orgId,
     defaultMembershipRole,
@@ -468,8 +508,10 @@ export const oidcSsoServiceFactory = ({
     email,
     isEmailVerifiedByIdp,
     firstName,
-    lastName
+    lastName,
+    auditContext
   }: {
+    auditContext: { ipAddress: string; userAgent: string };
     orgId: string;
     defaultMembershipRole: string;
     sub: string;
@@ -480,6 +522,7 @@ export const oidcSsoServiceFactory = ({
   }) => {
     let userAlias = await userAliasDAL.findOne({ externalId: sub, orgId, aliasType: UserAliasType.OIDC });
     let user: TUsers | undefined;
+    let isNewAccount = false;
     if (userAlias) {
       user = await userDAL.findById(userAlias.userId);
       if (!user) throw new NotFoundError({ message: "The account linked to this SSO identity no longer exists." });
@@ -525,6 +568,7 @@ export const oidcSsoServiceFactory = ({
             },
             tx
           );
+          isNewAccount = !existingUser;
           return { user: accountUser, userAlias: alias };
         }));
       } catch (err) {
@@ -568,6 +612,13 @@ export const oidcSsoServiceFactory = ({
         );
         await membershipRoleDAL.create({ membershipId: created.id, role, customRoleId: roleId }, tx);
       });
+      await createOidcSsoAuditLogSafely(auditLogService, {
+        ...toAuditBase(auditContext, orgId, accountUser),
+        event: {
+          type: OidcSsoAuditEventType.MemberProvisioned,
+          metadata: { organizationId: orgId, userId: accountUser.id, email, role: roleId ?? role, isNewAccount }
+        }
+      });
     }
 
     if (userAlias.isEmailVerified) {
@@ -596,12 +647,22 @@ export const oidcSsoServiceFactory = ({
         recipients: [user.email],
         substitutions: { code }
       });
+      await createOidcSsoAuditLogSafely(auditLogService, {
+        ...toAuditBase(auditContext, orgId, user),
+        event: {
+          type: OidcSsoAuditEventType.AccountLinkPending,
+          metadata: { organizationId: orgId, userId: user.id, email: user.email, userAliasId: userAlias.id }
+        }
+      });
     }
 
     return { user, userAlias };
   };
 
-  const completeLogin = async ({ code, returnedState, loginState, ip, userAgent }: TCompleteOidcSsoLoginDTO) => {
+  const runLogin = async (
+    { code, returnedState, loginState, ip, userAgent }: TCompleteOidcSsoLoginDTO,
+    attempt: { email?: string; idpSubject?: string }
+  ) => {
     if (!isSameSecret(loginState.state, returnedState)) {
       throw new BadRequestError({
         message: "The sign-in response did not match this login attempt. Start the sign-in again."
@@ -624,6 +685,8 @@ export const oidcSsoServiceFactory = ({
     const idTokenClaims = await verifyIdToken(tokens.id_token, config, metadata, loginState.nonce);
     const sub = typeof idTokenClaims.sub === "string" ? idTokenClaims.sub : "";
     if (!sub) throw new BadRequestError({ message: "The ID token from your identity provider has no 'sub' claim." });
+    // eslint-disable-next-line no-param-reassign
+    attempt.idpSubject = sub;
 
     const hasProfileInIdToken = typeof idTokenClaims.email === "string";
     const userinfo = hasProfileInIdToken ? {} : await fetchUserinfo(tokens.access_token, metadata, sub);
@@ -635,6 +698,8 @@ export const oidcSsoServiceFactory = ({
     }
 
     const email = sanitizeEmail(claims.email);
+    // eslint-disable-next-line no-param-reassign
+    attempt.email = email;
     validateEmail(email);
     if (!isEmailDomainAllowed(email, config.allowedEmailDomains)) {
       throw new ForbiddenRequestError({
@@ -650,7 +715,8 @@ export const oidcSsoServiceFactory = ({
       email,
       isEmailVerifiedByIdp: claims.isEmailVerified,
       firstName: claims.firstName,
-      lastName: claims.lastName
+      lastName: claims.lastName,
+      auditContext: { ipAddress: ip, userAgent }
     });
 
     const result = await loginService.processProviderCallback({
@@ -679,6 +745,29 @@ export const oidcSsoServiceFactory = ({
       authMethod: AuthMethod.OIDC,
       orgId: org.id
     };
+  };
+
+  const completeLogin = async (dto: TCompleteOidcSsoLoginDTO) => {
+    const attempt: { email?: string; idpSubject?: string } = {};
+    try {
+      return await runLogin(dto, attempt);
+    } catch (err) {
+      const org = await orgDAL.findById(dto.loginState.orgId).catch(() => undefined);
+      if (org) {
+        await createOidcSsoAuditLogSafely(auditLogService, {
+          ...toAuditBase({ ipAddress: dto.ip, userAgent: dto.userAgent }, org.id),
+          event: {
+            type: OidcSsoAuditEventType.LoginFailed,
+            metadata: {
+              organizationId: org.id,
+              reason: err instanceof Error ? err.message : "Unexpected error",
+              ...attempt
+            }
+          }
+        });
+      }
+      throw err;
+    }
   };
 
   return { getConfig, createConfig, updateConfig, startLogin, completeLogin };

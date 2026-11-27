@@ -16,6 +16,9 @@ export type OIDCConfigData = {
   jwtSignatureAlgorithm: OIDCJWTSignatureAlgorithm;
   mfaClaimName: string;
   mfaAmrValues?: string[] | null;
+  lastUsed?: string | null;
+  // The callback URL admins register at their IdP, built by the server from SITE_URL.
+  redirectUri?: string;
 };
 
 export enum OIDCJWTSignatureAlgorithm {

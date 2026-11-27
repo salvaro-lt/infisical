@@ -18,6 +18,7 @@ import {
   Badge,
   Button,
   Code,
+  CopyButton,
   DocumentationLinkBadge,
   Field,
   FieldDescription,
@@ -35,6 +36,7 @@ import {
   SelectValue,
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -178,7 +180,7 @@ export const OIDCModal = ({ popUp, handlePopUpClose, handlePopUpToggle, hideDele
     });
 
     createNotification({
-      text: "Successfully deleted OIDC configuration.",
+      text: "OIDC configuration deleted",
       type: "success"
     });
   };
@@ -282,12 +284,15 @@ export const OIDCModal = ({ popUp, handlePopUpClose, handlePopUpToggle, hideDele
     setAmrValueTagError(null);
 
     createNotification({
-      text: `Successfully ${data?.isActive ? "updated" : "added"} OIDC SSO configuration`,
+      text: data?.isActive ? "OIDC configuration updated" : "OIDC configuration saved",
       type: "success"
     });
   };
 
   const isPending = createIsLoading || updateIsLoading;
+  // Before the first save there is no server response to read it from; the path is fixed.
+  const redirectUri =
+    data?.redirectUri ?? `${window.location.origin}/api/v1/sso/community-oidc/callback`;
   const isMfaSignalInUse = currentOrg?.ssoMfaTrust === SsoMfaTrust.Signal;
 
   const urlField = (
@@ -324,19 +329,39 @@ export const OIDCModal = ({ popUp, handlePopUpClose, handlePopUpToggle, hideDele
           setIsClientSecretRevealed(false);
         }}
       >
-        <SheetContent className="sm:max-w-xl">
+        <SheetContent className="sm:max-w-xl" isPending={isPending}>
           <form onSubmit={handleSubmit(onOIDCModalSubmit)} className="flex h-full min-h-0 flex-col">
             <SheetHeader>
               <SheetTitle className="flex items-center gap-x-2">
-                Manage OIDC Configuration
+                {isExistingConfig ? "Edit OIDC Configuration" : "Configure OIDC"}
                 <DocumentationLinkBadge href="https://infisical.com/docs/integrations/user-authentication" />
               </SheetTitle>
+              <SheetDescription>
+                Connect an OpenID Connect identity provider so members can sign in with it.
+              </SheetDescription>
             </SheetHeader>
             <div className="thin-scrollbar flex-1 overflow-y-auto">
               <FormSection
                 title="Identity Provider"
                 description="How Infisical locates your IdP's OIDC endpoints."
               >
+                <Field>
+                  <FieldLabel htmlFor="oidc-redirect-uri">Redirect URI</FieldLabel>
+                  <InputGroup>
+                    <InputGroupInput
+                      id="oidc-redirect-uri"
+                      className="font-mono"
+                      value={redirectUri}
+                      readOnly
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <CopyButton value={redirectUri} ariaLabel="Copy redirect URI" />
+                    </InputGroupAddon>
+                  </InputGroup>
+                  <FieldDescription>
+                    Register this as an allowed redirect URI on the OIDC client in your IdP.
+                  </FieldDescription>
+                </Field>
                 <Controller
                   control={control}
                   name="configurationType"
@@ -499,13 +524,14 @@ export const OIDCModal = ({ popUp, handlePopUpClose, handlePopUpToggle, hideDele
                       </FieldLabel>
                       <Input
                         id="oidc-allowed-domains"
-                        placeholder="infisical.com, *.google.com"
+                        placeholder="example.com, *.example.com"
                         autoComplete="off"
                         isError={Boolean(error)}
                         {...field}
                       />
                       <FieldDescription>
-                        Any domain is allowed if empty. Supports wildcards, e.g. *.example.com.
+                        Leave empty to allow any domain. *.example.com allows subdomains but not
+                        example.com itself.
                       </FieldDescription>
                       <FieldError>{error?.message}</FieldError>
                     </Field>
@@ -565,27 +591,30 @@ export const OIDCModal = ({ popUp, handlePopUpClose, handlePopUpToggle, hideDele
                 />
               </FormSection>
             </div>
-            <SheetFooter className="justify-between border-t">
-              <div className="flex gap-2">
-                <Button type="submit" variant="org" isPending={isPending}>
-                  {isExistingConfig ? "Update Configuration" : "Configure OIDC"}
-                </Button>
+            <SheetFooter className="justify-end border-t">
+              {!hideDelete && Boolean(data?.clientId) && (
                 <Button
                   type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    handlePopUpClose("addOIDC");
-                    discardEdits();
-                  }}
+                  variant="danger"
+                  className="mr-auto"
+                  onClick={() => setIsDeletePopupOpen.on()}
                 >
-                  Cancel
-                </Button>
-              </div>
-              {!hideDelete && (
-                <Button type="button" variant="danger" onClick={() => setIsDeletePopupOpen.on()}>
-                  Delete
+                  Delete Configuration
                 </Button>
               )}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  handlePopUpClose("addOIDC");
+                  discardEdits();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="org" isPending={isPending}>
+                {isExistingConfig ? "Save Changes" : "Configure OIDC"}
+              </Button>
             </SheetFooter>
           </form>
         </SheetContent>
@@ -597,14 +626,14 @@ export const OIDCModal = ({ popUp, handlePopUpClose, handlePopUpToggle, hideDele
             <AlertDialogMedia>
               <Trash2 />
             </AlertDialogMedia>
-            <AlertDialogTitle>Delete OIDC Configuration?</AlertDialogTitle>
+            <AlertDialogTitle>Delete OIDC Configuration</AlertDialogTitle>
             <AlertDialogDescription>
-              This clears the OIDC connection. Members will no longer be able to sign in via OIDC
-              until it&apos;s reconfigured.
+              Members can no longer sign in through OIDC until it is configured again. The client ID
+              and secret are erased. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel variant="outline">Cancel</AlertDialogCancel>
             <AlertDialogAction variant="danger" onClick={handleOidcSoftDelete}>
               Delete
             </AlertDialogAction>
