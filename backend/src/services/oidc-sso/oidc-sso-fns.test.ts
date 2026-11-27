@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   buildAuthorizationUrl,
+  buildOidcSsoLoginUrl,
   buildOidcSsoRedirectUri,
   createOidcLoginSecrets,
   extractIdentityClaims,
@@ -81,6 +82,14 @@ describe("buildOidcSsoRedirectUri", () => {
   test("joins SITE_URL and the callback path without a doubled slash", () => {
     expect(buildOidcSsoRedirectUri("https://app.example.com/")).toBe(
       "https://app.example.com/api/v1/sso/community-oidc/callback"
+    );
+  });
+});
+
+describe("buildOidcSsoLoginUrl", () => {
+  test("points invitees at the community OIDC login, not the enterprise route", () => {
+    expect(buildOidcSsoLoginUrl("https://app.example.com/", "acme & co")).toBe(
+      "https://app.example.com/api/v1/sso/community-oidc/login?orgSlug=acme%20%26%20co"
     );
   });
 });

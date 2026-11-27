@@ -54,6 +54,7 @@ import { logger } from "@app/lib/logger";
 import { alphaNumericNanoId } from "@app/lib/nanoid";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
+import { buildOidcSsoLoginUrl } from "@app/services/oidc-sso/oidc-sso-fns";
 import { TOrgMembershipDALFactory } from "@app/services/org-membership/org-membership-dal";
 import { getDefaultOrgMembershipRoleForUpdateOrg } from "@app/services/org/org-role-fns";
 import { TUserAliasDALFactory } from "@app/services/user-alias/user-alias-dal";
@@ -1123,7 +1124,7 @@ export const orgServiceFactory = ({
     ]);
 
     if (oidcConfig) {
-      return `${appCfg.SITE_URL}/api/v1/sso/oidc/login?orgSlug=${encodeURIComponent(orgSlug)}`;
+      return buildOidcSsoLoginUrl(appCfg.SITE_URL, orgSlug);
     }
     if (samlConfig) {
       return `${appCfg.SITE_URL}/api/v1/sso/redirect/saml2/organizations/${encodeURIComponent(orgSlug)}`;

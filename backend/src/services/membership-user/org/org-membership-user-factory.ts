@@ -23,6 +23,7 @@ import {
   filterRolesNeedingPrivilegeBoundary,
   resolveMembershipRoleSlugs
 } from "@app/services/membership/membership-fns";
+import { buildOidcSsoLoginUrl } from "@app/services/oidc-sso/oidc-sso-fns";
 import { TOrgDALFactory } from "@app/services/org/org-dal";
 import { MAX_NEW_MEMBERS_PER_INVITE, TOrgInviteQuota } from "@app/services/org/org-invite-quota";
 import { isCustomOrgRole } from "@app/services/org/org-role-fns";
@@ -87,7 +88,7 @@ export const newOrgMembershipUserFactory = ({
     ]);
 
     if (oidcConfig) {
-      return `${appCfg.SITE_URL}/api/v1/sso/oidc/login?orgSlug=${encodeURIComponent(orgSlug)}`;
+      return buildOidcSsoLoginUrl(appCfg.SITE_URL, orgSlug);
     }
     if (samlConfig) {
       return `${appCfg.SITE_URL}/api/v1/sso/redirect/saml2/organizations/${encodeURIComponent(orgSlug)}`;

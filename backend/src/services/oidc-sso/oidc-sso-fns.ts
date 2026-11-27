@@ -10,6 +10,9 @@ export const OIDC_SSO_CALLBACK_PATH = "/api/v1/sso/community-oidc/callback";
 export const buildOidcSsoRedirectUri = (siteUrl?: string) =>
   `${(siteUrl ?? "").replace(/\/+$/, "")}${OIDC_SSO_CALLBACK_PATH}`;
 
+export const buildOidcSsoLoginUrl = (siteUrl: string | undefined, orgSlug: string) =>
+  `${(siteUrl ?? "").replace(/\/+$/, "")}/api/v1/sso/community-oidc/login?orgSlug=${encodeURIComponent(orgSlug)}`;
+
 export const toDiscoveryDocumentUrl = (discoveryUrl: string) => {
   const trimmed = discoveryUrl.trim().replace(/\/+$/, "");
   return trimmed.endsWith(WELL_KNOWN_SUFFIX) ? trimmed : `${trimmed}${WELL_KNOWN_SUFFIX}`;
